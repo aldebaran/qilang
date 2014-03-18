@@ -1,0 +1,19 @@
+
+
+object Graph "g"
+  object Motion.MoveTo "moveto"
+    direction: "forward"
+    length: 1
+
+    at finished: g.stop
+
+    at finished
+      g.stop
+    end
+  end
+
+  at moveto.finished
+    g.stop
+  end
+
+end

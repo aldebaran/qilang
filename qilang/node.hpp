@@ -11,6 +11,7 @@
 #include <qilang/api.hpp>
 
 #include <string>
+#include <vector>
 #include <qi/types.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -25,6 +26,9 @@ class BinaryOpNode;
 class UnaryOpNode;
 class VarNode;
 class ExprNode;
+class ObjectNode;
+class ObjectPropertyNode;
+class AtNode;
 
 //pure virtual
 class NodeVisitor {
@@ -36,16 +40,16 @@ public:
   virtual void visit(UnaryOpNode *node) = 0;
   virtual void visit(VarNode *node) = 0;
   virtual void visit(ExprNode *node) = 0;
+  virtual void visit(ObjectNode *node) = 0;
+  virtual void visit(ObjectPropertyNode *node) = 0;
+  virtual void visit(AtNode *node) = 0;
 };
 
 //Base Node used to describe the AST
 class QILANG_API Node
 {
 public:
-  Node(const std::string &name)
-    : name(name)
-  {
-  }
+  Node(const std::string &name);
 
   virtual void accept(NodeVisitor *visitor) = 0;
 
@@ -143,7 +147,7 @@ public:
 
 class QILANG_API StringNode: public Node {
 public:
-  StringNode(const char *value)
+  StringNode(const std::string& value)
     : Node("string")
     , value(value)
   {}
@@ -159,12 +163,6 @@ public:
     : Node("var")
     , value(name)
   {}
-//  VarNode(const std::string &name, TypeNodePtr type)
-//    : Node("var")
-//  {}
-//  VarNode(const std::string &name, TypeNodePtr type, ExprNodePtr value)
-//    : Node("var")
-//  {}
 
   void accept(NodeVisitor *visitor) { visitor->visit(this); }
 
@@ -186,22 +184,48 @@ public:
 // Object Motion.MoveTo "titi"
 class ObjectNode : public Node {
 public:
-  ObjectNode(const char *type, const char *id, NodePtr defs)
+  ObjectNode(const std::string& type, const std::string& id, const std::vector<NodePtr>& defs)
     : Node("object")
     , type(type)
     , id(id)
-    , value(defs)
+    , values(defs)
   {}
 
-  std::string type;
-  std::string id;
-  NodePtr     value;
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+  std::string          type;
+  std::string          id;
+  std::vector<NodePtr> values;
 };
 
 // myprop: tititoto
-class ObjectAssignNode : public Node {
+class ObjectPropertyNode : public Node {
 public:
-  ObjectAssignNode(NodePtr var, NodePtr value);
+  ObjectPropertyNode(const std::string& var, NodePtr value)
+    : Node("objprop")
+    , var(var)
+    , value(value)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+  std::string var;
+  NodePtr     value;
+};
+
+class AtNode : public Node {
+public:
+  AtNode(const std::string& sender, const std::string& receiver)
+    : Node("at")
+    , sender(sender)
+    , receiver(receiver)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string sender;
+  std::string receiver;
 };
 
 //// ### THIS IS THE FUTURE... and the future is useless right now

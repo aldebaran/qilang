@@ -16,6 +16,11 @@
 %option yylineno
 %option nounistd
 %option prefix="qilang_"
+/* %option nodefault */
+%option verbose
+%option nounput
+%option noinput
+%option interactive
 
 %{
 /* Do not use the C++ generator. The generator only support int yylex()
@@ -32,6 +37,7 @@
 #include <boost/make_shared.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
+//#include <iostream>
 #include "parser_p.hpp"
 #include "grammar.tab.hpp"
 
@@ -45,26 +51,35 @@
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
-//allow parsing char from a stream
-#define YY_INPUT(buf,result,max_size)   \
-{                                       \
-   char c;                              \
-   (*yyextra->in) >> c;                 \
-   if(yyextra->in->eof()) {             \
-      result = YY_NULL;                 \
-   } else {                             \
-   std::cout << "char:" << c << std::endl; \
-      buf[0] = c;                       \
-      result = 1;                       \
-   }                                    \
-}
+#define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
+
+
+  static void qilang_readsome(qilang::Parser* p, char* buf, size_t *result, size_t max_size)
+  {
+    //yy_flex_debug=1;
+    std::cout << "asking for:" << max_size << std::endl;
+    if (p->in->eof() || p->in->fail()) {
+      *result = 0;
+      return;
+    }
+    p->in->readsome(buf, max_size);
+    if (!p->in->gcount() && !p->in->eof())
+    {
+      p->in->peek();
+      p->in->readsome(buf, max_size);
+    }
+    if (p->in->bad())
+    {
+      std::cout << "Error...." << std::endl;
+      *result = -1;
+      return;
+    }
+    std::cout << "Read:" << p->in->gcount() << " bytes" << " =>" << buf << std::endl;
+    *result = p->in->gcount();
+  }
 
 #define yyterminate()                                   \
   return yy::parser::make_END_OF_FILE(yy::parser::location_type())
-
-//#define YY_EXTRA_TYPE qilang::Parser*
-
-//#include "grammar.tab.hpp"
 %}
 
 BLANKS   [ \t]+
@@ -76,7 +91,6 @@ IDSLASH  [a-zA-Z_/\-][_A-Za-z0-9./\-]*
 NATURAL  [0-9]+
 EXPONENT [eE][-+]?{NATURAL}
 UFLOAT   {NATURAL}\.{NATURAL}{EXPONENT}?|{NATURAL}{EXPONENT}
-
 FLOAT    {UFLOAT}
 
 %%
@@ -106,6 +120,16 @@ FLOAT    {UFLOAT}
 "|"             RETURN_OP(OR);
 "^"             RETURN_OP(XOR);
 "@"             RETURN_OP(ARO);
+":"             RETURN_OP(COLON);
+
+"object"        RETURN_OP(OBJECT);
+"interface"     RETURN_OP(INTERFACE);
+"struct"        RETURN_OP(STRUCT);
+"type"          RETURN_OP(TYPE);
+"at"            RETURN_OP(AT);
+"end"           RETURN_OP(END);
+"for"           RETURN_OP(FOR);
+"if"            RETURN_OP(IF);
 
 {FLOAT}           {
   qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));
@@ -114,22 +138,19 @@ FLOAT    {UFLOAT}
 
 {NATURAL}         {
   qilang::NodePtr node = boost::make_shared<qilang::IntNode>(boost::lexical_cast<int>(yytext));
-  RETURN_VAL(CONSTANT, node);
+   RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
-  qilang::NodePtr node = boost::make_shared<qilang::VarNode>(yytext);
-  RETURN_VAL(ID, node);
+  RETURN_VAL(ID, std::string(yytext));
 }
 
 [\']{IDSLASH}[\'] {
-  qilang::NodePtr node = boost::make_shared<qilang::VarNode>(yytext+1);
-  RETURN_VAL(IDSLASH, node);
+  RETURN_VAL(IDSLASH, std::string(yytext));
 }
 
-[\"][^"]*[\"]     {
-  qilang::NodePtr node = boost::make_shared<qilang::StringNode>(yytext+1);
-  RETURN_VAL(STRING, node);
+[\"][^"]*[\"]     {   // "   for indentation
+  RETURN_VAL(STRING, std::string(yytext));
 }
 
 {BLANKS}          {

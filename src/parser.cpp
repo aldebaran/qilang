@@ -31,6 +31,7 @@ namespace qilang {
 
   NodePtr Parser::parse() {
     yy::parser parser(this);
+    parser.set_debug_level(42);
     parser.parse();
     return root;
   }

@@ -14,6 +14,8 @@ set(C src/node.cpp
 find_package(FLEX)
 find_package(BISON)
 
+add_definitions("-DYYDEBUG")
+
 if(FLEX_EXECUTABLE AND BISON_EXECUTABLE)
   qi_generate_src(
     ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp

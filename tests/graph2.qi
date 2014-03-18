@@ -1,0 +1,11 @@
+
+
+object Graph "g"
+  object Motion.MoveTo "moveto"
+    direction: "forward"
+    length: 1m
+  end
+  object TTS.Say "say1"
+    text: "mange ton slip mec"
+  end
+end

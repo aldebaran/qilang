@@ -5,12 +5,22 @@
 ** Copyright (C) 2014 Aldebaran Robotics
 */
 
+#include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <stdexcept>
 #include <string>
 #include <sstream>
 
+qiLogCategory("qilang.node");
+
 namespace qilang {
+
+  Node::Node(const std::string &name)
+    : name(name)
+  {
+    qiLogInfo() << "node:" << name;
+  }
+
 
   class QiParserSExprPrinter : public NodeVisitor {
   public:
@@ -42,6 +52,19 @@ namespace qilang {
     }
     void visit(ExprNode *node) {
       ss << "(expr " << toSExpr(node->value) << ")";
+    }
+    void visit(ObjectNode *node) {
+      ss << "(object (" << node->type << " " << node->id << ")" << std::endl;
+      for (unsigned int i = 0; i < node->values.size(); ++i) {
+        ss << toSExpr(node->values[i]) << std::endl;
+      }
+      ss << ")";
+    }
+    void visit(ObjectPropertyNode *node) {
+      ss << "(prop " << node->var << toSExpr(node->value) << ")";
+    }
+    void visit(AtNode* node) {
+      ss << "(at " << node->sender << " " << node->receiver << ")";
     }
   };
 
