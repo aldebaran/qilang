@@ -29,6 +29,11 @@ class ExprNode;
 class ObjectNode;
 class ObjectPropertyNode;
 class AtNode;
+class InterfaceNode;
+class FnDeclNode;
+class InDeclNode;
+class OutDeclNode;
+class PropDeclNode;
 
 //pure virtual
 class NodeVisitor {
@@ -43,6 +48,12 @@ public:
   virtual void visit(ObjectNode *node) = 0;
   virtual void visit(ObjectPropertyNode *node) = 0;
   virtual void visit(AtNode *node) = 0;
+
+  virtual void visit(InterfaceNode *node) = 0;
+  virtual void visit(FnDeclNode *node) = 0;
+  virtual void visit(InDeclNode *node) = 0;
+  virtual void visit(OutDeclNode *node) = 0;
+  virtual void visit(PropDeclNode *node) = 0;
 };
 
 //Base Node used to describe the AST
@@ -169,7 +180,7 @@ public:
   std::string value;
 };
 
-class ExprNode : public Node {
+class QILANG_API ExprNode : public Node {
 public:
   ExprNode(NodePtr child)
     : Node("expr")
@@ -182,7 +193,7 @@ public:
 };
 
 // Object Motion.MoveTo "titi"
-class ObjectNode : public Node {
+class QILANG_API ObjectNode : public Node {
 public:
   ObjectNode(const std::string& type, const std::string& id, const std::vector<NodePtr>& defs)
     : Node("object")
@@ -199,7 +210,7 @@ public:
 };
 
 // myprop: tititoto
-class ObjectPropertyNode : public Node {
+class QILANG_API ObjectPropertyNode : public Node {
 public:
   ObjectPropertyNode(const std::string& var, NodePtr value)
     : Node("objprop")
@@ -213,7 +224,7 @@ public:
   NodePtr     value;
 };
 
-class AtNode : public Node {
+class QILANG_API AtNode : public Node {
 public:
   AtNode(const std::string& sender, const std::string& receiver)
     : Node("at")
@@ -227,6 +238,84 @@ public:
   std::string sender;
   std::string receiver;
 };
+
+// Object Motion.MoveTo "titi"
+class QILANG_API InterfaceNode : public Node {
+public:
+  InterfaceNode(const std::string& name, const std::vector<NodePtr>& defs)
+    : Node("interface")
+    , name(name)
+    , values(defs)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+  std::string          name;
+  std::vector<NodePtr> values;
+};
+
+class QILANG_API FnDeclNode : public Node {
+public:
+  FnDeclNode(const std::string& name, const std::vector<std::string>& args, std::string ret)
+    : Node("fn")
+    , name(name)
+    , args(args)
+    , ret(ret)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string              name;
+  std::vector<std::string> args;
+  std::string              ret;
+};
+
+class QILANG_API InDeclNode : public Node {
+public:
+  InDeclNode(const std::string& name, const std::vector<std::string>& args)
+    : Node("in")
+    , name(name)
+    , args(args)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string              name;
+  std::vector<std::string> args;
+};
+
+class QILANG_API OutDeclNode : public Node {
+public:
+  OutDeclNode(const std::string& name, const std::vector<std::string>& args)
+    : Node("out")
+    , name(name)
+    , args(args)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string              name;
+  std::vector<std::string> args;
+};
+
+class QILANG_API PropDeclNode : public Node {
+public:
+  PropDeclNode(const std::string& name, const std::vector<std::string>& args)
+    : Node("prop")
+    , name(name)
+    , args(args)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string              name;
+  std::vector<std::string> args;
+};
+
 
 //// ### THIS IS THE FUTURE... and the future is useless right now
 

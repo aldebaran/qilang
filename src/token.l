@@ -130,6 +130,10 @@ FLOAT    {UFLOAT}
 "end"           RETURN_OP(END);
 "for"           RETURN_OP(FOR);
 "if"            RETURN_OP(IF);
+"fn"            RETURN_OP(FN);
+"in"            RETURN_OP(IN);
+"out"           RETURN_OP(OUT);
+"prop"          RETURN_OP(PROP);
 
 {FLOAT}           {
   qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));

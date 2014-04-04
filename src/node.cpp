@@ -66,6 +66,48 @@ namespace qilang {
     void visit(AtNode* node) {
       ss << "(at " << node->sender << " " << node->receiver << ")";
     }
+
+    void visit(InterfaceNode* node) {
+      ss << "(interface " << node->name << std::endl;
+      for (unsigned int i = 0; i < node->values.size(); ++i) {
+        ss << toSExpr(node->values[i]) << std::endl;
+      }
+      ss << ")";
+    }
+
+    void visit(FnDeclNode* node) {
+      ss << "(fn " << node->name << std::endl;
+
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        ss << node->args[i] << std::endl;
+      }
+      ss << node->ret << ")";
+    }
+    void visit(InDeclNode* node) {
+      ss << "(in " << node->name << std::endl;
+
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        ss << node->args[i] << std::endl;
+      }
+      ss << ")";
+    }
+    void visit(OutDeclNode* node) {
+      ss << "(out " << node->name << std::endl;
+
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        ss << node->args[i] << std::endl;
+      }
+      ss << ")";
+    }
+    void visit(PropDeclNode* node) {
+      ss << "(prop " << node->name << std::endl;
+
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        ss << node->args[i] << std::endl;
+      }
+      ss << ")";
+    }
+
   };
 
 

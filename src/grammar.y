@@ -96,6 +96,12 @@
   STRUCT              "struct"
   TYPE                "type"
 
+  // IFace Keywords
+  FN                  "fn"
+  IN                  "in"
+  OUT                 "out"
+  PROP                "prop"
+
   // Core Keywords
   AT                  "at"
   END                 "end"
@@ -123,10 +129,10 @@
 %start toplevel;
 
 %type<qilang::NodePtr> toplevel;
-
 toplevel:
   exp    { context->root = boost::make_shared<qilang::ExprNode>($1); }
 | object { context->root = $1; }
+| iface  { context->root = $1; }
 
 
 /////////////// OBJECTS //////////////////
@@ -158,6 +164,59 @@ at_expr:
   AT ID ":" ID               { $$ = boost::make_shared<qilang::AtNode>($2, $4); }
 | AT ID ID END               { $$ = boost::make_shared<qilang::AtNode>($2, $3); }
 
+
+/////////////// INTERFACE //////////////////
+%type<qilang::NodePtr> iface;
+iface:
+  INTERFACE ID interface_defs END { $$ = boost::make_shared<qilang::InterfaceNode>($2, $3); }
+
+%type< std::vector<qilang::NodePtr> > interface_defs;
+interface_defs:
+                               {}
+| interface_def                { $$.push_back($1); }
+| interface_defs interface_def { std::swap($$, $1); $$.push_back($2); }
+
+%type <qilang::NodePtr> interface_def;
+interface_def:
+  function_decl           { std::swap($$, $1); }
+| in_decl                 { std::swap($$, $1); }
+| out_decl                { std::swap($$, $1); }
+| prop_decl               { std::swap($$, $1); }
+
+////////////// FUNC DECL ///////////////////////////
+
+// fn foooo (t1, t2, t3) tret
+%type<qilang::NodePtr> function_decl;
+function_decl:
+  FN  ID "(" function_args ")" function_arg { $$ = boost::make_shared<qilang::FnDeclNode>($2, $4, $6); }
+
+%type<qilang::NodePtr> in_decl;
+in_decl:
+  IN  ID "(" function_args ")"              { $$ = boost::make_shared<qilang::InDeclNode>($2, $4); }
+
+%type<qilang::NodePtr> out_decl;
+out_decl:
+  OUT ID "(" function_args ")"              { $$ = boost::make_shared<qilang::OutDeclNode>($2, $4); }
+
+%type<qilang::NodePtr> prop_decl;
+prop_decl:
+  PROP ID "(" function_args ")"             { $$ = boost::make_shared<qilang::PropDeclNode>($2, $4); }
+
+
+%type< std::vector<std::string> > function_args;
+function_args:
+                                  {}
+| function_arg                    { $$.push_back($1); }
+| function_args "," function_arg  { std::swap($$, $1);
+                                    $$.push_back($3); }
+
+%type<std::string> function_arg;
+function_arg:
+  ID { $$ = $1; }
+
+
+
+///////////////////////////////////// EXPR
 %type<qilang::NodePtr> exp;
 exp:
   exp "+" exp { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::BinaryOpCode_Plus);}

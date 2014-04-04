@@ -1,0 +1,6 @@
+
+
+interface AudioDevice
+  fn setDefaultDevice (str, str) int
+  fn setDefaultDevice2 (str) int
+end

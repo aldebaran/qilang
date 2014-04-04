@@ -1,6 +1,16 @@
+interface Audio.AudioDevice
+  property titi Int
 
+  send Finished(Int)
+  recv Start(Any)
+
+  function setTimeout(Int)
+end
+
+import Motion
 
 object Graph "g"
+
   object Motion.MoveTo "moveto"
     direction: "forward"
     length: 1
@@ -11,6 +21,24 @@ object Graph "g"
       g.stop
     end
   end
+
+  object Motion.MoveTo "moveto2"
+    direction: "forward"
+    length: 1
+    at finished: moveto3.start()
+  end
+
+  object Motion.MoveTo "moveto3"
+    direction: "forward"
+    length: 1
+
+    at finished: g.stop
+
+    at finished
+      g.stop
+    end
+  end
+
 
   at moveto.finished
     g.stop

@@ -1,0 +1,17 @@
+
+
+interface AudioDevice
+  fn setDefaultDevice (str, str) int
+
+  in start()
+  in stop()
+  in mute()
+  in unmute()
+
+  out started(cacaca, dsldslksdflk)
+  out stopped(prout)
+  out muted()
+  out unmuted()
+
+  prop velocity(int)
+end
