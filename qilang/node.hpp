@@ -17,8 +17,13 @@
 
 namespace qilang {
 
-//AST Node
+// AST Node
 
+// Package Management
+class PackageNode;
+class ImportNode;
+
+// Expression
 class IntNode;
 class FloatNode;
 class StringNode;
@@ -26,10 +31,14 @@ class BinaryOpNode;
 class UnaryOpNode;
 class VarNode;
 class ExprNode;
+
+// Object Graphs
 class ObjectNode;
-class ObjectPropertyNode;
+class PropertyNode;
 class AtNode;
-class InterfaceNode;
+
+// Interface Declaration
+class InterfaceDeclNode;
 class FnDeclNode;
 class InDeclNode;
 class OutDeclNode;
@@ -38,22 +47,30 @@ class PropDeclNode;
 //pure virtual
 class NodeVisitor {
 public:
+  // Package Management
+  virtual void visit(PackageNode* node) = 0;
+  virtual void visit(ImportNode* node) = 0;
+
+  // Expression
   virtual void visit(IntNode *node) = 0;
   virtual void visit(FloatNode *node) = 0;
   virtual void visit(StringNode *node) = 0;
   virtual void visit(BinaryOpNode *node) = 0;
   virtual void visit(UnaryOpNode *node) = 0;
-  virtual void visit(VarNode *node) = 0;
   virtual void visit(ExprNode *node) = 0;
+  virtual void visit(VarNode *node) = 0;
+
+  // Object Graph
   virtual void visit(ObjectNode *node) = 0;
-  virtual void visit(ObjectPropertyNode *node) = 0;
+  virtual void visit(PropertyNode *node) = 0;
   virtual void visit(AtNode *node) = 0;
 
-  virtual void visit(InterfaceNode *node) = 0;
-  virtual void visit(FnDeclNode *node) = 0;
-  virtual void visit(InDeclNode *node) = 0;
-  virtual void visit(OutDeclNode *node) = 0;
-  virtual void visit(PropDeclNode *node) = 0;
+  // Interface Declaration
+  virtual void visit(InterfaceDeclNode* node) = 0;
+  virtual void visit(FnDeclNode* node) = 0;
+  virtual void visit(InDeclNode* node) = 0;
+  virtual void visit(OutDeclNode* node) = 0;
+  virtual void visit(PropDeclNode* node) = 0;
 };
 
 //Base Node used to describe the AST
@@ -100,6 +117,34 @@ enum BinaryOpCode {
 
 QILANG_API const std::string &UnaryOpCodeToString(UnaryOpCode op);
 QILANG_API const std::string &BinaryOpCodeToString(BinaryOpCode op);
+
+class QILANG_API PackageNode : public Node {
+public:
+  PackageNode(const std::string& packageName)
+    : Node("package")
+    , name(packageName)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string name;
+};
+
+class QILANG_API ImportNode : public Node {
+public:
+  ImportNode(const std::string& packageName, const std::vector<std::string>& imported)
+    : Node("import")
+    , name(packageName)
+    , imported(imported)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+public:
+  std::string              name;
+  std::vector<std::string> imported;
+};
 
 class QILANG_API BinaryOpNode : public Node {
 public:
@@ -210,10 +255,10 @@ public:
 };
 
 // myprop: tititoto
-class QILANG_API ObjectPropertyNode : public Node {
+class QILANG_API PropertyNode : public Node {
 public:
-  ObjectPropertyNode(const std::string& var, NodePtr value)
-    : Node("objprop")
+  PropertyNode(const std::string& var, NodePtr value)
+    : Node("defprop")
     , var(var)
     , value(value)
   {}
@@ -240,9 +285,9 @@ public:
 };
 
 // Object Motion.MoveTo "titi"
-class QILANG_API InterfaceNode : public Node {
+class QILANG_API InterfaceDeclNode : public Node {
 public:
-  InterfaceNode(const std::string& name, const std::vector<NodePtr>& defs)
+  InterfaceDeclNode(const std::string& name, const std::vector<NodePtr>& defs)
     : Node("interface")
     , name(name)
     , values(defs)
@@ -319,12 +364,6 @@ public:
 
 //// ### THIS IS THE FUTURE... and the future is useless right now
 
-class PackageNode : public Node {
-public:
-  PackageNode()
-    : Node("package")
-  {}
-};
 
 class TypeNode: public Node {
 public:

@@ -148,7 +148,7 @@ object_def:
 
 %type<qilang::NodePtr> object_property;
 object_property:
-  ID ":" exp                   { $$ = boost::make_shared<qilang::ObjectPropertyNode>($1, $3); }
+  ID ":" exp                   { $$ = boost::make_shared<qilang::PropertyNode>($1, $3); }
 
 %type<qilang::NodePtr> at_expr;
 at_expr:
@@ -159,7 +159,7 @@ at_expr:
 /////////////// INTERFACE //////////////////
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID interface_defs END { $$ = boost::make_shared<qilang::InterfaceNode>($2, $3); }
+  INTERFACE ID interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $3); }
 
 %type< std::vector<qilang::NodePtr> > interface_defs;
 interface_defs:

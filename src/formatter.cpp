@@ -63,6 +63,13 @@ namespace qilang {
         indent() << ::qilang::format(vec[i]);
       }
     }
+    void visit(PackageNode* node) {
+      indent() << "package " << node->name;
+    }
+
+    void visit(ImportNode* node) {
+      indent() << "import " << node->name;
+    }
 
     void visit(IntNode *node) {
       out() << node->value;
@@ -73,7 +80,6 @@ namespace qilang {
     void visit(StringNode *node) {
       out() << node->value;
     }
-
     void visit(BinaryOpNode *node) {
       out() << ::qilang::format(node->n1) << " " << BinaryOpCodeToString(node->op) << " " << ::qilang::format(node->n2);
     }
@@ -92,14 +98,13 @@ namespace qilang {
       scopedDecl(node->values);
       indent() << "end" << std::endl;
     }
-    void visit(ObjectPropertyNode *node) {
+    void visit(PropertyNode *node) {
       indent() << "prop " << node->var << " " << ::qilang::format(node->value) << std::endl;
     }
     void visit(AtNode* node) {
       indent() << "at " << node->sender << " " << node->receiver << std::endl;
     }
-
-    void visit(InterfaceNode* node) {
+    void visit(InterfaceDeclNode* node) {
       indent() << "interface " << node->name << std::endl;
       scopedDecl(node->values);
       indent() << "end" << std::endl;
@@ -151,6 +156,14 @@ namespace qilang {
     }
 
   protected:
+    void visit(PackageNode* node) {
+      indent() << "(package " << node->name << ")";
+    }
+
+    void visit(ImportNode* node) {
+      indent() << "(import " << node->name << ")";
+    }
+
     void visit(IntNode *node) {
       out() << "(int " << node->value << ")";
     }
@@ -185,14 +198,14 @@ namespace qilang {
       scopedDecl(node->values);
       out() << ")";
     }
-    void visit(ObjectPropertyNode *node) {
+    void visit(PropertyNode *node) {
       indent() << "(prop " << node->var << " " << formatAST(node->value) << ")" << std::endl;
     }
     void visit(AtNode* node) {
       indent() << "(at " << node->sender << " " << node->receiver << ")" << std::endl;
     }
 
-    void visit(InterfaceNode* node) {
+    void visit(InterfaceDeclNode* node) {
       indent() << "(interface " << node->name << std::endl;
       scopedDecl(node->values);
       indent() << ")" << std::endl;
