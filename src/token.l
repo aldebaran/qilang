@@ -157,5 +157,6 @@ FLOAT    {UFLOAT}
 {BLANKS}          {
 }
 
+"#".*             {} // One-line comment.
 
 %%

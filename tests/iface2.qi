@@ -1,5 +1,6 @@
 
-
+#comment
+#comment
 interface AudioDevice
   fn setDefaultDevice (str, str) int
 
