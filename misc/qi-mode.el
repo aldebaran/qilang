@@ -12,7 +12,7 @@
   '("#" "//")                                     ;; comments delimiter
   '("if" "package" "end" "for"
     "interface" "fn" "in" "out" "prop"
-    "object" "at")      ;; some keywords
+    "object" "at" "package" "from" "import")      ;; some keywords
   '(;; int constant
     ("\\b[0-9]+\\b" . font-lock-constant-face)
     ;; blabla: value

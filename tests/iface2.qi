@@ -1,4 +1,9 @@
 
+package titi
+from tutu import *
+from tutu import toto
+from tutu import tutu, toto
+
 #comment
 #comment
 interface AudioDevice

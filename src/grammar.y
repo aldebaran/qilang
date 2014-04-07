@@ -81,11 +81,17 @@
   ARO                 "@"
   COLON               ":"
 
+  // Package Management
+  PACKAGE             "package"
+  IMPORT              "import"
+  FROM                "from"
+
   // Blocks Types
   OBJECT              "object"
   INTERFACE           "interface"
   STRUCT              "struct"
   TYPE                "type"
+  END                 "end"
 
   // IFace Keywords
   FN                  "fn"
@@ -95,7 +101,6 @@
 
   // Core Keywords
   AT                  "at"
-  END                 "end"
   FOR                 "for"
   IF                  "if"
 
@@ -127,6 +132,23 @@ toplevel:
 
 
 /////////////// OBJECTS //////////////////
+
+%type<qilang::NodePtr> package;
+package:
+  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2); }
+
+%type<qilang::NodePtr> import;
+import:
+  IMPORT ID                        { $$ = boost::make_shared<qilang::ImportNode>($2); }
+| FROM ID IMPORT import_defs       { $$ = boost::make_shared<qilang::ImportNode>($2, $4); }
+
+%type< std::vector<std::string> > import_defs;
+import_defs:
+  '*'                              { $$.push_back("*"); }
+| ID                               { $$.push_back($1); }
+| import_defs ',' ID               { std::swap($$, $1);
+                                     $$.push_back($3);
+                                   }
 
 %type<qilang::NodePtr> object;
 object:

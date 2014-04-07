@@ -119,18 +119,23 @@ FLOAT    {UFLOAT}
 "@"             RETURN_OP(ARO);
 ":"             RETURN_OP(COLON);
 
+"package"       RETURN_OP(PACKAGE);
+"from"          RETURN_OP(FROM);
+"import"        RETURN_OP(IMPORT);
 "object"        RETURN_OP(OBJECT);
 "interface"     RETURN_OP(INTERFACE);
 "struct"        RETURN_OP(STRUCT);
 "type"          RETURN_OP(TYPE);
-"at"            RETURN_OP(AT);
 "end"           RETURN_OP(END);
-"for"           RETURN_OP(FOR);
-"if"            RETURN_OP(IF);
+
 "fn"            RETURN_OP(FN);
 "in"            RETURN_OP(IN);
 "out"           RETURN_OP(OUT);
 "prop"          RETURN_OP(PROP);
+
+"at"            RETURN_OP(AT);
+"for"           RETURN_OP(FOR);
+"if"            RETURN_OP(IF);
 
 {FLOAT}           {
   qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));
