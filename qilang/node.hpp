@@ -12,6 +12,7 @@
 
 #include <string>
 #include <qi/types.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace qilang {
 
@@ -23,7 +24,7 @@ class StringNode;
 class BinaryOpNode;
 class UnaryOpNode;
 class VarNode;
-
+class ExprNode;
 
 //pure virtual
 class NodeVisitor {
@@ -34,6 +35,7 @@ public:
   virtual void visit(BinaryOpNode *node) = 0;
   virtual void visit(UnaryOpNode *node) = 0;
   virtual void visit(VarNode *node) = 0;
+  virtual void visit(ExprNode *node) = 0;
 };
 
 //Base Node used to describe the AST
@@ -42,12 +44,15 @@ class QILANG_API Node
 public:
   Node(const std::string &name)
     : name(name)
-  {}
+  {
+  }
 
   virtual void accept(NodeVisitor *visitor) = 0;
 
   std::string        name;
 };
+
+typedef boost::shared_ptr<Node> NodePtr;
 
 enum UnaryOpCode {
   UnaryOpCode_Negate,
@@ -83,7 +88,7 @@ QILANG_API const std::string &BinaryOpCodeToString(BinaryOpCode op);
 
 class QILANG_API BinaryOpNode : public Node {
 public:
-  BinaryOpNode(Node *n1, Node *n2, BinaryOpCode boc)
+  BinaryOpNode(NodePtr n1, NodePtr n2, BinaryOpCode boc)
     : Node("binaryop")
     , op(boc)
     , n1(n1)
@@ -93,13 +98,13 @@ public:
   void accept(NodeVisitor *visitor) { visitor->visit(this); }
 
   BinaryOpCode op;
-  Node*        n1;
-  Node*        n2;
+  NodePtr        n1;
+  NodePtr        n2;
 };
 
 class QILANG_API  UnaryOpNode : public Node {
 public:
-  UnaryOpNode(Node *node, UnaryOpCode op)
+  UnaryOpNode(NodePtr node, UnaryOpCode op)
     : Node("unaryop")
     , op(op)
     , n1(node)
@@ -108,7 +113,7 @@ public:
   void accept(NodeVisitor *visitor) { visitor->visit(this); }
 
   UnaryOpCode op;
-  Node* n1;
+  NodePtr n1;
 
 };
 
@@ -154,10 +159,10 @@ public:
     : Node("var")
     , value(name)
   {}
-//  VarNode(const std::string &name, TypeNode* type)
+//  VarNode(const std::string &name, TypeNodePtr type)
 //    : Node("var")
 //  {}
-//  VarNode(const std::string &name, TypeNode* type, ExprNode* value)
+//  VarNode(const std::string &name, TypeNodePtr type, ExprNodePtr value)
 //    : Node("var")
 //  {}
 
@@ -166,6 +171,38 @@ public:
   std::string value;
 };
 
+class ExprNode : public Node {
+public:
+  ExprNode(NodePtr child)
+    : Node("expr")
+    , value(child)
+  {}
+
+  void accept(NodeVisitor *visitor) { visitor->visit(this); }
+
+  NodePtr value;
+};
+
+// Object Motion.MoveTo "titi"
+class ObjectNode : public Node {
+public:
+  ObjectNode(const char *type, const char *id, NodePtr defs)
+    : Node("object")
+    , type(type)
+    , id(id)
+    , value(defs)
+  {}
+
+  std::string type;
+  std::string id;
+  NodePtr     value;
+};
+
+// myprop: tititoto
+class ObjectAssignNode : public Node {
+public:
+  ObjectAssignNode(NodePtr var, NodePtr value);
+};
 
 //// ### THIS IS THE FUTURE... and the future is useless right now
 
@@ -174,14 +211,6 @@ public:
   PackageNode()
     : Node("package")
   {}
-};
-
-class ExprNode : public Node {
-public:
-  ExprNode()
-    : Node("expr")
-  {}
-
 };
 
 class TypeNode: public Node {
@@ -236,8 +265,7 @@ public:
   {}
 };
 
-
-QILANG_API std::string toSExpr(Node *node);
+QILANG_API std::string toSExpr(NodePtr node);
 
 
 }

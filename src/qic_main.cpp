@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     in = &is;
   }
 
-  qilang::Node *rootnode = qilang::parse(in);
+  qilang::NodePtr rootnode = qilang::parse(in);
 
   std::cout << "parsed ast:" << qilang::toSExpr(rootnode) << std::endl;
   std::cout << "shuting down qi." << std::endl;

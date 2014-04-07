@@ -44,6 +44,7 @@ else()
   )
 endif()
 
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("src")
 
 qi_create_lib(qilang

@@ -14,7 +14,7 @@ namespace qilang {
 
   class QiParserSExprPrinter : public NodeVisitor {
   public:
-    std::string go(Node *node) {
+    std::string go(NodePtr node) {
       node->accept(this);
       return ss.str();
     }
@@ -40,9 +40,15 @@ namespace qilang {
     void visit(VarNode *node) {
       ss << "(var " << node->value << ")";
     }
+    void visit(ExprNode *node) {
+      ss << "(expr " << toSExpr(node->value) << ")";
+    }
   };
 
-  std::string toSExpr(Node *node) {
+
+  std::string toSExpr(NodePtr node) {
+    if (!node)
+      throw std::runtime_error("Invalid Node");
     return QiParserSExprPrinter().go(node);
   }
 

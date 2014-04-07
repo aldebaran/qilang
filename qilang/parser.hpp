@@ -10,11 +10,11 @@
 
 #include <qilang/api.hpp>
 #include <iosfwd>
+#include <qilang/node.hpp>
 
 namespace qilang {
 
-  class Node;
-  QILANG_API Node* parse(std::istream *stream);
+  QILANG_API NodePtr parse(std::istream *stream);
 
 }
 

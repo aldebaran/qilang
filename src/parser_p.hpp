@@ -16,12 +16,12 @@ namespace qilang {
     Parser(std::istream *stream);
     ~Parser();
 
-    qilang::Node *parse();
+    qilang::NodePtr parse();
 
   public:
     std::string   filename;
     void*         scanner;  // flex context
-    Node*         root;     // parser output
+    NodePtr       root;     // parser output
     std::istream* in;       // input stream
   };
 

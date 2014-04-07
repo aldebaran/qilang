@@ -6,20 +6,19 @@
 */
 
 #include <qilang/parser.hpp>
+#include <qilang/node.hpp>
 #include "parser_p.hpp"
 #include <iostream>
+#include "grammar.tab.hpp"
 
-int qilang_lex_init(void**);
-int qilang_lex_destroy(void*);
-
+int  qilang_lex_init(void**);
+int  qilang_lex_destroy(void*);
 void qilang_set_extra(qilang::Parser*, void *);
-int  qilang_parse(qilang::Parser *pc);
 
 namespace qilang {
 
   Parser::Parser(std::istream *stream)
-    : root(0)
-    , in(stream)
+    : in(stream)
   {
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
@@ -30,12 +29,13 @@ namespace qilang {
     qilang_lex_destroy(scanner);
   }
 
-  Node* Parser::parse() {
-    qilang_parse(this);
+  NodePtr Parser::parse() {
+    yy::parser parser(this);
+    parser.parse();
     return root;
   }
 
-  Node* parse(std::istream *stream) {
+  NodePtr parse(std::istream *stream) {
     Parser p(stream);
     return p.parse();
   }

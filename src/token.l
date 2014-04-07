@@ -9,13 +9,39 @@
 %option never-interactive
 */
 
+%option 8bit
+%option noyywrap
+%option debug
+%option reentrant
+%option yylineno
+%option nounistd
+%option prefix="qilang_"
+
 %{
+/* Do not use the C++ generator. The generator only support int yylex()
+ * so the FlexLexer.h include file need to be patched, which lead to
+ * all sort of complication.
+ *
+ * Instead: generate a C parser, and compile it in C++.
+ *
+ * %option c++
+ * %option yyclass="qilang::Scanner"
+ */
+
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
 #include "parser_p.hpp"
+#include "grammar.tab.hpp"
 
-#define RETURN_OP(a) return a
+#define RETURN_OP(Symbol)         \
+   return yy::parser::make_ ## Symbol(yy::parser::location_type())
+
+#define RETURN_VAL(Symbol, Value) \
+   return yy::parser::make_ ## Symbol(Value, yy::parser::location_type())
+
+#define YY_DECL yy::parser::symbol_type qilang_lex(yyscan_t yyscanner)
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
@@ -27,31 +53,19 @@
    if(yyextra->in->eof()) {             \
       result = YY_NULL;                 \
    } else {                             \
+   std::cout << "char:" << c << std::endl; \
       buf[0] = c;                       \
       result = 1;                       \
    }                                    \
 }
 
-#include "grammar.tab.hpp"
+#define yyterminate()                                   \
+  return yy::parser::make_END_OF_FILE(yy::parser::location_type())
+
+//#define YY_EXTRA_TYPE qilang::Parser*
+
+//#include "grammar.tab.hpp"
 %}
-
-%option 8bit
-%option noyywrap
-%option reentrant
-
-/* The next two options tell Flex that we are interfacing with a Bison generated parser;
-**   bison-bridge adds an argument yylval to yylex
-**   bison-locations adds an argument code yylloc for location tracking.
-*/
-%option bison-bridge
-%option bison-locations
-
-%option yylineno
-
-%option nounistd
-%option prefix="qilang_"
-
-
 
 BLANKS   [ \t]+
 EOL      \n|\r|\n\r|\r\n
@@ -92,32 +106,30 @@ FLOAT    {UFLOAT}
 "|"             RETURN_OP(OR);
 "^"             RETURN_OP(XOR);
 "@"             RETURN_OP(ARO);
-"subsets"       RETURN_OP(SUBSETS);
-"intersects"    RETURN_OP(INTERSECTS);
 
 {FLOAT}           {
-  yylval->node = new qilang::FloatNode(boost::lexical_cast<float>(yytext));
-  return CONSTANT;
+  qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));
+  RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
-  yylval->node = new qilang::IntNode(boost::lexical_cast<int>(yytext));
-  return CONSTANT;
+  qilang::NodePtr node = boost::make_shared<qilang::IntNode>(boost::lexical_cast<int>(yytext));
+  RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
-  yylval->node = new qilang::VarNode(yytext);
-  return ID;
+  qilang::NodePtr node = boost::make_shared<qilang::VarNode>(yytext);
+  RETURN_VAL(ID, node);
 }
 
 [\']{IDSLASH}[\'] {
-   yylval->node = new qilang::VarNode(yytext+1);
-   return ID;
+  qilang::NodePtr node = boost::make_shared<qilang::VarNode>(yytext+1);
+  RETURN_VAL(IDSLASH, node);
 }
 
 [\"][^"]*[\"]     {
-     yylval->node = new qilang::StringNode(yytext+1);
-     return STRING;
+  qilang::NodePtr node = boost::make_shared<qilang::StringNode>(yytext+1);
+  RETURN_VAL(STRING, node);
 }
 
 {BLANKS}          {
