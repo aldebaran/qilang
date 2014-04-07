@@ -378,7 +378,8 @@ public:
   {}
 };
 
-QILANG_API std::string toSExpr(NodePtr node);
+QILANG_API std::string formatAST(NodePtr node);
+QILANG_API std::string format(NodePtr node);
 
 
 }

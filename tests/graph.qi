@@ -1,13 +1,13 @@
 interface Audio.AudioDevice
-  property titi Int
+  prop titi(Int)
 
-  send Finished(Int)
-  recv Start(Any)
+  in Finished(Int)
+  out Start(Any)
 
-  function setTimeout(Int)
+  fn setTimeout(Int) dd
 end
 
-import Motion
+
 
 object Graph "g"
 
@@ -25,7 +25,7 @@ object Graph "g"
   object Motion.MoveTo "moveto2"
     direction: "forward"
     length: 1
-    at finished: moveto3.start()
+    at finished: moveto3.start
   end
 
   object Motion.MoveTo "moveto3"

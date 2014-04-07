@@ -5,7 +5,4 @@ object Graph "g"
     direction: "forward"
     length: 1
   end
-  object TTS.Say "say1"
-    text: "mange ton slip mec"
-  end
 end

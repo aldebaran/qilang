@@ -27,7 +27,11 @@ int main(int argc, char *argv[])
 
   qilang::NodePtr rootnode = qilang::parse(in);
 
-  std::cout << "parsed ast:" << qilang::toSExpr(rootnode) << std::endl;
-  std::cout << "shuting down qi." << std::endl;
+  std::cout << "AST:" << std::endl;
+  std::cout << qilang::formatAST(rootnode);
+
+  std::cout << std::endl;
+  std::cout << "QILANG:" << std::endl;
+  std::cout << qilang::format(rootnode);
   return 0;
 }
