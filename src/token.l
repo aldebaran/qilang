@@ -37,7 +37,6 @@
 #include <boost/make_shared.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
-//#include <iostream>
 #include "parser_p.hpp"
 #include "grammar.tab.hpp"
 
@@ -51,13 +50,13 @@
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
-#define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
+#define ECHO do { ; } while (0)
+
+#define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
   static void qilang_readsome(qilang::Parser* p, char* buf, size_t *result, size_t max_size)
   {
-    //yy_flex_debug=1;
-    std::cout << "asking for:" << max_size << std::endl;
     if (p->in->eof() || p->in->fail()) {
       *result = 0;
       return;
@@ -70,11 +69,9 @@
     }
     if (p->in->bad())
     {
-      std::cout << "Error...." << std::endl;
       *result = -1;
       return;
     }
-    std::cout << "Read:" << p->in->gcount() << " bytes" << " =>" << buf << std::endl;
     *result = p->in->gcount();
   }
 
@@ -159,5 +156,6 @@ FLOAT    {UFLOAT}
 
 {BLANKS}          {
 }
+
 
 %%

@@ -29,7 +29,7 @@ if(FLEX_EXECUTABLE AND BISON_EXECUTABLE)
     ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp
      SRC src/grammar.y
      COMMENT "bisoning ..."
-     COMMAND ${BISON_EXECUTABLE} -Wall -t -g=graph.txt -d -o grammar.tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.y
+     COMMAND ${BISON_EXECUTABLE} -Wall -t -g=graph.txt -v -d -o grammar.tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.y
   )
 else()
   message("flex or bison not found, using pregenerated files")

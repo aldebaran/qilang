@@ -18,10 +18,8 @@ namespace qilang {
   Node::Node(const std::string &name)
     : name(name)
   {
-    qiLogInfo() << "node:" << name;
+    qiLogDebug() << "new node(" << name << ")";
   }
-
-
 
   const std::string &UnaryOpCodeToString(UnaryOpCode op) {
     static std::string minus("-");

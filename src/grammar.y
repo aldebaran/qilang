@@ -7,24 +7,15 @@
 
 %{
 #include <cstdio>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <map>
 #include <stdexcept>
+#include <boost/make_shared.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
 #include "parser_p.hpp"
-#include <boost/make_shared.hpp>
-
-// stuff from flex that bison needs to know about:
-
-//extern "C" void yyerror(YYLTYPE* locp, qilang::Parser* context, const char* err);
-
-#undef YYDEBUG
-#define YYDEBUG 1
-
 %}
 
 %locations
@@ -143,7 +134,7 @@ object:
 
 %type< std::vector<qilang::NodePtr> > object_defs;
 object_defs:
-                               {}  //empty
+  %empty                       {}
 | object_def                   { $$.push_back($1); }
 | object_defs object_def       { std::swap($$, $1);
                                  $$.push_back($2);
@@ -172,7 +163,7 @@ iface:
 
 %type< std::vector<qilang::NodePtr> > interface_defs;
 interface_defs:
-                               {}
+  %empty                       {}
 | interface_def                { $$.push_back($1); }
 | interface_defs interface_def { std::swap($$, $1); $$.push_back($2); }
 
@@ -205,7 +196,7 @@ prop_decl:
 
 %type< std::vector<std::string> > function_args;
 function_args:
-                                  {}
+  %empty                          {}
 | function_arg                    { $$.push_back($1); }
 | function_args "," function_arg  { std::swap($$, $1);
                                     $$.push_back($3); }
