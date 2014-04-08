@@ -52,13 +52,36 @@ namespace qilang {
     else {
       qilang_set_debug(0, scanner);
     }
-    //try {
     parser.parse();
-    //} catch (const ParserError& pe) {
-    //  pe.setFileName(filename);
-    //  throw;
-    //}
     return root;
+  }
+
+  std::string getErrorLine(const yy::location& loc) {
+    std::ifstream is;
+    std::string   ret;
+    if (loc.begin.filename == 0)
+      return "";
+    is.open(loc.begin.filename->c_str());
+
+    std::string ln;
+    unsigned int lico = loc.begin.line;
+    for (int i = 0; i < lico; ++i)
+      getline(is, ln);
+    ret = "in:";
+    ret += ln + "\n";
+    ret += "   ";
+    unsigned int cbeg = loc.begin.column;
+    unsigned int cend = loc.end.column;
+    int count = cend - cbeg;
+    int space = cbeg;
+    space = space < 0 ? 0 : space;
+    count = count < 1 ? 1 : count;
+    for (int i = 0; i < space; ++i)
+      ret += " ";
+    for (int i = 0; i < count; ++i)
+      ret += "^";
+    ret += "\n";
+    return ret;
   }
 
   NodePtrVector parse(const std::string &filename) {

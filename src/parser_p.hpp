@@ -28,6 +28,9 @@ namespace qilang {
     std::istream*        in;       // input stream
     std::string          filename;
   };
+
+  std::string getErrorLine(const yy::location& loc);
+
 }
 
 #endif	    /* !PARSER_P_PP_ */

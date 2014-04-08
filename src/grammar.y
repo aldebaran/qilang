@@ -302,10 +302,10 @@ exp "[" exp "]" { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::
 
 %%
 
-void yy::parser::error(const yy::parser::location_type& loc,
-                       const std::string& msg)
+void yy::parser::error(const yy::parser::location_type& loc, const std::string& msg)
 {
   std::stringstream ss;
-  ss << "error: " << loc << ": " << msg;
+  ss << "error: " << loc << ": " << msg << std::endl;
+  ss << qilang::getErrorLine(loc);
   throw std::runtime_error(ss.str());
 }
