@@ -26,6 +26,10 @@ namespace qilang {
       ~ScopedIndent() { _indent -= _add; }
     };
 
+    virtual std::string format(const NodePtrVector& node) = 0;
+    virtual std::string format(const NodePtr& node) = 0;
+
+
   public:
     std::stringstream &indent(int changes = 0) {
       _indent += changes;
@@ -50,25 +54,48 @@ namespace qilang {
 
   class QiLangFormatter : public Formatter, public NodeVisitor {
   public:
-    std::string format(NodePtr node) {
+    std::string format(const NodePtrVector& node) {
+      for (int i = 0; i < node.size(); ++i) {
+        if (!node.at(i))
+          throw std::runtime_error("Invalid Node");
+        node.at(i)->accept(this);
+      }
+      return out().str();
+    }
+
+    std::string format(const NodePtr& node) {
+      if (!node)
+        throw std::runtime_error("Invalid Node");
       node->accept(this);
       return out().str();
     }
 
+
   protected:
     //indented block
-    void scopedDecl(const std::vector<qilang::NodePtr>& vec) {
+    void scopedDecl(const qilang::NodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
         indent() << ::qilang::format(vec[i]);
       }
     }
     void visit(PackageNode* node) {
-      indent() << "package " << node->name;
+      indent() << "package " << node->name << std::endl;
     }
 
     void visit(ImportNode* node) {
-      indent() << "import " << node->name;
+      if (node->imported.size() == 0)
+        indent() << "import " << node->name;
+      else {
+        indent() << "from " << node->name << " import ";
+        for (unsigned int i = 0; i < node->imported.size(); ++i) {
+          out() << node->imported.at(i);
+          if (i+1 < node->imported.size()) {
+            out() << ", ";
+          }
+        }
+      }
+      out() << std::endl;
     }
 
     void visit(IntNode *node) {
@@ -140,28 +167,49 @@ namespace qilang {
 
   };
 
-  std::string format(NodePtr node) {
-    if (!node)
-      throw std::runtime_error("Invalid Node");
-    return QiLangFormatter().format(node);
-  }
+
+
+
+
 
 
 
   class QiLangASTFormatter : public Formatter, public NodeVisitor {
   public:
-    std::string format(NodePtr node) {
+    std::string format(const NodePtrVector& node) {
+      for (int i = 0; i < node.size(); ++i) {
+        if (!node.at(i))
+          throw std::runtime_error("Invalid Node");
+        node.at(i)->accept(this);
+      }
+      return out().str();
+    }
+
+    std::string format(const NodePtr& node) {
+      if (!node)
+        throw std::runtime_error("Invalid Node");
       node->accept(this);
       return out().str();
     }
 
   protected:
     void visit(PackageNode* node) {
-      indent() << "(package " << node->name << ")";
+      indent() << "(package " << node->name << ")" << std::endl;
     }
 
     void visit(ImportNode* node) {
-      indent() << "(import " << node->name << ")";
+      if (node->imported.size() == 0) {
+        indent() << "(import " << node->name << ")" << std::endl;
+      } else {
+        indent() << "(from " << node->name << " (import ";
+        for (int i = 0; i < node->imported.size(); ++i) {
+          out() << node->imported.at(i);
+          if (i+1 < node->imported.size()) {
+            out() << " ";
+          }
+        }
+        out() << "))" << std::endl;
+      }
     }
 
     void visit(IntNode *node) {
@@ -241,13 +289,21 @@ namespace qilang {
 
   };
 
-
-  std::string formatAST(NodePtr node) {
-    if (!node)
-      throw std::runtime_error("Invalid Node");
+  std::string formatAST(const NodePtr& node) {
     return QiLangASTFormatter().format(node);
   }
 
+  std::string format(const NodePtr& node) {
+    return QiLangFormatter().format(node);
+  }
+
+  std::string formatAST(const NodePtrVector& node) {
+    return QiLangASTFormatter().format(node);
+  }
+
+  std::string format(const NodePtrVector& node) {
+    return QiLangFormatter().format(node);
+  }
 
 
 

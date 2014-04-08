@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <stdexcept>
 #include <qi/types.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -85,6 +86,7 @@ public:
 };
 
 typedef boost::shared_ptr<Node> NodePtr;
+typedef std::vector<NodePtr>    NodePtrVector;
 
 enum UnaryOpCode {
   UnaryOpCode_Negate,
@@ -133,11 +135,19 @@ public:
 
 class QILANG_API ImportNode : public Node {
 public:
-  ImportNode(const std::string& packageName, const std::vector<std::string>& imported)
+  explicit ImportNode(const std::string& packageName)
+    : Node("import")
+    , name(packageName)
+  {}
+
+  explicit ImportNode(const std::string& packageName, const std::vector<std::string>& imported)
     : Node("import")
     , name(packageName)
     , imported(imported)
-  {}
+  {
+    if (imported.size() == 0)
+      throw std::runtime_error("Empty import list");
+  }
 
   void accept(NodeVisitor *visitor) { visitor->visit(this); }
 
@@ -417,8 +427,11 @@ public:
   {}
 };
 
-QILANG_API std::string formatAST(NodePtr node);
-QILANG_API std::string format(NodePtr node);
+QILANG_API std::string formatAST(const NodePtrVector& node);
+QILANG_API std::string format(const NodePtrVector& node);
+
+QILANG_API std::string formatAST(const NodePtr& node);
+QILANG_API std::string format(const NodePtr& node);
 
 
 }

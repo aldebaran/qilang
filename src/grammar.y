@@ -121,17 +121,30 @@
 %left  "["
 
 %%
+// #######################################################################################
+// # TOP LEVEL
+// #######################################################################################
 
 %start toplevel;
 
-%type<qilang::NodePtr> toplevel;
+%type< std::vector<qilang::NodePtr> > toplevel;
 toplevel:
-  exp    { context->root = boost::make_shared<qilang::ExprNode>($1); }
-| object { context->root = $1; }
-| iface  { context->root = $1; }
+  %empty                {}
+| toplevel toplevel_def { context->root.insert(context->root.end(), $1.begin(), $1.end());
+                          context->root.push_back($2);
+                        }
 
+%type<qilang::NodePtr> toplevel_def;
+toplevel_def:
+  expr    { $$ = $1; }
+| object  { $$ = $1; }
+| iface   { $$ = $1; }
+| package { $$ = $1; }
+| import  { $$ = $1; }
 
-/////////////// OBJECTS //////////////////
+// #######################################################################################
+// # PACKAGE MANAGEMENT
+// #######################################################################################
 
 %type<qilang::NodePtr> package;
 package:
@@ -141,14 +154,19 @@ package:
 import:
   IMPORT ID                        { $$ = boost::make_shared<qilang::ImportNode>($2); }
 | FROM ID IMPORT import_defs       { $$ = boost::make_shared<qilang::ImportNode>($2, $4); }
+| FROM ID IMPORT "*"               { std::vector<std::string> v; v.push_back("*");
+                                     $$ = boost::make_shared<qilang::ImportNode>($2, v); }
 
 %type< std::vector<std::string> > import_defs;
 import_defs:
-  '*'                              { $$.push_back("*"); }
-| ID                               { $$.push_back($1); }
-| import_defs ',' ID               { std::swap($$, $1);
+  ID                               { $$.push_back($1); }
+| import_defs "," ID               { std::swap($$, $1);
                                      $$.push_back($3);
                                    }
+
+// #######################################################################################
+// # OBJECT GRAPH
+// #######################################################################################
 
 %type<qilang::NodePtr> object;
 object:
@@ -178,7 +196,10 @@ at_expr:
 | AT ID ID END               { $$ = boost::make_shared<qilang::AtNode>($2, $3); }
 
 
-/////////////// INTERFACE //////////////////
+// #######################################################################################
+// # INTERFACE DECLARATION
+// #######################################################################################
+
 %type<qilang::NodePtr> iface;
 iface:
   INTERFACE ID interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $3); }
@@ -195,8 +216,6 @@ interface_def:
 | in_decl                 { std::swap($$, $1); }
 | out_decl                { std::swap($$, $1); }
 | prop_decl               { std::swap($$, $1); }
-
-////////////// FUNC DECL ///////////////////////////
 
 // fn foooo (t1, t2, t3) tret
 %type<qilang::NodePtr> function_decl;
@@ -228,8 +247,14 @@ function_arg:
   ID { $$ = $1; }
 
 
+// #######################################################################################
+// # EXPR
+// #######################################################################################
 
-///////////////////////////////////// EXPR
+%type <qilang::NodePtr> expr;
+expr:
+ exp { $$ = boost::make_shared<qilang::ExprNode>($1); }
+
 %type<qilang::NodePtr> exp;
 exp:
   exp "+" exp { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::BinaryOpCode_Plus);}

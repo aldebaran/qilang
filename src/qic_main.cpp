@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     in = &is;
   }
 
-  qilang::NodePtr rootnode = qilang::parse(in);
+  qilang::NodePtrVector rootnode = qilang::parse(in);
 
   std::cout << "AST:" << std::endl;
   std::cout << qilang::formatAST(rootnode);

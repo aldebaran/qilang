@@ -32,7 +32,7 @@ namespace qilang {
     qilang_lex_destroy(scanner);
   }
 
-  NodePtr Parser::parse() {
+  NodePtrVector Parser::parse() {
     yy::parser parser(this);
 
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");
@@ -53,7 +53,7 @@ namespace qilang {
     return root;
   }
 
-  NodePtr parse(std::istream *stream) {
+  NodePtrVector parse(std::istream *stream) {
     Parser p(stream);
     return p.parse();
   }
