@@ -14,7 +14,8 @@
 
 namespace qilang {
 
-  QILANG_API NodePtrVector parse(std::istream *stream);
+  QILANG_API NodePtrVector parse(const std::string& filename);
+  QILANG_API NodePtrVector parse(std::istream *stream, const std::string& filename = std::string());
 
 }
 

@@ -10,6 +10,7 @@
 #include <qilang/node.hpp>
 #include "parser_p.hpp"
 #include <iostream>
+#include <fstream>
 #include "grammar.tab.hpp"
 
 int  qilang_lex_init(void**);
@@ -20,8 +21,9 @@ void qilang_set_debug(int debug_flag, void* yyscanner);
 
 namespace qilang {
 
-  Parser::Parser(std::istream *stream)
+  Parser::Parser(std::istream *stream, const std::string &filename)
     : in(stream)
+    , filename(filename)
   {
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
@@ -35,6 +37,7 @@ namespace qilang {
   NodePtrVector Parser::parse() {
     yy::parser parser(this);
 
+    loc.initialize(&filename);
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");
     if (!pdebug.empty() && pdebug != "0") {
       parser.set_debug_level(1);
@@ -49,12 +52,24 @@ namespace qilang {
     else {
       qilang_set_debug(0, scanner);
     }
+    //try {
     parser.parse();
+    //} catch (const ParserError& pe) {
+    //  pe.setFileName(filename);
+    //  throw;
+    //}
     return root;
   }
 
-  NodePtrVector parse(std::istream *stream) {
-    Parser p(stream);
+  NodePtrVector parse(const std::string &filename) {
+    std::ifstream is;
+    is.open(filename.c_str());
+    Parser p(&is, filename);
+    return p.parse();
+  }
+
+  NodePtrVector parse(std::istream *stream, const std::string& filename) {
+    Parser p(stream, filename);
     return p.parse();
   }
 

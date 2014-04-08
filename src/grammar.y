@@ -306,8 +306,6 @@ void yy::parser::error(const yy::parser::location_type& loc,
                        const std::string& msg)
 {
   std::stringstream ss;
-
-  //ss << context->filename << ":" << loc.first_line << ":" << loc.first_column << ": error:" << err;
-  ss << "error: " << loc << ":" << msg;
+  ss << "error: " << loc << ": " << msg;
   throw std::runtime_error(ss.str());
 }

@@ -13,10 +13,10 @@
 %option noyywrap
 %option debug
 %option reentrant
-%option yylineno
 %option nounistd
 %option prefix="qilang_"
-/* %option nodefault */
+/* by default unmatched scanner rules are print to stdout: disable (instead of disabling ECHO) */
+%option nodefault
 %option verbose
 %option nounput
 %option noinput
@@ -41,17 +41,35 @@
 #include "grammar.tab.hpp"
 
 #define RETURN_OP(Symbol)         \
-   return yy::parser::make_ ## Symbol(yy::parser::location_type())
+  do { \
+    STEP(); \
+    return yy::parser::make_ ## Symbol(qilang_get_extra(yyscanner)->loc); \
+  } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
-   return yy::parser::make_ ## Symbol(Value, yy::parser::location_type())
+   do { \
+     STEP(); \
+     return yy::parser::make_ ## Symbol(Value, qilang_get_extra(yyscanner)->loc); \
+   } while(false)
 
 #define YY_DECL yy::parser::symbol_type qilang_lex(yyscan_t yyscanner)
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
+// Called via YY_USER_ACTION each time we *advance* the cursor, in
+// which case Num is actually the number of bytes read.
+#define COLUMNS(Num)                                        \
+  qilang_get_extra(yyscanner)->loc.columns(Num)
 
-#define ECHO do { ; } while (0)
+#define YY_USER_ACTION                          \
+  COLUMNS(static_cast<unsigned>(yyleng));
+
+#define LINES(Num)                                  \
+  do {                                              \
+    qilang_get_extra(yyscanner)->loc.lines(Num);    \
+  } while (false)
+
+#define STEP() qilang_get_extra(yyscanner)->loc.step()
 
 #define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
@@ -138,24 +156,29 @@ FLOAT    {UFLOAT}
 "if"            RETURN_OP(IF);
 
 {FLOAT}           {
+  STEP();
   qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
+  STEP();
   qilang::NodePtr node = boost::make_shared<qilang::IntNode>(boost::lexical_cast<int>(yytext));
-   RETURN_VAL(CONSTANT, node);
+  RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
+  STEP();
   RETURN_VAL(ID, std::string(yytext));
 }
 
 [\']{IDSLASH}[\'] {
+  STEP();
   RETURN_VAL(IDSLASH, std::string(yytext));
 }
 
 [\"][^"]*[\"]     {   // "   for indentation
+  STEP();
   RETURN_VAL(STRING, std::string(yytext));
 }
 
@@ -163,5 +186,8 @@ FLOAT    {UFLOAT}
 }
 
 "#".*             {} // One-line comment.
+
+.                 { throw std::runtime_error("unmatched char"); }
+\n                { LINES(1); }
 
 %%

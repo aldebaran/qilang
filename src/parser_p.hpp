@@ -10,20 +10,23 @@
 
 #include <string>
 #include <qilang/node.hpp>
+#include "location.hh"
+
 
 namespace qilang {
   class QILANG_API Parser {
   public:
-    Parser(std::istream *stream);
+    Parser(std::istream *stream, const std::string &filename);
     ~Parser();
 
     NodePtrVector parse();
 
   public:
-    std::string          filename;
+    yy::location         loc;
     void*                scanner;  // flex context
     std::vector<NodePtr> root;     // parser output
     std::istream*        in;       // input stream
+    std::string          filename;
   };
 }
 
