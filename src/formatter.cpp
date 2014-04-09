@@ -8,51 +8,13 @@
 #include <sstream>
 #include <stdexcept>
 #include <qilang/node.hpp>
+#include <qilang/formatter.hpp>
+#include "formatter_p.hpp"
 
 namespace qilang {
 
-  class Formatter {
-  public:
-    class ScopedIndent {
-      int &_indent;
-      int _add;
-    public:
-      ScopedIndent(int& indent, int add = 2)
-        : _indent(indent)
-        , _add(add)
-      {
-        _indent += _add;
-      }
-      ~ScopedIndent() { _indent -= _add; }
-    };
 
-    virtual std::string format(const NodePtrVector& node) = 0;
-    virtual std::string format(const NodePtr& node) = 0;
-
-
-  public:
-    std::stringstream &indent(int changes = 0) {
-      _indent += changes;
-      if (_indent < 0)
-        _indent = 0;
-      for (int i = 0; i < _indent; ++i) {
-        ss.put(' ');
-      }
-      return ss;
-    }
-
-    std::stringstream &out() {
-      return ss;
-    }
-
-  public:
-    int               _indent;
-  private:
-    std::stringstream ss;
-
-  };
-
-  class QiLangFormatter : public Formatter, public NodeVisitor {
+  class QiLangFormatter : public NodeFormatter, public NodeVisitor {
   public:
     std::string format(const NodePtrVector& node) {
       for (int i = 0; i < node.size(); ++i) {
@@ -174,7 +136,7 @@ namespace qilang {
 
 
 
-  class QiLangASTFormatter : public Formatter, public NodeVisitor {
+  class QiLangASTFormatter : public NodeFormatter, public NodeVisitor {
   public:
     std::string format(const NodePtrVector& node) {
       for (int i = 0; i < node.size(); ++i) {

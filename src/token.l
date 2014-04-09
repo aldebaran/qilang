@@ -42,13 +42,13 @@
 
 #define RETURN_OP(Symbol)         \
   do { \
-    STEP(); \
+    STEP();\
     return yy::parser::make_ ## Symbol(qilang_get_extra(yyscanner)->loc); \
   } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
    do { \
-     STEP(); \
+     STEP();\
      return yy::parser::make_ ## Symbol(Value, qilang_get_extra(yyscanner)->loc); \
    } while(false)
 

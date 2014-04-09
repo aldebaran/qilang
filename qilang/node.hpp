@@ -427,12 +427,6 @@ public:
   {}
 };
 
-QILANG_API std::string formatAST(const NodePtrVector& node);
-QILANG_API std::string format(const NodePtrVector& node);
-
-QILANG_API std::string formatAST(const NodePtr& node);
-QILANG_API std::string format(const NodePtr& node);
-
 
 }
 

@@ -6,46 +6,33 @@ qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
 include_directories(".")
 
 set(H qilang/node.hpp
-      qilang/parser.hpp)
+      qilang/parser.hpp
+      qilang/formatter.hpp)
 
 set(C src/node.cpp
       src/parser.cpp
-      src/formatter.cpp)
+      src/formatter_p.hpp
+      src/formatter.cpp
+      src/genobject.cpp)
 
-find_package(FLEX)
-find_package(BISON)
+find_package(FLEX REQUIRED)
+find_package(BISON REQUIRED)
 
 add_definitions("-DYYDEBUG")
 
-if(FLEX_EXECUTABLE AND BISON_EXECUTABLE)
-  qi_generate_src(
-    ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
-     SRC src/token.l src/grammar.y
-     COMMENT "flexing ..."
-     COMMAND ${FLEX_EXECUTABLE} -o lex.y.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/token.l
-  )
+qi_generate_src(
+  ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
+   SRC src/token.l src/grammar.y
+   COMMENT "flexing ..."
+   COMMAND ${FLEX_EXECUTABLE} -o lex.y.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/token.l
+)
 
-  qi_generate_src(
-    ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp
-     SRC src/grammar.y
-     COMMENT "bisoning ..."
-     COMMAND ${BISON_EXECUTABLE} -Wall -t -g=graph.txt -v -d -o grammar.tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.y
-  )
-else()
-  message("flex or bison not found, using pregenerated files")
-  qi_generate_src(
-    ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp
-    COMMENT "copying generated files"
-    SRC
-        src/pregenerated/lex.y.cpp
-        src/pregenerated/grammar.tab.cpp
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/pregenerated
-        ${CMAKE_CURRENT_BINARY_DIR}
-  )
-endif()
+qi_generate_src(
+  ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp
+   SRC src/grammar.y
+   COMMENT "bisoning ..."
+   COMMAND ${BISON_EXECUTABLE} -Wall -t -g=graph.txt -v -d -o grammar.tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.y
+)
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("src")

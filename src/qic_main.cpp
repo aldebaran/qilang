@@ -10,7 +10,7 @@
 #include <fstream>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
-
+#include <qilang/formatter.hpp>
 
 int main(int argc, char *argv[])
 {
@@ -38,5 +38,11 @@ int main(int argc, char *argv[])
   std::cout << std::endl;
   std::cout << "QILANG:" << std::endl;
   std::cout << qilang::format(rootnode);
+
+
+  std::cout << std::endl;
+  std::cout << "HPP:" << std::endl;
+  std::cout << qilang::genCppObjectInterface(rootnode);
+
   return 0;
 }
