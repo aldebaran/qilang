@@ -38,7 +38,7 @@ namespace qilang {
     void scopedDecl(const qilang::NodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        indent() << ::qilang::format(vec[i]);
+        vec[i]->accept(this);
       }
     }
     void visit(PackageNode* node) {
@@ -200,13 +200,13 @@ namespace qilang {
     void scopedDecl(const std::vector<qilang::NodePtr>& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        indent() << ::qilang::formatAST(vec[i]);
+        vec[i]->accept(this);
       }
     }
     void visit(ObjectNode *node) {
-      out() << "(object " << node->type << " " << node->id << std::endl;
+      indent() << "(object " << node->type << " " << node->id << std::endl;
       scopedDecl(node->values);
-      out() << ")";
+      indent() << ")" << std::endl;
     }
     void visit(PropertyNode *node) {
       indent() << "(prop " << node->var << " " << formatAST(node->value) << ")" << std::endl;
