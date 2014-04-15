@@ -64,13 +64,13 @@ protected:
     throw std::runtime_error("unimplemented");
   }
 
-  void visit(IntNode *node) {
+  void visit(IntConstNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(FloatNode *node) {
+  void visit(FloatConstNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(StringNode *node) {
+  void visit(StringConstNode *node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(BinaryOpNode *node) {

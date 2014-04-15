@@ -157,13 +157,13 @@ FLOAT    {UFLOAT}
 
 {FLOAT}           {
   STEP();
-  qilang::NodePtr node = boost::make_shared<qilang::FloatNode>(boost::lexical_cast<float>(yytext));
+  qilang::NodePtr node = boost::make_shared<qilang::FloatConstNode>(boost::lexical_cast<float>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
   STEP();
-  qilang::NodePtr node = boost::make_shared<qilang::IntNode>(boost::lexical_cast<int>(yytext));
+  qilang::NodePtr node = boost::make_shared<qilang::IntConstNode>(boost::lexical_cast<int>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 

@@ -25,9 +25,9 @@ class PackageNode;
 class ImportNode;
 
 // Expression
-class IntNode;
-class FloatNode;
-class StringNode;
+class IntConstNode;
+class FloatConstNode;
+class StringConstNode;
 class BinaryOpNode;
 class UnaryOpNode;
 class VarNode;
@@ -53,9 +53,9 @@ public:
   virtual void visit(ImportNode* node) = 0;
 
   // Expression
-  virtual void visit(IntNode *node) = 0;
-  virtual void visit(FloatNode *node) = 0;
-  virtual void visit(StringNode *node) = 0;
+  virtual void visit(IntConstNode *node) = 0;
+  virtual void visit(FloatConstNode *node) = 0;
+  virtual void visit(StringConstNode *node) = 0;
   virtual void visit(BinaryOpNode *node) = 0;
   virtual void visit(UnaryOpNode *node) = 0;
   virtual void visit(ExprNode *node) = 0;
@@ -187,9 +187,9 @@ public:
 
 };
 
-class QILANG_API IntNode: public Node {
+class QILANG_API IntConstNode: public Node {
 public:
-  IntNode(qi::uint64_t val)
+  IntConstNode(qi::uint64_t val)
     : Node("int")
     , value(val)
   {}
@@ -199,9 +199,9 @@ public:
   qi::uint64_t value;
 };
 
-class QILANG_API FloatNode: public Node {
+class QILANG_API FloatConstNode: public Node {
 public:
-  FloatNode(double val)
+  FloatConstNode(double val)
     : Node("float")
     , value(val)
   {}
@@ -211,9 +211,9 @@ public:
   double value;
 };
 
-class QILANG_API StringNode: public Node {
+class QILANG_API StringConstNode: public Node {
 public:
-  StringNode(const std::string& value)
+  StringConstNode(const std::string& value)
     : Node("string")
     , value(value)
   {}

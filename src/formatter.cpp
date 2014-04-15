@@ -60,13 +60,13 @@ namespace qilang {
       out() << std::endl;
     }
 
-    void visit(IntNode *node) {
+    void visit(IntConstNode *node) {
       out() << node->value;
     }
-    void visit(FloatNode *node) {
+    void visit(FloatConstNode *node) {
       out() << node->value;
     }
-    void visit(StringNode *node) {
+    void visit(StringConstNode *node) {
       out() << node->value;
     }
     void visit(BinaryOpNode *node) {
@@ -174,13 +174,13 @@ namespace qilang {
       }
     }
 
-    void visit(IntNode *node) {
+    void visit(IntConstNode *node) {
       out() << "(int " << node->value << ")";
     }
-    void visit(FloatNode *node) {
+    void visit(FloatConstNode *node) {
       out() << "(float " << node->value << ")";
     }
-    void visit(StringNode *node) {
+    void visit(StringConstNode *node) {
       out() << "(string " << node->value << ")";
     }
     void visit(BinaryOpNode *node) {

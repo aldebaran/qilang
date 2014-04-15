@@ -276,7 +276,7 @@ exp:
 
 exp:
   CONSTANT { $$ = $1; }
-| STRING   { $$ = boost::make_shared<qilang::StringNode>($1); }
+| STRING   { $$ = boost::make_shared<qilang::StringConstNode>($1); }
 
 exp:
   ID       { $$ = boost::make_shared<qilang::VarNode>($1); }
