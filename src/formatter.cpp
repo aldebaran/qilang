@@ -85,7 +85,7 @@ namespace qilang {
     void visit(ObjectNode *node) {
       indent() << "object " << node->type << " " << node->id << std::endl;
       scopedDecl(node->values);
-      indent() << "end" << std::endl;
+      indent() << "end" << std::endl << std::endl;
     }
     void visit(PropertyNode *node) {
       indent() << "prop " << node->var << " " << ::qilang::format(node->value) << std::endl;
@@ -96,7 +96,7 @@ namespace qilang {
     void visit(InterfaceDeclNode* node) {
       indent() << "interface " << node->name << std::endl;
       scopedDecl(node->values);
-      indent() << "end" << std::endl;
+      indent() << "end" << std::endl << std::endl;
     }
 
     // a, ..., z
