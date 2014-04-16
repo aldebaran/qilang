@@ -5,14 +5,23 @@
 ;; Copyright (C) 2014 Aldebaran Robotics
 ;;
 
+;; Howto install:
+;;  (load-file "/fast/src/qi/qilang/misc/qi-mode.el")
+;;  (add-to-list 'auto-mode-alist '("\\.qi$" . qi-mode))
+
 (require 'generic-x)
 
 (define-generic-mode
   'qi-mode                                        ;; name of the mode
   '("#" "//")                                     ;; comments delimiter
-  '("if" "package" "end" "for"
+  '("if" "package" "end" "for"                    ;; keywords
     "interface" "fn" "in" "out" "prop"
-    "object" "at" "package" "from" "import")      ;; some keywords
+    "object" "at" "package" "from" "import"
+    "const" "struct"
+    "char" "int" "uint" "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
+    "float" "float32" "float64"
+    "str" "list" "map"
+    )
   '(;; int constant
     ("\\b[0-9]+\\b" . font-lock-constant-face)
     ;; blabla: value
