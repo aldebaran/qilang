@@ -17,6 +17,9 @@ namespace qilang {
   QILANG_API std::string genCppObjectInterface(const NodePtr& node);
   QILANG_API std::string genCppObjectInterface(const NodePtrVector& nodes);
 
+  QILANG_API std::string genCppObjectRegistration(const NodePtr& node);
+  QILANG_API std::string genCppObjectRegistration(const NodePtrVector& nodes);
+
   QILANG_API std::string formatAST(const NodePtrVector& node);
   QILANG_API std::string format(const NodePtrVector& node);
 

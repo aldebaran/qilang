@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
       ("help,h", "produce help message")
       ("codegen,c", po::value<std::string>()->default_value(""), "Set the codegenerator to use")
       ("input-file", po::value< std::vector< std::string> >(), "input files")
-      ("output-dir,o", po::value<std::string>(), "output dir")
+      ("output-file,o", po::value<std::string>(), "output dir")
       ;
 
   po::positional_options_description p;
@@ -38,13 +38,23 @@ int main(int argc, char *argv[])
       return 1;
   }
 
+  std::ostream*            out;
   std::string              codegen;
   std::vector<std::string> files;
+  std::ofstream            of;
 
   codegen = vm["codegen"].as<std::string>();
-  if (codegen != "cpp" && codegen != "qilang" && codegen != "sexpr") {
+  if (codegen != "cppr" && codegen != "cppi" && codegen != "qilang" && codegen != "sexpr") {
     std::cout << "Invalid codegen value: use cpp/qilang/sexpr" << std::endl;
     exit(1);
+  }
+
+  if (vm.count("output-file")) {
+    std::string outf = vm["output-file"].as<std::string>();
+    of.open(outf.c_str());
+    out = &of;
+  } else {
+    out = &std::cout;
   }
 
   files = vm["input-file"].as< std::vector<std::string> >();
@@ -58,12 +68,15 @@ int main(int argc, char *argv[])
       std::cout << e.what() << std::endl;
       exit(1);
     }
-    if (codegen == "cpp")
-      std::cout << qilang::genCppObjectInterface(rootnode);
+    if (codegen == "cppi")
+      *out << qilang::genCppObjectInterface(rootnode);
+    else if (codegen == "cppr")
+      *out << qilang::genCppObjectRegistration(rootnode);
     else if (codegen == "qilang")
-      std::cout << qilang::format(rootnode);
+      *out << qilang::format(rootnode);
     else if (codegen == "sexpr")
-      std::cout << qilang::formatAST(rootnode);
+      *out << qilang::formatAST(rootnode);
   }
+  of.close();
   return 0;
 }
