@@ -94,7 +94,7 @@
   }
 
 #define yyterminate()                                   \
-  return yy::parser::make_END_OF_FILE(yy::parser::location_type())
+  return yy::parser::make_END_OF_FILE(qilang_get_extra(yyscanner)->loc)
 %}
 
 BLANKS   [ \t]+
@@ -117,7 +117,7 @@ FLOAT    {UFLOAT}
 "-"             RETURN_OP(MINUS);
 "/"             RETURN_OP(SLASH);
 "=="            RETURN_OP(EQ_EQ);
-
+"="             RETURN_OP(EQ);
 ">"             RETURN_OP(GT);
 ">="            RETURN_OP(GT_EQ);
 "<"             RETURN_OP(LT);
@@ -145,6 +145,7 @@ FLOAT    {UFLOAT}
 "struct"        RETURN_OP(STRUCT);
 "type"          RETURN_OP(TYPE);
 "end"           RETURN_OP(END);
+"const"         RETURN_OP(CONST);
 
 "fn"            RETURN_OP(FN);
 "in"            RETURN_OP(IN);
@@ -157,29 +158,26 @@ FLOAT    {UFLOAT}
 
 {FLOAT}           {
   STEP();
-  qilang::NodePtr node = boost::make_shared<qilang::FloatConstNode>(boost::lexical_cast<float>(yytext));
+  qilang::ConstExprNodePtr node = boost::make_shared<qilang::FloatConstNode>(boost::lexical_cast<float>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
   STEP();
-  qilang::NodePtr node = boost::make_shared<qilang::IntConstNode>(boost::lexical_cast<int>(yytext));
+  qilang::ConstExprNodePtr node = boost::make_shared<qilang::IntConstNode>(boost::lexical_cast<int>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
   STEP();
-  RETURN_VAL(ID, std::string(yytext));
-}
-
-[\']{IDSLASH}[\'] {
-  STEP();
-  RETURN_VAL(IDSLASH, std::string(yytext));
+  qilang::SymbolNodePtr node = boost::make_shared<qilang::SymbolNode>(std::string(yytext));
+  RETURN_VAL(ID, node);
 }
 
 [\"][^"]*[\"]     {   // "   for indentation
   STEP();
-  RETURN_VAL(STRING, std::string(yytext));
+  qilang::ConstExprNodePtr node = boost::make_shared<qilang::StringConstNode>(std::string(yytext));
+  RETURN_VAL(STRING, node);
 }
 
 {BLANKS}          {
@@ -187,7 +185,11 @@ FLOAT    {UFLOAT}
 
 "#".*             {} // One-line comment.
 
-.                 { throw std::runtime_error("unmatched char"); }
+.                 {
+                    std::stringstream ss;
+                    ss << "Invalid token: '" << std::string(yytext) << "'";
+                    qilang_get_extra(yyscanner)->parser.error(qilang_get_extra(yyscanner)->loc, ss.str());
+                  }
 \n                { LINES(1); }
 
 %%

@@ -24,6 +24,7 @@ namespace qilang {
   Parser::Parser(std::istream *stream, const std::string &filename)
     : in(stream)
     , filename(filename)
+    , parser(this)
   {
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
@@ -35,7 +36,6 @@ namespace qilang {
   }
 
   NodePtrVector Parser::parse() {
-    yy::parser parser(this);
 
     loc.initialize(&filename);
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");

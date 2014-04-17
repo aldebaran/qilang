@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   try {
     rootnode = qilang::parse(in, argv[1]);
   } catch(const std::exception& e) {
-    std::cout << e.what();
+    std::cout << e.what() << std::endl;
     exit(1);
   }
   std::cout << "AST:" << std::endl;

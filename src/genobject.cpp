@@ -9,7 +9,10 @@
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qi/os.hpp>
 #include "formatter_p.hpp"
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 qiLogCategory("qigen.hppinterface");
 
@@ -24,9 +27,8 @@ public:
         throw std::runtime_error("Invalid Node");
       try {
         node.at(i)->accept(this);
-        indent() << std::endl;
       } catch (const std::exception&e) {
-        qiLogVerbose() << "Error while parsing:" << e.what();
+        qiLogWarning() << "Error while formating: " << e.what();
       }
     }
     formatFooter();
@@ -47,12 +49,15 @@ public:
     indent() << "**" << std::endl;
     indent() << "*/" << std::endl;
     indent() << "#pragma once" << std::endl;
-    indent() << "#ifndef BULLLSHHIIIIT" << std::endl;
-    indent() << "#define BULLLSHHIIIIT" << std::endl;
+    boost::uuids::uuid u = boost::uuids::random_generator()();
+    std::string uuid = boost::uuids::to_string(u);
+    indent() << "#ifndef " << uuid << std::endl;
+    indent() << "#define " << uuid << std::endl;
     indent() << std::endl;
   }
 
   void formatFooter() {
+    out() << std::endl;
     indent() << "#endif" << std::endl;
   }
 
@@ -65,13 +70,22 @@ protected:
   }
 
   void visit(IntConstNode *node) {
-    throw std::runtime_error("unimplemented");
+    out() << node->value;
   }
   void visit(FloatConstNode *node) {
-    throw std::runtime_error("unimplemented");
+    out() << node->value;
   }
   void visit(StringConstNode *node) {
-    throw std::runtime_error("unimplemented");
+    out() << node->value;
+  }
+  void visit(ListConstNode* node) {
+    out() << "[" << "FAIL" << "]";
+  }
+  void visit(DictConstNode* node) {
+    out() << "{" << "FAIL" << "}";
+  }
+  void visit(SymbolNode* node) {
+    out() << node->name;
   }
   void visit(BinaryOpNode *node) {
     throw std::runtime_error("unimplemented");
@@ -107,7 +121,7 @@ protected:
     indent() << "class " << node->name << " {" << std::endl;
     indent() << "public:" << std::endl;
     scopedDecl(node->values);
-    indent() << "};" << std::endl;
+    indent() << "};" << std::endl << std::endl;
   }
 
   void visit(FnDeclNode* node) {
@@ -120,6 +134,7 @@ protected:
     }
     out() << ");" << std::endl;
   }
+
   void visit(InDeclNode* node) {
     indent() << "// slot" << std::endl;
     indent() << "void " << node->name << "(";
@@ -150,6 +165,31 @@ protected:
       }
     }
     out() << "> " << node->name << ";" << std::endl;
+  }
+
+  void visit(StructNode* node) {
+    indent() << "struct " << node->name << " {" << std::endl;
+    scopedDecl(node->values);
+    indent() << "};" << std::endl << std::endl;
+  }
+
+  void visit(VarDefNode* node) {
+    if (node->type)
+      indent() << node->type << " " << node->name;
+    else
+      indent() << "qi::AnyValue " << node->name;
+    out() << " = " << node->value << ";" << std::endl;
+  }
+
+  void visit(ConstDefNode* node) {
+    indent() << "const ";
+    if (node->type)
+      out() << node->type << " " << node->name;
+    else
+      out() << "qi::AnyValue " << node->name;
+    out() << " = ";
+    node->value->accept(this);
+    out() << ";" << std::endl;
   }
 
 };

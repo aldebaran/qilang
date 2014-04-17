@@ -11,6 +11,7 @@
 #include <string>
 #include <qilang/node.hpp>
 #include "location.hh"
+#include "grammar.tab.hpp"
 
 
 namespace qilang {
@@ -27,6 +28,7 @@ namespace qilang {
     std::vector<NodePtr> root;     // parser output
     std::istream*        in;       // input stream
     std::string          filename;
+    yy::parser           parser;
   };
 
   std::string getErrorLine(const yy::location& loc);

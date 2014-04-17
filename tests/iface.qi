@@ -4,3 +4,13 @@ interface AudioDevice
   fn setDefaultDevice (str, str) int
   fn setDefaultDevice2 (str) int
 end
+
+struct AudioBuffer
+  buffer char[]
+  size   int
+end
+
+const AudioType_Mono = 0
+const AudioType_Stereo = 1
+
+const AudioMap = { "titi" : 42 }

@@ -10,6 +10,7 @@
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
 #include "formatter_p.hpp"
+#include <boost/static_assert.hpp>
 
 namespace qilang {
 
@@ -69,6 +70,15 @@ namespace qilang {
     void visit(StringConstNode *node) {
       out() << node->value;
     }
+    void visit(ListConstNode* node) {
+      out() << "[" << "FAIL" << "]";
+    }
+    void visit(DictConstNode* node) {
+      out() << "{" << "FAIL" << "}";
+    }
+    void visit(SymbolNode* node) {
+      out() << node->name;
+    }
     void visit(BinaryOpNode *node) {
       out() << ::qilang::format(node->n1) << " " << BinaryOpCodeToString(node->op) << " " << ::qilang::format(node->n2);
     }
@@ -100,8 +110,7 @@ namespace qilang {
     }
 
     // a, ..., z
-    template <class T>
-    void declParamList(const std::string &declname, const std::string& name, const std::vector<T>& vec, const std::string &ret = "") {
+    void declParamList(const std::string& declname, const NodePtr& name, const NodePtrVector& vec, const NodePtr& ret = NodePtr()) {
       indent() << declname << " " << name << "(";
       for (unsigned int i = 0; i < vec.size(); ++i) {
         out() << vec[i];
@@ -110,7 +119,7 @@ namespace qilang {
         }
       }
       out() << ")";
-      if (!ret.empty())
+      if (!ret)
         out() << " " << ret;
       out() << std::endl;
     }
@@ -125,6 +134,26 @@ namespace qilang {
     }
     void visit(PropDeclNode* node) {
       declParamList("prop", node->name, node->args);
+    }
+
+    void visit(StructNode* node) {
+      indent() << "struct " << node->name << std::endl;
+      scopedDecl(node->values);
+      indent() << "end" << std::endl << std::endl;
+    }
+
+    void visit(VarDefNode* node) {
+      indent() << node->name;
+      if (node->type)
+        out() << node->type;
+      out() << " = " << node->value << std::endl;
+    }
+
+    void visit(ConstDefNode* node) {
+      indent() << "const " << node->name;
+      if (node->type)
+        out() << node->type;
+      out() << " = " << node->value << std::endl;
     }
 
   };
@@ -183,6 +212,20 @@ namespace qilang {
     void visit(StringConstNode *node) {
       out() << "(string " << node->value << ")";
     }
+
+    void visit(ListConstNode* node) {
+      out() << "(list " << "FAIL" << ")";
+    }
+
+
+    void visit(DictConstNode* node) {
+      out() << "(dict " << "FAIL" << ")";
+    }
+
+    void visit(SymbolNode* node) {
+      out() << "(symbol " << node->name << ")";
+    }
+
     void visit(BinaryOpNode *node) {
       out() << "(" << BinaryOpCodeToString(node->op) << " " << formatAST(node->n1) << " " << formatAST(node->n2) << ")";
     }
@@ -221,8 +264,7 @@ namespace qilang {
       indent() << ")" << std::endl;
     }
 
-    template <class T>
-    void declParamList(const std::string &declname, const std::string& name, const std::vector<T>& vec, const std::string &ret = "") {
+    void declParamList(const std::string &declname, const NodePtr& name, const NodePtrVector& vec, const NodePtr &ret = NodePtr()) {
       out() << "(" << declname << " " << name << "(";
       for (unsigned int i = 0; i < vec.size(); ++i) {
         out() << vec[i];
@@ -231,7 +273,7 @@ namespace qilang {
         }
       }
       out() << ")";
-      if (!ret.empty())
+      if (ret)
         out() << " " << ret;
       out() << ")" << std::endl;
     }
@@ -248,6 +290,27 @@ namespace qilang {
     void visit(PropDeclNode* node) {
       declParamList("prop", node->name, node->args);
     }
+
+    void visit(StructNode* node) {
+      indent() << "(struct " << node->name << std::endl;
+      scopedDecl(node->values);
+      indent() << ")" << std::endl;
+    }
+
+    void visit(VarDefNode* node) {
+      indent() << "(defvar " << node->name << " ";
+      if (node->type)
+        out() << node->type << " ";
+      out() << node->value << ")" << std::endl;
+    }
+
+    void visit(ConstDefNode* node) {
+      indent() << "(defconst " << node->name << " ";
+      if (node->type)
+        out() << node->type << " ";
+      out() << node->value << ")" << std::endl;
+    }
+
 
   };
 
