@@ -74,6 +74,8 @@
   NOT_EQ              "!="
   AMPERSAND_AMPERSAND "&&"
   PIPE_PIPE           "||"
+  LBRACE              "{"
+  RBRACE              "}"
   LPAREN              "("
   RPAREN              ")"
   TILDA               "~"
@@ -163,7 +165,8 @@ package:
 import:
   IMPORT ID                        { $$ = boost::make_shared<qilang::ImportNode>($2); }
 | FROM ID IMPORT import_defs       { $$ = boost::make_shared<qilang::ImportNode>($2, $4); }
-| FROM ID IMPORT "*"               { qilang::SymbolNodePtrVector v; v.push_back(boost::make_shared<qilang::SymbolNode>("*"));
+| FROM ID IMPORT "*"               { qilang::SymbolNodePtrVector v;
+                                     v.push_back(boost::make_shared<qilang::SymbolNode>("*"));
                                      $$ = boost::make_shared<qilang::ImportNode>($2, v); }
 
 %type<qilang::SymbolNodePtrVector> import_defs;
@@ -173,13 +176,17 @@ import_defs:
                                      $$.push_back($3);
                                    }
 
+%type<qilang::TypeNodePtr> type;
+type:
+  ID { $$ = boost::make_shared<qilang::TypeNode>($1); }
+
 // #######################################################################################
 // # OBJECT GRAPH
 // #######################################################################################
 
 %type<qilang::NodePtr> object;
 object:
-  OBJECT ID STRING object_defs END { $$ = boost::make_shared<qilang::ObjectNode>($2, $3, $4); }
+  OBJECT type STRING object_defs END { $$ = boost::make_shared<qilang::ObjectNode>($2, $3, $4); }
 
 %type<qilang::NodePtrVector> object_defs;
 object_defs:
@@ -197,7 +204,7 @@ object_def:
 
 %type<qilang::NodePtr> object_property;
 object_property:
-  ID ":" exp                   { $$ = boost::make_shared<qilang::PropertyNode>($1, $3); }
+  ID ":" const_exp             { $$ = boost::make_shared<qilang::PropertyNode>($1, $3); }
 
 %type<qilang::NodePtr> at_expr;
 at_expr:
@@ -230,6 +237,7 @@ interface_def:
 %type<qilang::NodePtr> function_decl;
 function_decl:
   FN  ID "(" function_args ")" function_arg { $$ = boost::make_shared<qilang::FnDeclNode>($2, $4, $6); }
+| FN  ID "(" function_args ")"              { $$ = boost::make_shared<qilang::FnDeclNode>($2, $4); }
 
 %type<qilang::NodePtr> in_decl;
 in_decl:
@@ -244,16 +252,16 @@ prop_decl:
   PROP ID "(" function_args ")"             { $$ = boost::make_shared<qilang::PropDeclNode>($2, $4); }
 
 
-%type<qilang::SymbolNodePtrVector> function_args;
+%type<qilang::TypeNodePtrVector> function_args;
 function_args:
   %empty                          {}
 | function_arg                    { $$.push_back($1); }
 | function_args "," function_arg  { std::swap($$, $1);
                                     $$.push_back($3); }
 
-%type<qilang::SymbolNodePtr> function_arg;
+%type<qilang::TypeNodePtr> function_arg;
 function_arg:
-  ID { $$ = $1; }
+  type { $$ = $1; }
 
 
 // #######################################################################################
@@ -262,8 +270,8 @@ function_arg:
 
 %type<qilang::NodePtr> const;
 const:
-  CONST ID "=" CONSTANT    { $$ = boost::make_shared<qilang::ConstDefNode>($2, $4); }
-| CONST ID ID "=" CONSTANT { $$ = boost::make_shared<qilang::ConstDefNode>($2, $3, $5); }
+  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDefNode>($2, $4); }
+| CONST ID ID "=" const_exp { $$ = boost::make_shared<qilang::ConstDefNode>($2, $3, $5); }
 
 
 // #######################################################################################
@@ -282,7 +290,7 @@ struct_field_defs:
 
 %type<qilang::NodePtr> struct_field_def;
 struct_field_def:
-  ID ID   { $$ = boost::make_shared<qilang::VarDefNode>($1, $2); }
+  ID type   { $$ = boost::make_shared<qilang::VarDefNode>($1, $2); }
 
 
 // #######################################################################################
@@ -313,8 +321,7 @@ exp:
 | exp "&&" exp { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::BinaryOpCode_BoolAnd);}
 
 exp:
-  CONSTANT { $$ = $1; }
-| STRING   { $$ = $1; }
+  const_exp { $$ = $1; }
 
 exp:
   ID       { $$ = boost::make_shared<qilang::VarNode>($1); }
@@ -330,33 +337,75 @@ exp:
 // The PersistNode has been removed (all keys data are persistent now). But we
 //  need to keep this here so we don't get parse errors on existing conditions
 exp:
-  exp "@" exp { $$ = $1;}
+  exp "@" exp { $$ = $1; }
 
 exp:
-  "(" exp ")" { $$ = $2;}
+  "(" exp ")" { $$ = $2; }
 
 exp:
-exp "[" exp "]" { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::BinaryOpCode_FetchArray);}
+  exp "[" exp "]" { $$ = boost::make_shared<qilang::BinaryOpNode>($1, $3, qilang::BinaryOpCode_FetchArray);}
 
+// #######################################################################################
+// # CONST EXPR
+// #######################################################################################
+
+%type<qilang::ConstExprNodePtr> const_exp;
+const_exp:
+  CONSTANT { $$ = $1; }
+| STRING   { $$ = $1; }
+| dict     { $$ = $1; }
+| list     { $$ = $1; }
+| tuple    { $$ = $1; }
 
 
 // #######################################################################################
 // # Dict
 // #######################################################################################
 
-%type<qilang::NodePtr> dict;
+
+%type<qilang::ConstExprNodePtr> dict;
 dict:
-  "{" dict_defs "}" { $$ = new boost::make_shared<qilang::ConstDictNode>($2); }
+  "{" dict_defs "}" { $$ = boost::make_shared<qilang::DictConstNode>($2); }
 
-%type<qilang::NodePtrPairVector> dict_defs;
+%type<qilang::ConstExprNodePtrPairVector> dict_defs;
 dict_defs:
-  %empty {}
-| dict_def           { $$.push_back($1); }
-| dict_defs dict_def { std::swap($$, $1); $$.push_back($2); }
+  %empty      {}
+| dict_defs.1 { std::swap($$, $1); }
 
-%type<qilang::NodePtrPair> dict_def;
+%type<qilang::ConstExprNodePtrPairVector> dict_defs.1;
+dict_defs.1:
+  dict_def               { $$.push_back($1); }
+| dict_defs "," dict_def { std::swap($$, $1); $$.push_back($3); }
+
+
+%type<qilang::ConstExprNodePtrPair> dict_def;
 dict_def:
-  ID ":" ID { $$ = std::make_pair($1, $3); }
+  const_exp ":" const_exp { $$ = std::make_pair($1, $3); }
+
+
+// #######################################################################################
+// # List & Tuple
+// #######################################################################################
+
+%type<qilang::ConstExprNodePtr> list;
+list:
+  "(" list_defs ")" { $$ = boost::make_shared<qilang::ListConstNode>($2); }
+
+%type<qilang::ConstExprNodePtr> tuple;
+tuple:
+  "[" list_defs "]" { $$ = boost::make_shared<qilang::TupleConstNode>($2); }
+
+%type<qilang::ConstExprNodePtrVector> list_defs;
+list_defs:
+  %empty       {}
+| list_defs.1  { std::swap($$, $1); }
+
+%type<qilang::ConstExprNodePtrVector> list_defs.1;
+list_defs.1:
+  const_exp                 { $$.push_back($1); }
+| list_defs.1 "," const_exp { std::swap($$, $1); $$.push_back($3); }
+
+
 
 %%
 

@@ -25,6 +25,22 @@ namespace std {
   }
 }
 
+std::string typeToCpp(const std::string& type) {
+  const char* pod[] = { "bool", "char", "int",
+                        "int8", "uint8",
+                        "int16", "uint16",
+                        "int32", "uint32",
+                        "int64", "uint64",
+                        "float32", "float64",
+                        0 };
+  int i = 0;
+  while (pod[i]) {
+    if (type == pod[i])
+      return type;
+    ++i;
+  }
+  return "const " + type + "&";
+}
 
 namespace qilang {
 
@@ -66,6 +82,9 @@ protected:
   void visit(StringConstNode *node) {
     out() << node->value;
   }
+  void visit(TupleConstNode* node) {
+    out() << "(" << "FAIL" << ")";
+  }
   void visit(ListConstNode* node) {
     out() << "[" << "FAIL" << "]";
   }
@@ -86,6 +105,9 @@ protected:
   }
   void visit(ExprNode *node) {
     throw std::runtime_error("unimplemented");
+  }
+  void visit(TypeNode *node) {
+    out() << typeToCpp(node->value);
   }
 
   //indented block

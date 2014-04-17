@@ -30,6 +30,15 @@
 
 namespace qilang {
 
+
+  /**
+   * @brief The NodeFormatter class
+   *
+   * to implement a formatter you need to implement the virtual accept method.
+   *
+   * use out() for expressions
+   * use indent() for statements
+   */
   class NodeFormatter {
   public:
     class ScopedIndent {

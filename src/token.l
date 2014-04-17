@@ -125,6 +125,8 @@ FLOAT    {UFLOAT}
 "!="            RETURN_OP(NOT_EQ);
 "&&"|"and"      RETURN_OP(AMPERSAND_AMPERSAND);
 "||"|"or"       RETURN_OP(PIPE_PIPE);
+"{"             RETURN_OP(LBRACE);
+"}"             RETURN_OP(RBRACE);
 "("             RETURN_OP(LPAREN);
 ")"             RETURN_OP(RPAREN);
 "~"             RETURN_OP(TILDA);
