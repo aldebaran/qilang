@@ -114,6 +114,7 @@ typedef std::vector<NodePtrPair>          NodePtrPairVector;
 
 //some commonly used nodes types
 typedef boost::shared_ptr<SymbolNode>     SymbolNodePtr;
+typedef std::vector<SymbolNodePtr>        SymbolNodePtrVector;
 typedef boost::shared_ptr<TypeNode>       TypeNodePtr;
 typedef boost::shared_ptr<ExprNode>       ExprNodePtr;
 typedef boost::shared_ptr<ConstExprNode>  ConstExprNodePtr;
@@ -170,7 +171,7 @@ public:
     , name(packageName)
   {}
 
-  explicit ImportNode(const SymbolNodePtr& packageName, const NodePtrVector& imported)
+  explicit ImportNode(const SymbolNodePtr& packageName, const SymbolNodePtrVector& imported)
     : Node("import")
     , name(packageName)
     , imported(imported)
@@ -182,8 +183,8 @@ public:
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
 public:
-  SymbolNodePtr              name;
-  NodePtrVector imported;
+  SymbolNodePtr       name;
+  SymbolNodePtrVector imported;
 };
 
 class QILANG_API BinaryOpNode : public Node {
@@ -217,10 +218,18 @@ public:
 
 };
 
-class QILANG_API IntConstNode: public Node {
+//Virtual
+class QILANG_API ConstExprNode : public Node {
+public:
+  ConstExprNode(const std::string& name)
+    : Node(name)
+  {}
+};
+
+class QILANG_API IntConstNode: public ConstExprNode {
 public:
   IntConstNode(qi::uint64_t val)
-    : Node("int")
+    : ConstExprNode("int")
     , value(val)
   {}
 
@@ -229,10 +238,10 @@ public:
   qi::uint64_t value;
 };
 
-class QILANG_API FloatConstNode: public Node {
+class QILANG_API FloatConstNode: public ConstExprNode {
 public:
   FloatConstNode(double val)
-    : Node("float")
+    : ConstExprNode("float")
     , value(val)
   {}
 
@@ -241,10 +250,10 @@ public:
   double value;
 };
 
-class QILANG_API StringConstNode: public Node {
+class QILANG_API StringConstNode: public ConstExprNode {
 public:
   StringConstNode(const std::string& value)
-    : Node("string")
+    : ConstExprNode("string")
     , value(value)
   {}
 
@@ -305,9 +314,9 @@ public:
 
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
-  SymbolNodePtr name;
-  NodePtr type;
-  NodePtr     value;
+  SymbolNodePtr    name;
+  NodePtr          type;
+  NodePtr value;
 };
 
 class QILANG_API SymbolNode : public Node {
@@ -317,7 +326,8 @@ public:
     , name(symname)
   {}
 
-  const std::string& value() { return name; }
+  const std::string& str() { return name; }
+
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
   std::string name;
@@ -350,10 +360,11 @@ public:
   NodePtr value;
 };
 
+
 // Object Motion.MoveTo "titi"
 class QILANG_API ObjectNode : public Node {
 public:
-  ObjectNode(const TypeNodePtr& type, const SymbolNodePtr& id, const NodePtrVector& defs)
+  ObjectNode(const SymbolNodePtr& type, const ConstExprNodePtr& id, const NodePtrVector& defs)
     : Node("object")
     , type(type)
     , id(id)
@@ -362,9 +373,9 @@ public:
 
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
-  TypeNodePtr   type;
-  SymbolNodePtr id;
-  NodePtrVector values;
+  SymbolNodePtr    type;
+  ConstExprNodePtr id;
+  NodePtrVector    values;
 };
 
 // myprop: tititoto
@@ -408,13 +419,13 @@ public:
 
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
-  SymbolNodePtr name;
+  SymbolNodePtr       name;
   NodePtrVector values;
 };
 
 class QILANG_API FnDeclNode : public Node {
 public:
-  FnDeclNode(const SymbolNodePtr& name, const NodePtrVector& args, NodePtr ret)
+  FnDeclNode(const SymbolNodePtr& name, const SymbolNodePtrVector& args, const SymbolNodePtr& ret)
     : Node("fn")
     , name(name)
     , args(args)
@@ -424,14 +435,14 @@ public:
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
 public:
-  SymbolNodePtr name;
-  NodePtrVector args;
-  NodePtr       ret;
+  SymbolNodePtr       name;
+  SymbolNodePtrVector args;
+  SymbolNodePtr       ret;
 };
 
 class QILANG_API InDeclNode : public Node {
 public:
-  InDeclNode(const NodePtr& name, const NodePtrVector& args)
+  InDeclNode(const SymbolNodePtr& name, const SymbolNodePtrVector& args)
     : Node("in")
     , name(name)
     , args(args)
@@ -440,13 +451,13 @@ public:
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
 public:
-  NodePtr              name;
-  NodePtrVector args;
+  SymbolNodePtr       name;
+  SymbolNodePtrVector args;
 };
 
 class QILANG_API OutDeclNode : public Node {
 public:
-  OutDeclNode(const NodePtr& name, const NodePtrVector& args)
+  OutDeclNode(const SymbolNodePtr& name, const SymbolNodePtrVector& args)
     : Node("out")
     , name(name)
     , args(args)
@@ -455,13 +466,13 @@ public:
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
 public:
-  NodePtr              name;
-  NodePtrVector args;
+  SymbolNodePtr name;
+  SymbolNodePtrVector args;
 };
 
 class QILANG_API PropDeclNode : public Node {
 public:
-  PropDeclNode(const NodePtr& name, const NodePtrVector& args)
+  PropDeclNode(const SymbolNodePtr& name, const SymbolNodePtrVector& args)
     : Node("prop")
     , name(name)
     , args(args)
@@ -470,8 +481,8 @@ public:
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
 public:
-  NodePtr              name;
-  NodePtrVector args;
+  SymbolNodePtr name;
+  SymbolNodePtrVector args;
 };
 
 

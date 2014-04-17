@@ -46,8 +46,34 @@ namespace qilang {
       int  _add;
     };
 
-    virtual std::string format(const NodePtrVector& node) = 0;
-    virtual std::string format(const NodePtr& node) = 0;
+    //virtual std::string format(const NodePtrVector& node) = 0;
+    //virtual std::string format(const NodePtr& node) = 0;
+
+    virtual std::string format(const NodePtrVector& node) {
+      formatHeader();
+      for (int i = 0; i < node.size(); ++i) {
+        if (!node.at(i))
+          throw std::runtime_error("Invalid Node");
+        accept(node.at(i));
+      }
+      formatFooter();
+      return out().str();
+    }
+
+    virtual std::string format(const NodePtr& node) {
+      if (!node)
+        throw std::runtime_error("Invalid Node");
+      formatHeader();
+      accept(node);
+      formatFooter();
+      return out().str();
+    }
+
+    virtual void accept(const NodePtr& node) = 0;
+    virtual void formatHeader() {};
+    virtual void formatFooter() {};
+
+
 
   public:
     std::stringstream &indent(int changes = 0) {
@@ -62,6 +88,14 @@ namespace qilang {
 
     std::stringstream &out() {
       return _ss;
+    }
+
+    //visit a node
+    // TODO check node is an EXPR node
+    const std::string& expr(NodePtr node) {
+      static const std::string ret;
+      accept(node);
+      return ret;
     }
 
   public:

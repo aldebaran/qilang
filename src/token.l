@@ -102,7 +102,7 @@ EOL      \n|\r|\n\r|\r\n
 
 ID       [a-zA-Z_][_A-Za-z0-9.]*
 IDSLASH  [a-zA-Z_/\-][_A-Za-z0-9./\-]*
-
+STRING   [\"][^"]*[\"]
 NATURAL  [0-9]+
 EXPONENT [eE][-+]?{NATURAL}
 UFLOAT   {NATURAL}\.{NATURAL}{EXPONENT}?|{NATURAL}{EXPONENT}
@@ -174,7 +174,7 @@ FLOAT    {UFLOAT}
   RETURN_VAL(ID, node);
 }
 
-[\"][^"]*[\"]     {   // "   for indentation
+{STRING}          {   // "   for indentation
   STEP();
   qilang::ConstExprNodePtr node = boost::make_shared<qilang::StringConstNode>(std::string(yytext));
   RETURN_VAL(STRING, node);

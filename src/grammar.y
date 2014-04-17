@@ -112,9 +112,8 @@
   IF                  "if"
 
 
-%token <qilang::NodePtr>          STRING
-%token <qilang::ConstExprNodePtr> CONSTANT
-%token <qilang::SymbolNodePtr>    ID
+%token <qilang::ConstExprNodePtr>   STRING CONSTANT
+%token <qilang::SymbolNodePtr>      ID
 
 // the first item here is the last to evaluate, the last item is the first
 %left  "||"
@@ -164,10 +163,10 @@ package:
 import:
   IMPORT ID                        { $$ = boost::make_shared<qilang::ImportNode>($2); }
 | FROM ID IMPORT import_defs       { $$ = boost::make_shared<qilang::ImportNode>($2, $4); }
-| FROM ID IMPORT "*"               { qilang::NodePtrVector v; v.push_back(boost::make_shared<qilang::SymbolNode>("*"));
+| FROM ID IMPORT "*"               { qilang::SymbolNodePtrVector v; v.push_back(boost::make_shared<qilang::SymbolNode>("*"));
                                      $$ = boost::make_shared<qilang::ImportNode>($2, v); }
 
-%type<qilang::NodePtrVector> import_defs;
+%type<qilang::SymbolNodePtrVector> import_defs;
 import_defs:
   ID                               { $$.push_back($1); }
 | import_defs "," ID               { std::swap($$, $1);
@@ -180,7 +179,7 @@ import_defs:
 
 %type<qilang::NodePtr> object;
 object:
-  OBJECT STRING ID object_defs END { $$ = boost::make_shared<qilang::ObjectNode>($2, $3, $4); }
+  OBJECT ID STRING object_defs END { $$ = boost::make_shared<qilang::ObjectNode>($2, $3, $4); }
 
 %type<qilang::NodePtrVector> object_defs;
 object_defs:
@@ -245,14 +244,14 @@ prop_decl:
   PROP ID "(" function_args ")"             { $$ = boost::make_shared<qilang::PropDeclNode>($2, $4); }
 
 
-%type<qilang::NodePtrVector> function_args;
+%type<qilang::SymbolNodePtrVector> function_args;
 function_args:
   %empty                          {}
 | function_arg                    { $$.push_back($1); }
 | function_args "," function_arg  { std::swap($$, $1);
                                     $$.push_back($3); }
 
-%type<qilang::NodePtr> function_arg;
+%type<qilang::SymbolNodePtr> function_arg;
 function_arg:
   ID { $$ = $1; }
 
