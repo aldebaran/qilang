@@ -26,7 +26,15 @@ namespace std {
   }
 }
 
-static std::string typeToCpp(const std::string& type) {
+namespace qilang {
+
+static std::string constRefYourSelf(const std::string& type, bool constref=true) {
+  if (!constref)
+    return type;
+  return "const " + type + "&";
+}
+
+static std::string typeToCpp(const std::string& type, bool constref=true) {
   const char* pod[] = { "bool", "char", "int",
                         "int8", "uint8",
                         "int16", "uint16",
@@ -40,8 +48,69 @@ static std::string typeToCpp(const std::string& type) {
       return type;
     ++i;
   }
-  return "const " + type + "&";
+  if (type == "str")
+    return constRefYourSelf("std::string");
+  return constRefYourSelf(type, constref);
 }
+
+
+class TypeToCppVisitor: public TypeNodeVisitor, public NodeFormatter {
+public:
+  int noconstref;
+
+  explicit TypeToCppVisitor(bool noconst) {
+    noconstref = 0;
+    if (noconst)
+      noconstref++;
+  }
+
+  const std::string& noconst(NodePtr node) {
+    static const std::string ret;
+    noconstref++;
+    accept(node);
+    noconstref--;
+    return ret;
+  }
+
+  const std::string& doconst() {
+    static const std::string constt("const ");
+    static const std::string empt;
+    if (noconstref == 0)
+      return constt;
+    return empt;
+  }
+
+  const std::string& doref() {
+    static const std::string constt("&");
+    static const std::string empt;
+    if (noconstref == 0)
+      return constt;
+    return empt;
+  }
+
+  virtual void accept(const NodePtr& node) { node->accept(this); }
+
+  void visit(SimpleTypeNode* node) {
+    out() << typeToCpp(node->value, noconstref==0);
+  }
+
+  void visit(ListTypeNode* node) {
+    out() << doconst() << "std::vector< " << noconst(node->element) << " >" << doref();
+  }
+  void visit(MapTypeNode* node) {
+    out() << doconst() << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << ">" << doref();
+  }
+  void visit(TupleTypeNode* node) {
+    out() << "TUPLENOTIMPL";
+  }
+};
+static void noDestroy(TypeNode*) {}
+
+static std::string typeToCpp(TypeNode* type, bool constref=true) {
+  TypeNodePtr tnp(type, &noDestroy);
+  return TypeToCppVisitor(!constref).format(tnp);
+}
+
 
 static std::vector<std::string> splitPkgName(const std::string& name) {
   std::vector<std::string> ret;
@@ -50,12 +119,19 @@ static std::vector<std::string> splitPkgName(const std::string& name) {
   return ret;
 }
 
-namespace qilang {
+
 
 
 class QiLangGenObjectDef : public NodeVisitor, public NodeFormatter {
 public:
-  int toclose;
+  int toclose;     //number of } to close (namespace)
+  int noconstref;    //should we disable adding constref to types ?
+
+  QiLangGenObjectDef()
+    : toclose(0)
+    , noconstref(0)
+  {
+  }
 
   virtual void accept(const NodePtr& node) { node->accept(this); }
 
@@ -129,8 +205,17 @@ protected:
   void visit(ExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(TypeNode *node) {
-    out() << typeToCpp(node->value);
+  void visit(SimpleTypeNode *node) {
+    out() << typeToCpp(node, noconstref==0);
+  }
+  void visit(ListTypeNode *node) {
+    out() << typeToCpp(node, noconstref==0);
+  }
+  void visit(MapTypeNode *node) {
+    out() << typeToCpp(node, noconstref==0);
+  }
+  void visit(TupleTypeNode *node) {
+    out() << typeToCpp(node, noconstref==0);
   }
 
   //indented block
@@ -151,7 +236,16 @@ protected:
   }
 
   void visit(InterfaceDeclNode* node) {
-    indent() << "class " << expr(node->name) << "Interface {" << std::endl;
+    indent() << "class " << expr(node->name) << "Interface";
+    if (node->inherits.size() > 0) {
+      out() << ": ";
+      for (int i = 0; i < node->inherits.size(); ++i) {
+        out() << "public " << expr(node->inherits.at(i));
+        if (i + 1 != node->inherits.size())
+          out() << ", ";
+      }
+    }
+    out() << " {" << std::endl;
     indent() << "public:" << std::endl;
     scopedDecl(node->values);
     indent() << "};" << std::endl << std::endl;
@@ -207,7 +301,9 @@ protected:
 
   void visit(StructNode* node) {
     indent() << "struct " << expr(node->name) << " {" << std::endl;
+    noconstref++;
     scopedDecl(node->values);
+    noconstref--;
     indent() << "};" << std::endl << std::endl;
   }
 
@@ -301,8 +397,17 @@ protected:
   void visit(ExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(TypeNode *node) {
-    out() << typeToCpp(node->value);
+  void visit(SimpleTypeNode *node) {
+    out() << typeToCpp(node);
+  }
+  void visit(ListTypeNode *node) {
+    out() << typeToCpp(node);
+  }
+  void visit(MapTypeNode *node) {
+    out() << typeToCpp(node);
+  }
+  void visit(TupleTypeNode *node) {
+    out() << typeToCpp(node);
   }
 
   //indented block

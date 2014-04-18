@@ -107,8 +107,23 @@ namespace qilang {
     void visit(ExprNode *node) {
       out() << "(" << expr(node->value) << ")" << std::endl;
     }
-    void visit(TypeNode *node) {
+    void visit(SimpleTypeNode *node) {
       out() << node->value;
+    }
+    void visit(ListTypeNode *node) {
+      out() << "[]" << expr(node->element);
+    }
+    void visit(MapTypeNode *node) {
+      out() << "[" << expr(node->key) << "]" << expr(node->value);
+    }
+    void visit(TupleTypeNode *node) {
+      out() << "(";
+      for (int i = 0; i < node->elements.size(); ++i) {
+        out() << expr(node->elements.at(i));
+        if (i + 1 == node->elements.size())
+          out() << ", ";
+      }
+      out() << ")";
     }
     void visit(VarNode *node) {
       out() << "(var " << expr(node->value) << ")";
@@ -130,7 +145,17 @@ namespace qilang {
       indent() << "at " << expr(node->sender) << " " << expr(node->receiver) << std::endl;
     }
     void visit(InterfaceDeclNode* node) {
-      indent() << "interface " << expr(node->name) << std::endl;
+      indent() << "interface " << expr(node->name);
+      if (node->inherits.size() > 0) {
+        out() << "(";
+        for (int i = 0; i < node->inherits.size(); ++i) {
+          out() << expr(node->inherits.at(i));
+          if (i + 1 != node->inherits.size())
+            out() << ", ";
+        }
+        out() << ")";
+      }
+      out() << std::endl;
       scopedDecl(node->values);
       indent() << "end" << std::endl << std::endl;
     }
@@ -266,8 +291,23 @@ namespace qilang {
     void visit(VarNode *node) {
        out() << "(var " << expr(node->value) << ")";
     }
-    void visit(TypeNode *node) {
+    void visit(SimpleTypeNode *node) {
       out() << "(type " << node->value << ")";
+    }
+    void visit(ListTypeNode *node) {
+      out() << "(listtype " << expr(node->element) << ")";
+    }
+    void visit(MapTypeNode *node) {
+      out() << "(maptype " << expr(node->key) << " " << expr(node->value) << ")";
+    }
+    void visit(TupleTypeNode *node) {
+      out() << "(tupletype ";
+      for (int i = 0; i < node->elements.size(); ++i) {
+        out() << expr(node->elements.at(i));
+        if (i + 1 == node->elements.size())
+          out() << " ";
+      }
+      out() << ")";
     }
     void visit(ExprNode *node) {
       out() << "(expr " << expr(node->value) << ")";
@@ -293,7 +333,17 @@ namespace qilang {
     }
 
     void visit(InterfaceDeclNode* node) {
-      indent() << "(interface " << expr(node->name) << std::endl;
+      indent() << "(interface " << expr(node->name);
+      if (node->inherits.size() > 0) {
+        out() << "(inherit ";
+        for (int i = 0; i < node->inherits.size(); ++i) {
+          out() << expr(node->inherits.at(i));
+          if (i + 1 != node->inherits.size())
+            out() << " ";
+        }
+        out() << ")";
+      }
+      out() << std::endl;
       scopedDecl(node->values);
       indent() << ")" << std::endl;
     }

@@ -41,6 +41,10 @@ namespace qilang {
    */
   class NodeFormatter {
   public:
+    NodeFormatter()
+      : _indent(0)
+    {}
+
     class ScopedIndent {
     public:
       ScopedIndent(int& indent, int add = 2)
@@ -109,6 +113,7 @@ namespace qilang {
 
   public:
     int               _indent;
+
   private:
     std::stringstream _ss;
   };

@@ -34,11 +34,17 @@ class ListConstNode;
 class DictConstNode;
 class TupleConstNode;
 
+// Type
+class TypeNode;
+class SimpleTypeNode;
+class ListTypeNode;
+class MapTypeNode;
+class TupleTypeNode;
+
 // Expression
 class SymbolNode;
 class BinaryOpNode;
 class UnaryOpNode;
-class TypeNode;
 class VarNode;
 class ExprNode;
 
@@ -79,7 +85,12 @@ public:
   virtual void visit(ExprNode* node) = 0;
   virtual void visit(VarNode* node) = 0;
   virtual void visit(SymbolNode* node) = 0;
-  virtual void visit(TypeNode* node) = 0;
+
+  // Type
+  virtual void visit(SimpleTypeNode* node) = 0;
+  virtual void visit(ListTypeNode* node) = 0;
+  virtual void visit(MapTypeNode* node) = 0;
+  virtual void visit(TupleTypeNode* node) = 0;
 
   // Object Graph
   virtual void visit(ObjectNode* node) = 0;
@@ -96,8 +107,48 @@ public:
   virtual void visit(VarDefNode* node) = 0;
   virtual void visit(ConstDefNode* node) = 0;
   virtual void visit(StructNode* node) = 0;
-
 };
+
+
+class TypeNodeVisitor: public NodeVisitor {
+  // Type
+  virtual void visit(SimpleTypeNode* node) = 0;
+  virtual void visit(ListTypeNode* node) = 0;
+  virtual void visit(MapTypeNode* node) = 0;
+  virtual void visit(TupleTypeNode* node) = 0;
+
+  // We dont mind about everything else
+  virtual void visit(PackageNode* node)       { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(ImportNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+
+  virtual void visit(IntConstNode* node)      { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(FloatConstNode* node)    { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(StringConstNode* node)   { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(TupleConstNode* node)    { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(ListConstNode* node)     { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(DictConstNode* node)     { throw std::runtime_error("not implemented for a TypeVisitor"); }
+
+  virtual void visit(BinaryOpNode* node)      { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(UnaryOpNode* node)       { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(ExprNode* node)          { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(VarNode* node)           { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(SymbolNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+
+  virtual void visit(ObjectNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(PropertyNode* node)      { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(AtNode* node)            { throw std::runtime_error("not implemented for a TypeVisitor"); }
+
+  virtual void visit(InterfaceDeclNode* node) { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(FnDeclNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(InDeclNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(OutDeclNode* node)       { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(PropDeclNode* node)      { throw std::runtime_error("not implemented for a TypeVisitor"); }
+
+  virtual void visit(VarDefNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(ConstDefNode* node)      { throw std::runtime_error("not implemented for a TypeVisitor"); }
+  virtual void visit(StructNode* node)        { throw std::runtime_error("not implemented for a TypeVisitor"); }
+};
+
 
 //Base Node used to describe the AST
 class QILANG_API Node
@@ -113,7 +164,6 @@ public:
 // NodePtr
 typedef boost::shared_ptr<Node>           NodePtr;
 typedef std::vector<NodePtr>              NodePtrVector;
-
 
 // SymbolNodePtr
 typedef boost::shared_ptr<SymbolNode>     SymbolNodePtr;
@@ -337,11 +387,19 @@ public:
   std::string name;
 };
 
+//NOT Visitable
 class QILANG_API TypeNode : public Node {
 public:
-  explicit TypeNode(const SymbolNodePtr& name)
-    : Node("type")
-    , value(name->name)
+  explicit TypeNode(const std::string& name)
+    : Node(name)
+  {}
+};
+
+class QILANG_API SimpleTypeNode : public TypeNode {
+public:
+  explicit SimpleTypeNode(const SymbolNodePtr& sym)
+    : TypeNode("type")
+    , value(sym->name)
   {}
 
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
@@ -349,10 +407,48 @@ public:
   std::string value;
 };
 
+class QILANG_API ListTypeNode : public TypeNode {
+public:
+  explicit ListTypeNode(const TypeNodePtr& element)
+    : TypeNode("listtype")
+    , element(element)
+  {}
+
+  void accept(NodeVisitor* visitor) { visitor->visit(this); }
+
+  TypeNodePtr element;
+};
+
+class QILANG_API MapTypeNode : public TypeNode {
+public:
+  explicit MapTypeNode(const TypeNodePtr& key, const TypeNodePtr& value)
+    : TypeNode("maptype")
+    , key(key)
+    , value(value)
+  {}
+
+  void accept(NodeVisitor* visitor) { visitor->visit(this); }
+
+  TypeNodePtr key;
+  TypeNodePtr value;
+};
+
+class QILANG_API TupleTypeNode : public TypeNode {
+public:
+  explicit TupleTypeNode(const TypeNodePtrVector& elements)
+    : TypeNode("tupletype")
+    , elements(elements)
+  {}
+
+  void accept(NodeVisitor* visitor) { visitor->visit(this); }
+
+  TypeNodePtrVector elements;
+};
+
 
 class QILANG_API ConstDefNode : public Node {
 public:
-  ConstDefNode(const SymbolNodePtr& name, const NodePtr& type, const ConstExprNodePtr& value)
+  ConstDefNode(const SymbolNodePtr& name, const TypeNodePtr& type, const ConstExprNodePtr& value)
     : Node("constdef")
     , name(name)
     , type(type)
@@ -480,10 +576,18 @@ public:
     , values(defs)
   {}
 
+  InterfaceDeclNode(const SymbolNodePtr& name, const SymbolNodePtrVector& inherits, const NodePtrVector& defs)
+    : Node("interface")
+    , name(name)
+    , values(defs)
+    , inherits(inherits)
+  {}
+
   void accept(NodeVisitor* visitor) { visitor->visit(this); }
 
   SymbolNodePtr       name;
-  NodePtrVector values;
+  NodePtrVector       values;
+  SymbolNodePtrVector inherits;
 };
 
 class QILANG_API FnDeclNode : public Node {

@@ -7,3 +7,9 @@ const AudioType_Mono = 0
 const AudioType_Stereo = 1
 
 const AudioMap = { "titi" : 42 }
+
+
+interface Super(Canard, Poule)
+  fn start(int, int) int
+  signal
+end

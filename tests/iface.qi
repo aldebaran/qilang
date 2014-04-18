@@ -6,8 +6,9 @@ interface AudioDevice
 end
 
 struct AudioBuffer
-  buffer char[]
+  buffer []char
   size   int
+  ma     [int]str
 end
 
 const AudioType_Mono = 0

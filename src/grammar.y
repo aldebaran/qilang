@@ -176,10 +176,6 @@ import_defs:
                                      $$.push_back($3);
                                    }
 
-%type<qilang::TypeNodePtr> type;
-type:
-  ID { $$ = boost::make_shared<qilang::TypeNode>($1); }
-
 // #######################################################################################
 // # OBJECT GRAPH
 // #######################################################################################
@@ -213,12 +209,40 @@ at_expr:
 
 
 // #######################################################################################
+// # TYPE
+// #######################################################################################
+%type<qilang::TypeNodePtr> type;
+type:
+  ID                      { $$ = boost::make_shared<qilang::SimpleTypeNode>($1); }
+| "[" "]" type            { $$ = boost::make_shared<qilang::ListTypeNode>($3); }
+| "[" type "]" type       { $$ = boost::make_shared<qilang::MapTypeNode>($2, $4); }
+| "(" tuple_type_defs ")" { $$ = boost::make_shared<qilang::TupleTypeNode>($2); }
+
+%type<qilang::TypeNodePtrVector> tuple_type_defs;
+tuple_type_defs:
+  type                      { $$.push_back($1); }
+| tuple_type_defs "," type  { std::swap($$, $1); $$.push_back($3); }
+
+
+// #######################################################################################
 // # INTERFACE DECLARATION
 // #######################################################################################
 
+
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $3); }
+  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $4, $6); }
+| INTERFACE ID interface_defs END                      { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $3); }
+
+%type<qilang::SymbolNodePtrVector> inherit_defs;
+inherit_defs:
+  %empty         {}
+| inherit_defs.1 { std::swap($$, $1); }
+
+%type<qilang::SymbolNodePtrVector> inherit_defs.1;
+inherit_defs.1:
+  ID                     { $$.push_back($1); }
+| inherit_defs.1 "," ID  { std::swap($$, $1); $$.push_back($3); }
 
 %type<qilang::NodePtrVector> interface_defs;
 interface_defs:
@@ -261,7 +285,8 @@ function_args:
 
 %type<qilang::TypeNodePtr> function_arg;
 function_arg:
-  type { $$ = $1; }
+  type    { $$ = $1; }
+| ID type { $$ = $2; }
 
 
 // #######################################################################################
@@ -271,7 +296,7 @@ function_arg:
 %type<qilang::NodePtr> const;
 const:
   CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDefNode>($2, $4); }
-| CONST ID ID "=" const_exp { $$ = boost::make_shared<qilang::ConstDefNode>($2, $3, $5); }
+| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDefNode>($2, $3, $5); }
 
 
 // #######################################################################################

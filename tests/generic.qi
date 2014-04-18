@@ -1,0 +1,83 @@
+#which style do we want?
+
+struct Foo
+  buf []int
+  ma  [int]string
+end
+
+struct Bar<T>
+  Foo
+  buf []T
+  ma  [T]string
+end
+
+struct Bar(T)
+  Foo
+end
+
+interface ToTo
+end
+
+interface TiTi(T)
+  inherit ToTo
+  fn foo(t T) T
+end
+
+interface List(T)
+  fn append(pos int, value T)
+  fn get(pos int) V
+end
+
+interface Map(K,V)
+  fn append(k K, v V)
+  fn get(k K) V
+end
+
+def newTiti(t T) TiTi(T)
+  return new TiTi(t)
+end
+
+
+#list(int) or []int
+#dict(str, int) or [str]int
+
+
+#Type Ploup Ploup
+const foo []int = [ 42, 42 ]
+
+val []int = [ 42, 53 ]
+
+tutu [str]int = { "titi" : 3, "toto" : 4 }
+
+foo.bar([str]int {"tutu" : 42})
+
+
+#Type2 Ploup Ploup
+const foo list(int) = [ 42, 42 ]
+
+val list(int) = [ 42, 53 ]
+
+tutu map(str,int) = { "titi" : 3, "toto" : 4 }
+
+foo.bar(map(str,int)({"tutu" : 42}))
+
+
+
+#NO Type
+const foo = [ 42, 42 ]
+
+val = [ 42, 544 ]
+
+tutu = { "titi" : 3, "toto" : 4 }
+
+foo.bar({"tutu" : 42})
+
+
+# Type Assersion
+const foo = [ 42, 42 ] :: []int
+
+val = [ 42, 53 ] :: []int
+
+tutu = { "tutu" : 42 } :: [str]int
+
+foo.bar({"tutu" : 42} :: [str]int)
