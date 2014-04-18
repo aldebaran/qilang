@@ -87,6 +87,9 @@ namespace qilang {
   NodePtrVector parse(const std::string &filename) {
     std::ifstream is;
     is.open(filename.c_str());
+    if (!is.is_open())
+      throw std::runtime_error("Can't open file: " + filename);
+
     Parser p(&is, filename);
     return p.parse();
   }
