@@ -28,6 +28,15 @@
 
 #include <qilang/node.hpp>
 
+namespace std {
+  //only to avoid mistake... (shared_ptr are displayed as pointer by default...)
+  //this function will generate an error instead
+  template <class T>
+  std::ostream& operator<<(std::ostream&o, const boost::shared_ptr<T>& node) {
+    o << *node.get();
+  }
+}
+
 namespace qilang {
 
 
