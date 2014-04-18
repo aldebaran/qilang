@@ -109,7 +109,8 @@ public:
   virtual void visit(StructNode* node) = 0;
 };
 
-
+/** Type only visitor. throw on all other node type
+ */
 class TypeNodeVisitor: public NodeVisitor {
   // Type
   virtual void visit(SimpleTypeNode* node) = 0;
