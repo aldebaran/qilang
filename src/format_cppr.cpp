@@ -123,7 +123,7 @@ protected:
   void visit(VarDefNode* node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(ConstDefNode* node) {
+  void visit(ConstDeclNode* node) {
     throw std::runtime_error("unimplemented");
   }
 

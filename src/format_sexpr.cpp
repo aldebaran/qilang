@@ -190,7 +190,7 @@ namespace qilang {
       out() << ")" << std::endl;
     }
 
-    void visit(ConstDefNode* node) {
+    void visit(ConstDeclNode* node) {
       indent() << "(defconst " << expr(node->name);
       if (node->type)
         out() << " " << expr(node->type);

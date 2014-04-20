@@ -127,9 +127,9 @@
 %left  "|" "&" "^"
 %left  "+" "-"
 %left  "*" "/" "%"
-%left  "~" "@"
-%right "!"
-%left  "["
+%precedence "!"
+%precedence "["
+
 
 %%
 // #######################################################################################
@@ -140,20 +140,24 @@
 
 %type<qilang::NodePtrVector> toplevel;
 toplevel:
-  %empty                {}
-| toplevel toplevel_def { context->root.insert(context->root.end(), $1.begin(), $1.end());
-                          context->root.push_back($2);
-                        }
+  %empty         {}
+| toplevel.1 { context->root.insert(context->root.end(), $1.begin(), $1.end()); }
+
+%type<qilang::NodePtrVector> toplevel.1;
+toplevel.1:
+  toplevel_def            { $$.push_back($1); }
+| toplevel.1 toplevel_def { std::swap($$, $1); $$.push_back($2); }
 
 %type<qilang::NodePtr> toplevel_def;
 toplevel_def:
-  expr    { $$ = $1; }
-| object  { $$ = $1; }
+  object  { $$ = $1; }
 | iface   { $$ = $1; }
 | package { $$ = $1; }
 | import  { $$ = $1; }
 | const   { $$ = $1; }
 | struct  { $$ = $1; }
+| exp     { $$ = $1; }
+
 
 // #######################################################################################
 // # PACKAGE MANAGEMENT
@@ -182,29 +186,32 @@ import_defs:
 // # OBJECT GRAPH
 // #######################################################################################
 
-%type<qilang::NodePtr> object;
+%type<qilang::StmtNodePtr> object;
 object:
   OBJECT type STRING object_defs END { $$ = boost::make_shared<qilang::ObjectDefNode>($2, $3, $4); }
 
-%type<qilang::NodePtrVector> object_defs;
+%type<qilang::StmtNodePtrVector> object_defs;
 object_defs:
   %empty                       {}
-| object_def                   { $$.push_back($1); }
-| object_defs object_def       { std::swap($$, $1);
-                                 $$.push_back($2);
-                               }
+| object_defs.1                { std::swap($$, $1); }
 
-%type<qilang::NodePtr> object_def;
+%type<qilang::StmtNodePtrVector> object_defs.1;
+object_defs.1:
+  object_def                   { $$.push_back($1); }
+| object_defs.1 object_def     { std::swap($$, $1); $$.push_back($2); }
+
+
+%type<qilang::StmtNodePtr> object_def;
 object_def:
   object                       { $$ = $1; }
 | object_property              { $$ = $1; }
 | at_expr                      { $$ = $1; }
 
-%type<qilang::NodePtr> object_property;
+%type<qilang::StmtNodePtr> object_property;
 object_property:
   ID ":" const_exp             { $$ = boost::make_shared<qilang::PropertyDefNode>($1, $3); }
 
-%type<qilang::NodePtr> at_expr;
+%type<qilang::StmtNodePtr> at_expr;
 at_expr:
   AT ID ":" ID               { $$ = boost::make_shared<qilang::AtNode>($2, $4); }
 | AT ID ID END               { $$ = boost::make_shared<qilang::AtNode>($2, $3); }
@@ -249,8 +256,12 @@ inherit_defs.1:
 %type<qilang::DeclNodePtrVector> interface_defs;
 interface_defs:
   %empty                       {}
-| interface_def                { $$.push_back($1); }
-| interface_defs interface_def { std::swap($$, $1); $$.push_back($2); }
+| interface_defs.1             { std::swap($$, $1); }
+
+%type<qilang::DeclNodePtrVector> interface_defs.1;
+interface_defs.1:
+  interface_def                  { $$.push_back($1); }
+| interface_defs.1 interface_def { std::swap($$, $1); $$.push_back($2); }
 
 %type<qilang::DeclNodePtr> interface_def;
 interface_def:
@@ -296,8 +307,8 @@ function_arg:
 
 %type<qilang::NodePtr> const;
 const:
-  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDefNode>($2, $4); }
-| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDefNode>($2, $3, $5); }
+  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDeclNode>($2, $4); }
+| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDeclNode>($2, $3, $5); }
 
 
 // #######################################################################################
@@ -307,25 +318,28 @@ const:
 struct:
   STRUCT ID struct_field_defs END { $$ = boost::make_shared<qilang::StructDeclNode>($2, $3); }
 
-%type<qilang::NodePtrVector> struct_field_defs;
+%type<qilang::FieldDeclNodePtrVector> struct_field_defs;
 struct_field_defs:
   %empty  {}
-| struct_field_def                   { $$.push_back($1); }
-| struct_field_defs struct_field_def { std::swap($$, $1);
-                                       $$.push_back($2); }
+| struct_field_defs.1 { std::swap($$, $1); }
 
-%type<qilang::NodePtr> struct_field_def;
+%type<qilang::FieldDeclNodePtrVector> struct_field_defs.1;
+struct_field_defs.1:
+  struct_field_def                     { $$.push_back($1); }
+| struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.push_back($2); }
+
+%type<qilang::FieldDeclNodePtr> struct_field_def;
 struct_field_def:
-  ID type   { $$ = boost::make_shared<qilang::VarDefNode>($1, $2); }
+  ID type   { $$ = boost::make_shared<qilang::FieldDeclNode>($1, $2); }
 
 
 // #######################################################################################
 // # EXPR
 // #######################################################################################
 
-%type<qilang::ExprNodePtr> expr;
-expr:
- exp { std::swap($$, $1); }
+//%type<qilang::ExprNodePtr> expr;
+//expr:
+// exp { std::swap($$, $1); }
 
 %type<qilang::ExprNodePtr> exp;
 exp:
@@ -359,11 +373,6 @@ exp:
 |  exp ">"  exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Gt);}
 |  exp ">=" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Ge);}
 |  exp "!=" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Ne);}
-
-// The PersistNode has been removed (all keys data are persistent now). But we
-//  need to keep this here so we don't get parse errors on existing conditions
-exp:
-  exp "@" exp { $$ = $1; }
 
 exp:
   "(" exp ")" { $$ = $2; }

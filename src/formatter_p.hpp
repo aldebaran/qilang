@@ -122,18 +122,13 @@ namespace qilang {
     }
 
     //indented block
-    void scopedDecl(const qilang::StmtNodePtrVector& vec) {
-      ScopedIndent _(_indent);
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptStmt(vec[i]);
-      }
-    }
 
   public:
     int               _indent;
   };
 
   class StmtNodeFormatter : virtual public IndentNodeFormatter, public StmtNodeVisitor {
+  public:
     virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
     const std::string& stmt(StmtNodePtr node) {
@@ -141,6 +136,37 @@ namespace qilang {
       acceptStmt(node);
       return ret;
     }
+
+    void scopedStmt(const qilang::StmtNodePtrVector& vec) {
+      ScopedIndent _(_indent);
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptStmt(vec[i]);
+      }
+    }
+  };
+
+  class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
+  public:
+
+    const std::string& decl(DeclNodePtr node) {
+      static const std::string ret;
+      acceptDecl(node);
+      return ret;
+    }
+
+    void scopedDecl(const qilang::DeclNodePtrVector& vec) {
+      ScopedIndent _(_indent);
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptDecl(vec[i]);
+      }
+    }
+    void scopedField(const qilang::FieldDeclNodePtrVector& vec) {
+      ScopedIndent _(_indent);
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptDecl(vec[i]);
+      }
+    }
+
   };
 
   class FileFormatter: virtual public BasicNodeFormatter {

@@ -31,7 +31,6 @@ class ObjectDefNode;
 class PropertyDefNode;
 class AtNode;
 class VarDefNode;
-class ConstDefNode;
 
 // EXPR: Const Data
 class ConstDataNode;  // VIRTUAL
@@ -58,12 +57,14 @@ class VarExprNode;
 class ConstDataExprNode;
 
 // Interface Declaration
-//class DeclNode;          //VIRTUAL
+class DeclNode;          //VIRTUAL
 class InterfaceDeclNode;
 class FnDeclNode;
 class EmitDeclNode;
 class PropDeclNode;
 class StructDeclNode; //Struct Decl
+class FieldDeclNode;
+class ConstDeclNode;
 
 
 typedef std::vector<std::string>          StringVector;
@@ -71,8 +72,8 @@ typedef std::vector<std::string>          StringVector;
 typedef boost::shared_ptr<Node>           NodePtr;
 typedef std::vector<NodePtr>              NodePtrVector;
 
-//typedef boost::shared_ptr<DeclNode>       DeclNodePtr;
-//typedef std::vector<DeclNodePtr>          DeclNodePtrVector;
+typedef boost::shared_ptr<DeclNode>        DeclNodePtr;
+typedef std::vector<DeclNodePtr>          DeclNodePtrVector;
 
 typedef boost::shared_ptr<StmtNode>       StmtNodePtr;
 typedef std::vector<StmtNodePtr>          StmtNodePtrVector;
@@ -92,8 +93,23 @@ typedef std::vector<ConstDataNodePtrPair>             ConstDataNodePtrPairVector
 
 /* All Statements
  */
+class DeclNodeVisitor {
+public:
+  virtual void acceptDecl(const DeclNodePtr& node) = 0;
+
+  // Interface Declaration
+  virtual void visitDecl(InterfaceDeclNode* node) = 0;
+  virtual void visitDecl(FnDeclNode* node) = 0;
+  virtual void visitDecl(EmitDeclNode* node) = 0;
+  virtual void visitDecl(PropDeclNode* node) = 0;
+
+  // Struct Declaration
+  virtual void visitDecl(StructDeclNode* node) = 0;
+  virtual void visitDecl(ConstDeclNode* node) = 0;
+  virtual void visitDecl(FieldDeclNode* node) = 0;
+};
+
 class StmtNodeVisitor {
-protected:
 public:
   virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
@@ -107,17 +123,8 @@ public:
   virtual void visitStmt(AtNode* node) = 0;
 
   // Definitions
-  virtual void visitStmt(ConstDefNode* node) = 0;
   virtual void visitStmt(VarDefNode* node) = 0;
-
-  // Interface Declaration
-  virtual void visitStmt(InterfaceDeclNode* node) = 0;
-  virtual void visitStmt(FnDeclNode* node) = 0;
-  virtual void visitStmt(EmitDeclNode* node) = 0;
-  virtual void visitStmt(PropDeclNode* node) = 0;
-
-  // Struct Declaration
-  virtual void visitStmt(StructDeclNode* node) = 0;
+  //virtual void visitStmt(ConstDefNode* node) = 0;
   // Call ?
 };
 
@@ -203,6 +210,7 @@ enum NodeType {
   NodeType_PropDecl,
 
   NodeType_StructDecl,
+  NodeType_FieldDecl,
   NodeType_ConstDecl
 };
 
@@ -572,28 +580,6 @@ public:
 };
 
 
-class QILANG_API ConstDefNode : public StmtNode {
-public:
-  ConstDefNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
-    : StmtNode(NodeType_ConstDecl)
-    , name(name)
-    , type(type)
-    , data(data)
-  {}
-
-  ConstDefNode(const std::string& name, const ConstDataNodePtr& data)
-    : StmtNode(NodeType_ConstDecl)
-    , name(name)
-    , data(data)
-  {}
-
-
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
-
-  std::string      name;
-  TypeExprNodePtr  type;
-  ConstDataNodePtr data;
-};
 
 class QILANG_API VarDefNode : public StmtNode {
 public:
@@ -620,7 +606,7 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API ObjectDefNode : public StmtNode {
 public:
-  ObjectDefNode(const TypeExprNodePtr& type, const ConstDataNodePtr& name, const NodePtrVector& defs)
+  ObjectDefNode(const TypeExprNodePtr& type, const ConstDataNodePtr& name, const StmtNodePtrVector& defs)
     : StmtNode(NodeType_ObjectDef)
     , type(type)
     , name(name)
@@ -632,7 +618,7 @@ public:
   TypeExprNodePtr  type;
   ConstDataNodePtr name;
 
-  NodePtrVector    values;
+  StmtNodePtrVector values;
 };
 
 // myprop: tititoto
@@ -668,33 +654,45 @@ public:
 // ####################
 // # DECL Node
 // ####################
-typedef StmtNodeVisitor   DeclNodeVisitor;
-typedef StmtNode          DeclNode;
-typedef StmtNodePtr       DeclNodePtr;
-typedef StmtNodePtrVector DeclNodePtrVector;
 
-//class QILANG_API DeclNode : public Node
-//{
-//public:
-//  DeclNode(NodeType type)
-//    : Node(NodeKind_Decl, type)
-//  {}
+class QILANG_API DeclNode : public Node
+{
+public:
+  DeclNode(NodeType type)
+    : Node(NodeKind_Decl, type)
+  {}
 
-//  virtual void accept(DeclNodeVisitor* visitor) = 0;
-//};
+  virtual void accept(DeclNodeVisitor* visitor) = 0;
+};
+
+class QILANG_API FieldDeclNode : public DeclNode {
+public:
+  FieldDeclNode(const std::string &name, const TypeExprNodePtr& type)
+    : DeclNode(NodeType_FieldDecl)
+    , name(name)
+    , type(type)
+  {}
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  std::string     name;
+  TypeExprNodePtr type;
+};
+typedef boost::shared_ptr<FieldDeclNode> FieldDeclNodePtr;
+typedef std::vector<FieldDeclNodePtr>    FieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& name, const NodePtrVector& vardefs)
+  StructDeclNode(const std::string& name, const FieldDeclNodePtrVector& vardefs)
     : DeclNode(NodeType_StructDecl)
     , name(name)
-    , values(vardefs)
+    , fields(vardefs)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  std::string   name;
-  NodePtrVector values;
+  std::string            name;
+  FieldDeclNodePtrVector fields;
 };
 
 // Object Motion.MoveTo "titi"
@@ -713,7 +711,7 @@ public:
     , inherits(inherits)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string       name;
   DeclNodePtrVector values;
@@ -735,7 +733,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
   std::string       name;
@@ -752,7 +750,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
   std::string           name;
@@ -767,13 +765,35 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
   std::string           name;
   TypeExprNodePtrVector args;
 };
 
+class QILANG_API ConstDeclNode : public DeclNode {
+public:
+  ConstDeclNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
+    : DeclNode(NodeType_ConstDecl)
+    , name(name)
+    , type(type)
+    , data(data)
+  {}
+
+  ConstDeclNode(const std::string& name, const ConstDataNodePtr& data)
+    : DeclNode(NodeType_ConstDecl)
+    , name(name)
+    , data(data)
+  {}
+
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  std::string      name;
+  TypeExprNodePtr  type;
+  ConstDataNodePtr data;
+};
 
 }
 

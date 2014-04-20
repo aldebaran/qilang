@@ -189,7 +189,7 @@ protected:
     out() << ";" << std::endl;
   }
 
-  void visit(ConstDefNode* node) {
+  void visit(ConstDeclNode* node) {
     indent() << "const ";
     if (node->type)
       out() << expr(node->type) << " " << expr(node->name);
