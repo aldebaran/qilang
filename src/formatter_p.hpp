@@ -92,6 +92,7 @@ namespace qilang {
    */
   class IndentNodeFormatter : virtual public BasicNodeFormatter {
   public:
+    virtual void accept(const StmtNodePtr& node) = 0;
 
     IndentNodeFormatter()
       : _indent(0)
@@ -126,13 +127,10 @@ namespace qilang {
     }
 
     //indented block
-    void scopedDecl(const qilang::NodePtrVector& vec) {
+    void scopedDecl(const qilang::StmtNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        if (vec[i]->kind() == NodeKind_Decl)
-          boost::dynamic_pointer_cast<DeclNode>(vec[i])->accept(this);
-        else if (vec[i]->kind() == NodeKind_Stmt)
-          boost::dynamic_pointer_cast<StmtNode>(vec[i])->accept(this);
+        accept(vec[i]);
       }
     }
 

@@ -20,7 +20,6 @@ namespace qilang {
 //Generate Type Registration Information
 class QiLangGenObjectDecl  : public FileFormatter,
                              public StmtNodeFormatter,
-                             public DeclNodeFormatter,
                              public TypeExprNodeFormatter,
                              public ExprNodeFormatter,
                              public ConstDataNodeFormatter {

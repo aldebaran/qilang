@@ -654,6 +654,8 @@ public:
 // ####################
 typedef StmtNodeVisitor DeclNodeVisitor;
 typedef StmtNode        DeclNode;
+typedef StmtNodePtrVector DeclNodePtrVector;
+
 //class QILANG_API DeclNode : public StmtNode
 //{
 //public:

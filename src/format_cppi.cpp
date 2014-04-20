@@ -23,7 +23,6 @@ namespace qilang {
 
 class QiLangGenObjectDef : public FileFormatter,
                            public StmtNodeFormatter,
-                           public DeclNodeFormatter,
                            public TypeExprNodeFormatter,
                            public ExprNodeFormatter,
                            public ConstDataNodeFormatter {
@@ -64,7 +63,7 @@ public:
 
 protected:
   void visit(PackageNode* node) {
-    std::vector<std::string> ns = splitPkgName(node->name->name);
+    std::vector<std::string> ns = splitPkgName(node->name);
     for (int i = 0; i < ns.size(); ++i) {
       toclose++;
       indent() << "namespace " << ns.at(i) << " {" << std::endl;

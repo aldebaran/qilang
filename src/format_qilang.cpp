@@ -64,13 +64,11 @@ namespace qilang {
   };
 
   class QiLangFormatter : public StmtNodeFormatter,
-                          public DeclNodeFormatter,
                           public TypeExprNodeFormatter,
                           public ExprNodeFormatter,
                           public QiLangConstDataFormatter {
   protected:
     virtual void accept(const StmtNodePtr& node)      { node->accept((StmtNodeVisitor*)this); }
-    virtual void accept(const DeclNodePtr& node)      { node->accept((DeclNodeVisitor*)this); }
     virtual void accept(const ExprNodePtr& node)      { node->accept((ExprNodeVisitor*)this); }
     virtual void accept(const TypeExprNodePtr& node)  { node->accept((TypeExprNodeVisitor*)this); }
 
@@ -133,12 +131,12 @@ namespace qilang {
     // STATEMENT
     // #############
     void visit(ObjectDefNode *node) {
-      indent() << "object " << type(node->type) << " " << cdata(node->id) << std::endl;
+      indent() << "object " << type(node->type) << " " << cdata(node->name) << std::endl;
       scopedDecl(node->values);
       indent() << "end" << std::endl << std::endl;
     }
     void visit(PropertyDefNode *node) {
-      indent() << "prop " << node->var << " " << cdata(node->value) << std::endl;
+      indent() << "prop " << node->name << " " << cdata(node->data) << std::endl;
     }
     void visit(AtNode* node) {
       indent() << "at " << node->sender << " " << node->receiver << std::endl;
@@ -192,7 +190,7 @@ namespace qilang {
       if (node->type)
         out() << " " << type(node->type);
       if (node->value)
-        out() << " = " << cdata(node->value);
+        out() << " = " << cdata(node->data);
       out() << std::endl;
     }
     void visit(ConstDefNode* node) {
@@ -200,7 +198,7 @@ namespace qilang {
       if (node->type)
         out() << type(node->type);
       if (node->value)
-        out() << " = " << cdata(node->value);
+        out() << " = " << cdata(node->data);
       out() << std::endl;
     }
 

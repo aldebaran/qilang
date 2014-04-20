@@ -26,6 +26,34 @@ namespace qilang {
   QILANG_API std::string formatAST(const NodePtr& node);
   QILANG_API std::string format(const NodePtr& node);
 
+  enum FormatterCodeGen {
+    QiLang,
+    Cpp_Header,
+    Cpp_Code
+  };
+
+  enum FormatterType {
+    Expr,
+    ConstExpr,
+    TypeExpr,
+    Data,
+    Stmt,
+  };
+
+  class Formatter {
+  public:
+    explicit Formatter(const NodePtr& node);
+    explicit Formatter(const NodePtrVector& node);
+
+    // Runtime
+    //qi::AnyValue formatValue();
+    //qi::AnyType  formatType();
+    //qi::AnyStmt  formatStmt();
+    std::string  format(FormatterCodeGen codegen, FormatterType type);
+  }
+  fn newFormatter(node qilang.Node)
+  fn newFormatter(nodes []qilang.Node)
+
   /* Format Options:
    * language: ast, qilang, cpp
    *
@@ -33,7 +61,6 @@ namespace qilang {
    * formatExpr(Expr) std::string
    * format(Node)
    */
-
 }
 
 #endif	    /* !VISITOR_PP_ */
