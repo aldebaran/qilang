@@ -1,0 +1,31 @@
+
+package qilang
+
+from qi import File, AnyValue
+
+
+interface Parser
+  fn parse []Node
+end
+fn newParser(filename str) Parser
+fn newParser(file qi.File) Parser
+
+enum Generator
+  Generator_Cpp
+  Generator_QiLang
+  Generator_AST
+end
+
+enum FormatType
+  FormatType_Data
+  FormatType_IDL
+  FormatType_Expr
+  FormatType_Type
+end
+
+interface Formatter
+  fn format(gen Generator, type FormatType) str
+  #fn formatValue() any  #qi.AnyValue
+  #fn formatType() type   #qi.AnyType
+end
+fn newFormatter([]Node) Formatter
