@@ -40,6 +40,47 @@ namespace std {
 
 namespace qilang {
 
+  class BasicNodeFormatter {
+  public:
+    std::stringstream &out() {
+      return _ss;
+    }
+  private:
+    std::stringstream _ss;
+  };
+
+  class ConstDataNodeFormatter : virtual public BasicNodeFormatter, public ConstDataNodeVisitor {
+  public:
+    virtual void accept(const ConstDataNodePtr& node) = 0;
+
+    const std::string& cdata(ConstDataNodePtr node) {
+      static const std::string ret;
+      accept(node);
+      return ret;
+    }
+  };
+
+  class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
+  public:
+    virtual void accept(const ExprNodePtr& node) = 0;
+
+    const std::string& expr(ExprNodePtr node) {
+      static const std::string ret;
+      accept(node);
+      return ret;
+    }
+  };
+
+  class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
+  public:
+    virtual void accept(const TypeExprNodePtr& node) = 0;
+
+    const std::string& type(TypeExprNodePtr node) {
+      static const std::string ret;
+      accept(node);
+      return ret;
+    }
+  };
 
   /**
    * @brief The NodeFormatter class
@@ -49,9 +90,10 @@ namespace qilang {
    * use out() for expressions
    * use indent() for statements
    */
-  class NodeFormatter {
+  class IndentNodeFormatter : virtual public BasicNodeFormatter {
   public:
-    NodeFormatter()
+
+    IndentNodeFormatter()
       : _indent(0)
     {}
 
@@ -69,8 +111,80 @@ namespace qilang {
       int  _add;
     };
 
-    //virtual std::string format(const NodePtrVector& node) = 0;
-    //virtual std::string format(const NodePtr& node) = 0;
+    virtual void formatHeader() {};
+    virtual void formatFooter() {};
+
+  public:
+    std::stringstream &indent(int changes = 0) {
+      _indent += changes;
+      if (_indent < 0)
+        _indent = 0;
+      for (int i = 0; i < _indent; ++i) {
+        out().put(' ');
+      }
+      return out();
+    }
+
+    //indented block
+    void scopedDecl(const qilang::NodePtrVector& vec) {
+      ScopedIndent _(_indent);
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        if (vec[i]->kind() == NodeKind_Decl)
+          boost::dynamic_pointer_cast<DeclNode>(vec[i])->accept(this);
+        else if (vec[i]->kind() == NodeKind_Stmt)
+          boost::dynamic_pointer_cast<StmtNode>(vec[i])->accept(this);
+      }
+    }
+
+
+  public:
+    int               _indent;
+  };
+
+//  class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
+//    virtual void accept(const DeclNodePtr& node) = 0;
+
+//    const std::string& decl(DeclNodePtr node) {
+//      static const std::string ret;
+//      accept(node);
+//      return ret;
+//    }
+//  };
+
+  class StmtNodeFormatter : virtual public IndentNodeFormatter, public StmtNodeVisitor {
+    virtual void accept(const StmtNodePtr& node) = 0;
+
+    const std::string& stmt(StmtNodePtr node) {
+      static const std::string ret;
+      accept(node);
+      return ret;
+    }
+  };
+
+  class FileFormatter: virtual public BasicNodeFormatter {
+  public:
+    virtual void accept(const NodePtr& node) {
+      switch (node->kind()) {
+      case NodeKind_ConstData:
+        accept(boost::dynamic_pointer_cast<ConstDataNode>(node));
+        break;
+      case NodeKind_Decl:
+        accept(boost::dynamic_pointer_cast<DeclNode>(node));
+        break;
+      case NodeKind_Expr:
+        accept(boost::dynamic_pointer_cast<ExprNode>(node));
+        break;
+      case NodeKind_Stmt:
+        accept(boost::dynamic_pointer_cast<StmtNode>(node));
+        break;
+      case NodeKind_TypeExpr:
+        accept(boost::dynamic_pointer_cast<TypeExprNode>(node));
+        break;
+      }
+    }
+
+    virtual void formatHeader() {}
+    virtual void formatFooter() {}
 
     virtual std::string format(const NodePtrVector& node) {
       formatHeader();
@@ -91,41 +205,6 @@ namespace qilang {
       formatFooter();
       return out().str();
     }
-
-    virtual void accept(const NodePtr& node) = 0;
-    virtual void formatHeader() {};
-    virtual void formatFooter() {};
-
-
-
-  public:
-    std::stringstream &indent(int changes = 0) {
-      _indent += changes;
-      if (_indent < 0)
-        _indent = 0;
-      for (int i = 0; i < _indent; ++i) {
-        _ss.put(' ');
-      }
-      return _ss;
-    }
-
-    std::stringstream &out() {
-      return _ss;
-    }
-
-    //visit a node
-    // TODO check node is an EXPR node
-    const std::string& expr(NodePtr node) {
-      static const std::string ret;
-      accept(node);
-      return ret;
-    }
-
-  public:
-    int               _indent;
-
-  private:
-    std::stringstream _ss;
   };
 
 }

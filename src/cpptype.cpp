@@ -35,8 +35,7 @@ static std::string typeToCpp(const std::string& type, bool constref=true) {
   return constRefYourSelf(type, constref);
 }
 
-
-class TypeToCppVisitor: public TypeNodeVisitor, public NodeFormatter {
+class TypeToCppVisitor: public TypeExprNodeVisitor, public NodeFormatter {
 public:
   int noconstref;
 
@@ -46,7 +45,7 @@ public:
       noconstref++;
   }
 
-  const std::string& noconst(NodePtr node) {
+  const std::string& noconst(TypeExprNodePtr node) {
     static const std::string ret;
     noconstref++;
     accept(node);
@@ -70,26 +69,57 @@ public:
     return empt;
   }
 
-  virtual void accept(const NodePtr& node) { node->accept(this); }
+  virtual void accept(const TypeExprNodePtr& node) { node->accept(this); }
 
-  void visit(SimpleTypeNode* node) {
+  void visit(SimpleTypeExprNode* node) {
     out() << typeToCpp(node->value, noconstref==0);
   }
 
-  void visit(ListTypeNode* node) {
+  void visit(ListTypeExprNode* node) {
     out() << doconst() << "std::vector< " << noconst(node->element) << " >" << doref();
   }
-  void visit(MapTypeNode* node) {
+  void visit(MapTypeExprNode* node) {
     out() << doconst() << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << ">" << doref();
   }
-  void visit(TupleTypeNode* node) {
+  void visit(TupleTypeExprNode* node) {
     out() << "TUPLENOTIMPL";
   }
 };
-static void noDestroy(TypeNode*) {}
 
-std::string typeToCpp(TypeNode* type, bool constref) {
-  TypeNodePtr tnp(type, &noDestroy);
+class DataToCppVisitor : public ConstDataNodeVisitor, public ExprNodeFormatter {
+public:
+  virtual void accept(const ConstDataNodePtr& node) { node->accept(this); }
+
+  void visit(BoolConstDataNode *node) {
+    if (node->value)
+      out() << "true";
+    else
+      out() << "false";
+  }
+  void visit(IntConstDataNode *node) {
+    out() << node->value;
+  }
+  void visit(FloatConstDataNode *node) {
+    out() << node->value;
+  }
+  void visit(StringConstDataNode *node) {
+    out() << node->value;
+  }
+  void visit(TupleConstDataNode* node) {
+    out() << "(" << "FAIL" << ")";
+  }
+  void visit(ListConstDataNode* node) {
+    out() << "[" << "FAIL" << "]";
+  }
+  void visit(DictConstDataNode* node) {
+    out() << "{" << "FAIL" << "}";
+  }
+};
+
+static void noDestroy(TypeExprNode*) {}
+
+std::string typeToCpp(TypeExprNode* type, bool constref) {
+  TypeExprNodePtr tnp(type, &noDestroy);
   return TypeToCppVisitor(!constref).format(tnp);
 }
 

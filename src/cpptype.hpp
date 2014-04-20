@@ -11,7 +11,7 @@
 
 namespace qilang {
 
-  std::string typeToCpp(TypeNode* type, bool constref=true);
+  std::string typeToCpp(TypeExprNode* type, bool constref=true);
   std::vector<std::string> splitPkgName(const std::string& name);
 
 }

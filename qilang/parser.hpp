@@ -17,6 +17,14 @@ namespace qilang {
   QILANG_API NodePtrVector parse(const std::string& filename);
   QILANG_API NodePtrVector parse(std::istream *stream, const std::string& filename = std::string());
 
+  /* parse options:
+   * - interface
+   * - const expr / data
+   * - expr
+   * - object
+   *
+   * From: qilang file, AnyValue (for value), ...
+   */
 }
 
 #endif // QIPARSER_HPP

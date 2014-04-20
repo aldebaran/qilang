@@ -15,10 +15,11 @@ qiLogCategory("qilang.node");
 
 namespace qilang {
 
-  Node::Node(const std::string &name)
-    : name(name)
+  Node::Node(NodeKind kind, NodeType type)
+    : _kind(kind)
+    , _type(type)
   {
-    qiLogDebug() << "new node(" << name << ")";
+    qiLogDebug() << "new node(" << _kind << ", " << _type << ")";
   }
 
   const std::string &UnaryOpCodeToString(UnaryOpCode op) {

@@ -18,13 +18,16 @@ qiLogCategory("qigen.hppinterface");
 namespace qilang {
 
 //Generate Type Registration Information
-class QiLangGenObjectDecl : public NodeVisitor, public NodeFormatter {
+class QiLangGenObjectDecl  : public FileFormatter,
+                             public StmtNodeFormatter,
+                             public DeclNodeFormatter,
+                             public TypeExprNodeFormatter,
+                             public ExprNodeFormatter,
+                             public ConstDataNodeFormatter {
 public:
   int toclose;
   int id;
   std::string currentParent;
-
-  virtual void accept(const NodePtr& node) { node->accept(this); }
 
   void formatHeader() {
     indent() << "/*" << std::endl;
@@ -40,7 +43,7 @@ public:
 
 protected:
   void visit(PackageNode* node) {
-    std::vector<std::string> ns = splitPkgName(node->name->name);
+    std::vector<std::string> ns = splitPkgName(node->name);
     for (int i = 0; i < ns.size(); ++i) {
       toclose++;
       indent() << "namespace " << ns.at(i) << " {" << std::endl;
@@ -51,63 +54,36 @@ protected:
   void visit(ImportNode* node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(IntConstNode *node) {
-    out() << node->value;
-  }
-  void visit(FloatConstNode *node) {
-    out() << node->value;
-  }
-  void visit(StringConstNode *node) {
-    out() << node->value;
-  }
-  void visit(TupleConstNode* node) {
-    out() << "(" << "FAIL" << ")";
-  }
-  void visit(ListConstNode* node) {
-    out() << "[" << "FAIL" << "]";
-  }
-  void visit(DictConstNode* node) {
-    out() << "{" << "FAIL" << "}";
-  }
-  void visit(SymbolNode* node) {
-    out() << node->name;
-  }
-  void visit(BinaryOpNode *node) {
+
+  void visit(BinaryOpExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(UnaryOpNode *node) {
+  void visit(UnaryOpExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(VarNode *node) {
+  void visit(VarExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(ExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(SimpleTypeNode *node) {
+  void visit(SimpleTypeExprNode *node) {
     out() << typeToCpp(node);
   }
-  void visit(ListTypeNode *node) {
+  void visit(ListTypeExprNode *node) {
     out() << typeToCpp(node);
   }
-  void visit(MapTypeNode *node) {
+  void visit(MapTypeExprNode *node) {
     out() << typeToCpp(node);
   }
-  void visit(TupleTypeNode *node) {
+  void visit(TupleTypeExprNode *node) {
     out() << typeToCpp(node);
   }
 
-  //indented block
-  void scopedDecl(const std::vector<qilang::NodePtr>& vec) {
-    ScopedIndent _(_indent);
-    for (unsigned int i = 0; i < vec.size(); ++i) {
-      vec[i]->accept(this);
-    }
-  }
-  void visit(ObjectNode *node) {
+  void visit(ObjectDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(PropertyNode *node) {
+  void visit(PropertyDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(AtNode* node) {
@@ -116,7 +92,7 @@ protected:
   void visit(InterfaceDeclNode* node) {
     int current = id;
     id++;
-    currentParent = node->name->name + "Interface";
+    currentParent = node->name + "Interface";
     indent() << "static int initType" << current << "() {" << std::endl;
     {
       ScopedIndent _(_indent);
@@ -131,22 +107,18 @@ protected:
     indent() << std::endl;
   }
   void visit(FnDeclNode* node) {
-    indent() << "builder.advertiseMethod(\"" << expr(node->name) << "\", &" << currentParent << "::" << expr(node->name);
+    indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
     out() << ");" << std::endl;
   }
-  void visit(InDeclNode* node) {
-    indent() << "builder.advertiseMethod(\"" << expr(node->name) << "\", &" << currentParent << "::" << expr(node->name);
-    out() << ");" << std::endl;
-  }
-  void visit(OutDeclNode* node) {
-    indent() << "builder.advertiseSignal(\"" << expr(node->name) << "\", &" << currentParent << "::" << expr(node->name);
+  void visit(EmitDeclNode* node) {
+    indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
     out() << ");" << std::endl;
   }
   void visit(PropDeclNode* node) {
-    indent() << "builder.advertiseProperty(\"" << expr(node->name) << "\", &" << currentParent << "::" << expr(node->name);
+    indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << currentParent << "::" << node->name;
     out() << ");" << std::endl;
   }
-  void visit(StructNode* node) {
+  void visit(StructDeclNode* node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(VarDefNode* node) {

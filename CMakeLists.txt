@@ -47,7 +47,7 @@ qi_create_lib(qilang
   ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp)
 
-qi_use_lib(qilang qi)
+qi_use_lib(qilang qi qitype)
 qi_stage_lib(qilang)
 
 

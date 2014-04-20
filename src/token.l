@@ -139,6 +139,9 @@ FLOAT    {UFLOAT}
 "@"             RETURN_OP(ARO);
 ":"             RETURN_OP(COLON);
 
+"true"          RETURN_OP(TRUE);
+"false"         RETURN_OP(FALSE);
+
 "package"       RETURN_OP(PACKAGE);
 "from"          RETURN_OP(FROM);
 "import"        RETURN_OP(IMPORT);
@@ -150,8 +153,7 @@ FLOAT    {UFLOAT}
 "const"         RETURN_OP(CONST);
 
 "fn"            RETURN_OP(FN);
-"in"            RETURN_OP(IN);
-"out"           RETURN_OP(OUT);
+"emit"          RETURN_OP(EMIT);
 "prop"          RETURN_OP(PROP);
 
 "at"            RETURN_OP(AT);
@@ -160,13 +162,13 @@ FLOAT    {UFLOAT}
 
 {FLOAT}           {
   STEP();
-  qilang::ConstExprNodePtr node = boost::make_shared<qilang::FloatConstNode>(boost::lexical_cast<float>(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::FloatConstDataNode>(boost::lexical_cast<float>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
   STEP();
-  qilang::ConstExprNodePtr node = boost::make_shared<qilang::IntConstNode>(boost::lexical_cast<int>(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::IntConstDataNode>(boost::lexical_cast<int>(yytext));
   RETURN_VAL(CONSTANT, node);
 }
 
@@ -178,7 +180,7 @@ FLOAT    {UFLOAT}
 
 {STRING}          {   // "   for indentation
   STEP();
-  qilang::ConstExprNodePtr node = boost::make_shared<qilang::StringConstNode>(std::string(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext));
   RETURN_VAL(STRING, node);
 }
 

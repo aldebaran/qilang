@@ -21,7 +21,12 @@ qiLogCategory("qigen.hppinterface");
 namespace qilang {
 
 
-class QiLangGenObjectDef : public NodeVisitor, public NodeFormatter {
+class QiLangGenObjectDef : public FileFormatter,
+                           public StmtNodeFormatter,
+                           public DeclNodeFormatter,
+                           public TypeExprNodeFormatter,
+                           public ExprNodeFormatter,
+                           public ConstDataNodeFormatter {
 public:
   int toclose;     //number of } to close (namespace)
   int noconstref;    //should we disable adding constref to types ?
@@ -32,7 +37,7 @@ public:
   {
   }
 
-  virtual void accept(const NodePtr& node) { node->accept(this); }
+  //virtual void accept(const NodePtr& node) { node->accept(this); }
 
   void formatHeader() {
     indent() << "/*" << std::endl;
@@ -71,49 +76,29 @@ protected:
     throw std::runtime_error("unimplemented");
   }
 
-  void visit(IntConstNode *node) {
-    out() << node->value;
-  }
-  void visit(FloatConstNode *node) {
-    out() << node->value;
-  }
-  void visit(StringConstNode *node) {
-    out() << node->value;
-  }
-  void visit(TupleConstNode* node) {
-    out() << "(" << "FAIL" << ")";
-  }
-  void visit(ListConstNode* node) {
-    out() << "[" << "FAIL" << "]";
-  }
-  void visit(DictConstNode* node) {
-    out() << "{" << "FAIL" << "}";
-  }
-  void visit(SymbolNode* node) {
-    out() << node->name;
-  }
-  void visit(BinaryOpNode *node) {
+  void visit(BinaryOpExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(UnaryOpNode *node) {
+  void visit(UnaryOpExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(VarNode *node) {
+  void visit(VarExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(ExprNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(SimpleTypeNode *node) {
+
+  void visit(SimpleTypeExprNode *node) {
     out() << typeToCpp(node, noconstref==0);
   }
-  void visit(ListTypeNode *node) {
+  void visit(ListTypeExprNode *node) {
     out() << typeToCpp(node, noconstref==0);
   }
-  void visit(MapTypeNode *node) {
+  void visit(MapTypeExprNode *node) {
     out() << typeToCpp(node, noconstref==0);
   }
-  void visit(TupleTypeNode *node) {
+  void visit(TupleTypeExprNode *node) {
     out() << typeToCpp(node, noconstref==0);
   }
 
@@ -124,10 +109,10 @@ protected:
       vec[i]->accept(this);
     }
   }
-  void visit(ObjectNode *node) {
+  void visit(ObjectDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(PropertyNode *node) {
+  void visit(PropertyDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
   void visit(AtNode* node) {
@@ -166,18 +151,7 @@ protected:
     out() << ");" << std::endl;
   }
 
-  void visit(InDeclNode* node) {
-    indent() << "// slot" << std::endl;
-    indent() << "void " << expr(node->name) << "(";
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << expr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
-    out() << ");" << std::endl;
-  }
-  void visit(OutDeclNode* node) {
+  void visit(EmitDeclNode* node) {
     indent() << "qi::Signal<";
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << expr(node->args[i]);
@@ -198,7 +172,7 @@ protected:
     out() << "> " << expr(node->name) << ";" << std::endl;
   }
 
-  void visit(StructNode* node) {
+  void visit(StructDeclNode* node) {
     indent() << "struct " << expr(node->name) << " {" << std::endl;
     noconstref++;
     scopedDecl(node->values);

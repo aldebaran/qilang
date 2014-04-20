@@ -15,7 +15,7 @@
   'qi-mode                                        ;; name of the mode
   '("#" "//")                                     ;; comments delimiter
   '("if" "package" "end" "for"                    ;; keywords
-    "interface" "fn" "in" "out" "prop"
+    "interface" "fn" "emit" "prop"
     "object" "at" "package" "from" "import"
     "const" "struct"
     "char" "int" "uint" "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"

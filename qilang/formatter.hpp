@@ -26,6 +26,14 @@ namespace qilang {
   QILANG_API std::string formatAST(const NodePtr& node);
   QILANG_API std::string format(const NodePtr& node);
 
+  /* Format Options:
+   * language: ast, qilang, cpp
+   *
+   * formatValue(ConstExpr) -> AnyValue
+   * formatExpr(Expr) std::string
+   * format(Node)
+   */
+
 }
 
 #endif	    /* !VISITOR_PP_ */
