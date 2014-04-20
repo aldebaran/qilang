@@ -38,3 +38,10 @@ public:
 Bar newBar() {
   return Bar(new BarImpl);
 }
+
+
+//Declare the content of the pimpl package
+QI_PACKAGE(pimpl) {
+  registerImpl<BarImpl, Bar>();
+  //registerRemote<BarRemoteImpl, Bar>();  //object that take a session?
+}

@@ -42,6 +42,7 @@ namespace qilang {
 
   class BasicNodeFormatter {
   public:
+    //virtual void accept(const NodePtr& node) = 0;
     std::stringstream &out() {
       return _ss;
     }
@@ -51,33 +52,27 @@ namespace qilang {
 
   class ConstDataNodeFormatter : virtual public BasicNodeFormatter, public ConstDataNodeVisitor {
   public:
-    virtual void accept(const ConstDataNodePtr& node) = 0;
-
     const std::string& cdata(ConstDataNodePtr node) {
       static const std::string ret;
-      accept(node);
+      acceptData(node);
       return ret;
     }
   };
 
   class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
   public:
-    virtual void accept(const ExprNodePtr& node) = 0;
-
     const std::string& expr(ExprNodePtr node) {
       static const std::string ret;
-      accept(node);
+      acceptExpr(node);
       return ret;
     }
   };
 
   class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
   public:
-    virtual void accept(const TypeExprNodePtr& node) = 0;
-
-    const std::string& type(TypeExprNodePtr node) {
+    const std::string& type(const TypeExprNodePtr& node) {
       static const std::string ret;
-      accept(node);
+      acceptTypeExpr(node);
       return ret;
     }
   };
@@ -92,7 +87,7 @@ namespace qilang {
    */
   class IndentNodeFormatter : virtual public BasicNodeFormatter {
   public:
-    virtual void accept(const StmtNodePtr& node) = 0;
+    virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
     IndentNodeFormatter()
       : _indent(0)
@@ -130,56 +125,27 @@ namespace qilang {
     void scopedDecl(const qilang::StmtNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        accept(vec[i]);
+        acceptStmt(vec[i]);
       }
     }
-
 
   public:
     int               _indent;
   };
 
-//  class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
-//    virtual void accept(const DeclNodePtr& node) = 0;
-
-//    const std::string& decl(DeclNodePtr node) {
-//      static const std::string ret;
-//      accept(node);
-//      return ret;
-//    }
-//  };
-
   class StmtNodeFormatter : virtual public IndentNodeFormatter, public StmtNodeVisitor {
-    virtual void accept(const StmtNodePtr& node) = 0;
+    virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
     const std::string& stmt(StmtNodePtr node) {
       static const std::string ret;
-      accept(node);
+      acceptStmt(node);
       return ret;
     }
   };
 
   class FileFormatter: virtual public BasicNodeFormatter {
   public:
-    virtual void accept(const NodePtr& node) {
-      switch (node->kind()) {
-      case NodeKind_ConstData:
-        accept(boost::dynamic_pointer_cast<ConstDataNode>(node));
-        break;
-      case NodeKind_Decl:
-        accept(boost::dynamic_pointer_cast<DeclNode>(node));
-        break;
-      case NodeKind_Expr:
-        accept(boost::dynamic_pointer_cast<ExprNode>(node));
-        break;
-      case NodeKind_Stmt:
-        accept(boost::dynamic_pointer_cast<StmtNode>(node));
-        break;
-      case NodeKind_TypeExpr:
-        accept(boost::dynamic_pointer_cast<TypeExprNode>(node));
-        break;
-      }
-    }
+    virtual void accept(const NodePtr& node) = 0;
 
     virtual void formatHeader() {}
     virtual void formatFooter() {}

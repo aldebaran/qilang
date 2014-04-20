@@ -13,9 +13,12 @@
 
 namespace qilang {
 
+  // #############
+  // CONST DATA
+  // #############
   class QiLangConstDataFormatter : public ConstDataNodeFormatter {
   public:
-    virtual void accept(const ConstDataNodePtr& node) { node->accept(this); }
+    virtual void acceptData(const ConstDataNodePtr& node) { node->accept(this); }
 
     const std::string &list(ConstDataNodePtrVector pv) {
       static const std::string ret;
@@ -37,46 +40,112 @@ namespace qilang {
       return ret;
     }
 
-    void visit(BoolConstDataNode *node) {
+    virtual void visitData(BoolConstDataNode *node) {
       if (node->value)
         out() << "true";
       else
         out() << "false";
     }
-    void visit(IntConstDataNode *node) {
+    virtual void visitData(IntConstDataNode *node) {
       out() << node->value;
     }
-    void visit(FloatConstDataNode *node) {
+    virtual void visitData(FloatConstDataNode *node) {
       out() << node->value;
     }
-    void visit(StringConstDataNode *node) {
+    virtual void visitData(StringConstDataNode *node) {
       out() << node->value;
     }
-    void visit(ListConstDataNode* node) {
+    virtual void visitData(ListConstDataNode* node) {
       out() << "[ " << list(node->values) << " ]";
     }
-    void visit(TupleConstDataNode* node) {
+    virtual void visitData(TupleConstDataNode* node) {
       out() << "( " << list(node->values) << " )";
     }
-    void visit(DictConstDataNode* node) {
+    virtual void visitData(DictConstDataNode* node) {
       out() << "{ " << dict(node->values) << " }";
     }
   };
 
-  class QiLangFormatter : public StmtNodeFormatter,
-                          public TypeExprNodeFormatter,
-                          public ExprNodeFormatter,
-                          public QiLangConstDataFormatter {
-  protected:
-    virtual void accept(const StmtNodePtr& node)      { node->accept((StmtNodeVisitor*)this); }
-    virtual void accept(const ExprNodePtr& node)      { node->accept((ExprNodeVisitor*)this); }
-    virtual void accept(const TypeExprNodePtr& node)  { node->accept((TypeExprNodeVisitor*)this); }
+  // #############
+  // TYPE EXPR
+  // #############
+  class QiLangTypeExprFormatter : public TypeExprNodeFormatter {
+  public:
+    virtual void acceptTypeExpr(const TypeExprNodePtr& node)  { node->accept((TypeExprNodeVisitor*)this); }
+    void visitTypeExpr(SimpleTypeExprNode *node) {
+      out() << node->value;
+    }
+    void visitTypeExpr(ListTypeExprNode *node) {
+      out() << "[]" << type(node->element);
+    }
+    void visitTypeExpr(MapTypeExprNode *node) {
+      out() << "[" << type(node->key) << "]" << type(node->value);
+    }
+    void visitTypeExpr(TupleTypeExprNode *node) {
+      out() << "(";
+      for (int i = 0; i < node->elements.size(); ++i) {
+        out() << type(node->elements.at(i));
+        if (i + 1 == node->elements.size())
+          out() << ", ";
+      }
+      out() << ")";
+    }
+  };
 
-    void visit(PackageNode* node) {
+  // #############
+  // EXPR
+  // #############
+  class QiLangExprFormatter : public QiLangConstDataFormatter, public ExprNodeFormatter {
+  public:
+    virtual void acceptExpr(const ExprNodePtr& node) { node->accept((ExprNodeVisitor*)this); }
+
+    void visitExpr(BinaryOpExprNode *node) {
+      out() << expr(node->n1) << " " << BinaryOpCodeToString(node->op) << " " << expr(node->n2);
+    }
+    void visitExpr(UnaryOpExprNode *node) {
+      out() << UnaryOpCodeToString(node->op) << expr(node->n1);
+    }
+    void visitExpr(VarExprNode *node) {
+      out() << node->value;
+    }
+    void visitExpr(ConstDataExprNode* node) {
+      out() << cdata(node->data);
+    }
+  };
+
+  class QiLangFormatter : public FileFormatter
+                        , public StmtNodeFormatter
+                        , public QiLangTypeExprFormatter
+                        , public QiLangExprFormatter
+  {
+  protected:
+    virtual void accept(const NodePtr& node) {
+      switch (node->kind()) {
+      case NodeKind_ConstData:
+        acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+        break;
+      case NodeKind_Decl:
+        acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
+        break;
+      case NodeKind_Expr:
+        acceptExpr(boost::dynamic_pointer_cast<ExprNode>(node));
+        break;
+      case NodeKind_Stmt:
+        acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
+        break;
+      case NodeKind_TypeExpr:
+        acceptTypeExpr(boost::dynamic_pointer_cast<TypeExprNode>(node));
+        break;
+      }
+    }
+
+    virtual void acceptStmt(const StmtNodePtr& node)      { node->accept((StmtNodeVisitor*)this); }
+
+    virtual void visitStmt(PackageNode* node) {
       indent() << "package " << node->name << std::endl;
     }
 
-    void visit(ImportNode* node) {
+    void visitStmt(ImportNode* node) {
       if (node->imported.size() == 0)
         indent() << "import " << node->name;
       else {
@@ -91,57 +160,22 @@ namespace qilang {
       out() << std::endl;
     }
 
-    // #############
-    // EXPR
-    // #############
-
-    void visit(BinaryOpExprNode *node) {
-      out() << expr(node->n1) << " " << BinaryOpCodeToString(node->op) << " " << expr(node->n2);
-    }
-    void visit(UnaryOpExprNode *node) {
-      out() << UnaryOpCodeToString(node->op) << expr(node->n1);
-    }
-    void visit(VarExprNode *node) {
-      out() << "(var " << node->value << ")";
-    }
-
-
-    void visit(SimpleTypeExprNode *node) {
-      out() << node->value;
-    }
-    void visit(ListTypeExprNode *node) {
-      out() << "[]" << type(node->element);
-    }
-    void visit(MapTypeExprNode *node) {
-      out() << "[" << type(node->key) << "]" << type(node->value);
-    }
-    void visit(TupleTypeExprNode *node) {
-      out() << "(";
-      for (int i = 0; i < node->elements.size(); ++i) {
-        out() << type(node->elements.at(i));
-        if (i + 1 == node->elements.size())
-          out() << ", ";
-      }
-      out() << ")";
-    }
-
-
 
     // #############
     // STATEMENT
     // #############
-    void visit(ObjectDefNode *node) {
+    void visitStmt(ObjectDefNode *node) {
       indent() << "object " << type(node->type) << " " << cdata(node->name) << std::endl;
-      scopedDecl(node->values);
+      //TODO scopedDecl(node->values);
       indent() << "end" << std::endl << std::endl;
     }
-    void visit(PropertyDefNode *node) {
+    void visitStmt(PropertyDefNode *node) {
       indent() << "prop " << node->name << " " << cdata(node->data) << std::endl;
     }
-    void visit(AtNode* node) {
+    void visitStmt(AtNode* node) {
       indent() << "at " << node->sender << " " << node->receiver << std::endl;
     }
-    void visit(InterfaceDeclNode* node) {
+    void visitStmt(InterfaceDeclNode* node) {
       indent() << "interface " << node->name;
       if (node->inherits.size() > 0) {
         out() << "(";
@@ -171,33 +205,33 @@ namespace qilang {
         out() << " " << type(ret);
       out() << std::endl;
     }
-    void visit(FnDeclNode* node) {
+    void visitStmt(FnDeclNode* node) {
       declParamList("fn", node->name, node->args, node->ret);
     }
-    void visit(EmitDeclNode* node) {
+    void visitStmt(EmitDeclNode* node) {
       declParamList("out", node->name, node->args);
     }
-    void visit(PropDeclNode* node) {
+    void visitStmt(PropDeclNode* node) {
       declParamList("prop", node->name, node->args);
     }
-    void visit(StructDeclNode* node) {
+    void visitStmt(StructDeclNode* node) {
       indent() << "struct " << node->name << std::endl;
-      scopedDecl(node->values);
+      //TODO scopedDecl(node->values);
       indent() << "end" << std::endl << std::endl;
     }
-    void visit(VarDefNode* node) {
+    void visitStmt(VarDefNode* node) {
       indent() << node->name;
       if (node->type)
         out() << " " << type(node->type);
-      if (node->value)
+      if (node->data)
         out() << " = " << cdata(node->data);
       out() << std::endl;
     }
-    void visit(ConstDefNode* node) {
+    void visitStmt(ConstDefNode* node) {
       indent() << "const " << node->name;
       if (node->type)
         out() << type(node->type);
-      if (node->value)
+      if (node->data)
         out() << " = " << cdata(node->data);
       out() << std::endl;
     }

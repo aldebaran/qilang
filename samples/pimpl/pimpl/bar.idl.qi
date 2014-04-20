@@ -1,4 +1,5 @@
 
+package pimpl
 
 interface Bar
   fn foo(str)

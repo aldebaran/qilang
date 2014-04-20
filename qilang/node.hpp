@@ -55,6 +55,7 @@ class ExprNode;        //VIRTUAL: dep on TypeExpr, ConstData
 class BinaryOpExprNode;
 class UnaryOpExprNode;
 class VarExprNode;
+class ConstDataExprNode;
 
 // Interface Declaration
 //class DeclNode;          //VIRTUAL
@@ -94,58 +95,57 @@ typedef std::vector<ConstDataNodePtrPair>             ConstDataNodePtrPairVector
 class StmtNodeVisitor {
 protected:
 public:
-  virtual void accept(const StmtNodePtr& node) = 0;
+  virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
   // Package Management
-  virtual void visit(PackageNode* node) = 0;
-  virtual void visit(ImportNode* node) = 0;
+  virtual void visitStmt(PackageNode* node) = 0;
+  virtual void visitStmt(ImportNode* node) = 0;
 
   // Object Definitions
-  virtual void visit(ObjectDefNode* node) = 0;
-  virtual void visit(PropertyDefNode* node) = 0;
-  virtual void visit(AtNode* node) = 0;
+  virtual void visitStmt(ObjectDefNode* node) = 0;
+  virtual void visitStmt(PropertyDefNode* node) = 0;
+  virtual void visitStmt(AtNode* node) = 0;
 
   // Definitions
-  virtual void visit(ConstDefNode* node) = 0;
-  virtual void visit(VarDefNode* node) = 0;
+  virtual void visitStmt(ConstDefNode* node) = 0;
+  virtual void visitStmt(VarDefNode* node) = 0;
 
   // Interface Declaration
-  virtual void visit(InterfaceDeclNode* node) = 0;
-  virtual void visit(FnDeclNode* node) = 0;
-  virtual void visit(EmitDeclNode* node) = 0;
-  virtual void visit(PropDeclNode* node) = 0;
+  virtual void visitStmt(InterfaceDeclNode* node) = 0;
+  virtual void visitStmt(FnDeclNode* node) = 0;
+  virtual void visitStmt(EmitDeclNode* node) = 0;
+  virtual void visitStmt(PropDeclNode* node) = 0;
 
   // Struct Declaration
-  virtual void visit(StructDeclNode* node) = 0;
+  virtual void visitStmt(StructDeclNode* node) = 0;
   // Call ?
 };
 
 
 class ExprNodeVisitor {
 public:
-  virtual void accept(const ExprNodePtr& node) = 0;
+  virtual void acceptExpr(const ExprNodePtr& node) = 0;
 
   // Expr
-  virtual void visit(BinaryOpExprNode* node) = 0;
-  virtual void visit(UnaryOpExprNode* node) = 0;
-  virtual void visit(VarExprNode* node) = 0;
+  virtual void visitExpr(BinaryOpExprNode* node) = 0;
+  virtual void visitExpr(UnaryOpExprNode* node) = 0;
+  virtual void visitExpr(VarExprNode* node) = 0;
+  virtual void visitExpr(ConstDataExprNode* node) = 0;
 };
 
 /** Const Data Expression Visitor
  */
 class ConstDataNodeVisitor {
-protected:
 public:
-  friend class ConstDataNode;
-  virtual void accept(const ConstDataNodePtr& node) = 0;
+  virtual void acceptData(const ConstDataNodePtr& node) = 0;
 
-  virtual void visit(BoolConstDataNode* node) = 0;
-  virtual void visit(IntConstDataNode* node) = 0;
-  virtual void visit(FloatConstDataNode* node) = 0;
-  virtual void visit(StringConstDataNode* node) = 0;
-  virtual void visit(TupleConstDataNode* node) = 0;
-  virtual void visit(ListConstDataNode* node) = 0;
-  virtual void visit(DictConstDataNode* node) = 0;
+  virtual void visitData(BoolConstDataNode* node) = 0;
+  virtual void visitData(IntConstDataNode* node) = 0;
+  virtual void visitData(FloatConstDataNode* node) = 0;
+  virtual void visitData(StringConstDataNode* node) = 0;
+  virtual void visitData(TupleConstDataNode* node) = 0;
+  virtual void visitData(ListConstDataNode* node) = 0;
+  virtual void visitData(DictConstDataNode* node) = 0;
 };
 
 /** Type Expression Visitor
@@ -153,13 +153,12 @@ public:
 class TypeExprNodeVisitor {
 protected:
 public:
-  friend class TypeExprNode;
-  virtual void accept(const TypeExprNodePtr& node) = 0;
+  virtual void acceptTypeExpr(const TypeExprNodePtr& node) = 0;
 
-  virtual void visit(SimpleTypeExprNode* node) = 0;
-  virtual void visit(ListTypeExprNode* node) = 0;
-  virtual void visit(MapTypeExprNode* node) = 0;
-  virtual void visit(TupleTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(SimpleTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(ListTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(MapTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(TupleTypeExprNode* node) = 0;
 };
 
 
@@ -178,6 +177,7 @@ enum NodeType {
   NodeType_BinOpExpr,
   NodeType_UOpExpr,
   NodeType_VarExpr,
+  NodeType_ConstDataExpr,
 
   NodeType_SimpleTypeExpr,
   NodeType_MapTypeExpr,
@@ -211,6 +211,7 @@ class QILANG_API Node
 {
 public:
   Node(NodeKind kind, NodeType type);
+  virtual ~Node() {}
 
   NodeKind kind() const { return _kind; }
   NodeType type() const { return _type; }
@@ -295,11 +296,14 @@ QILANG_API const std::string &BinaryOpCodeToString(BinaryOpCode op);
 // ####################
 
 class QILANG_API ExprNode : public Node {
-public:
+protected:
+  explicit ExprNode(NodeKind kind, NodeType type)
+    : Node(kind, type)
+  {}
   explicit ExprNode(NodeType type)
     : Node(NodeKind_Expr, type)
   {}
-
+public:
   virtual void accept(ExprNodeVisitor *visitor) = 0;
 };
 
@@ -312,7 +316,7 @@ public:
     , n2(n2)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
   BinaryOpCode op;
   ExprNodePtr  n1;
@@ -327,7 +331,7 @@ public:
     , n1(node)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
   UnaryOpCode op;
   ExprNodePtr n1;
@@ -341,9 +345,21 @@ public:
     , value(name)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
   std::string value;
+};
+
+class QILANG_API ConstDataExprNode : public ExprNode {
+public:
+  explicit ConstDataExprNode(const ConstDataNodePtr& data)
+    : ExprNode(NodeType_ConstDataExpr)
+    , data(data)
+  {}
+
+  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+
+  ConstDataNodePtr data;
 };
 
 // ####################
@@ -365,7 +381,7 @@ public:
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   bool value;
 };
@@ -377,7 +393,7 @@ public:
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   qi::uint64_t value;
 };
@@ -389,7 +405,7 @@ public:
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   double value;
 };
@@ -401,7 +417,7 @@ public:
     , value(value)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   const std::string value;
 };
@@ -413,7 +429,7 @@ public:
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   ConstDataNodePtrVector values;
 };
@@ -425,7 +441,7 @@ public:
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   ConstDataNodePtrVector values;
 };
@@ -437,7 +453,7 @@ public:
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
 
   ConstDataNodePtrPairVector values;
 };
@@ -462,7 +478,7 @@ public:
     , value(sym)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   std::string value;
 };
@@ -474,7 +490,7 @@ public:
     , element(element)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr element;
 };
@@ -487,7 +503,7 @@ public:
     , value(value)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr key;
   TypeExprNodePtr value;
@@ -500,7 +516,7 @@ public:
     , elements(elements)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtrVector elements;
 };
@@ -526,7 +542,7 @@ public:
     , name(packageName)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string name;
@@ -548,7 +564,7 @@ public:
       throw std::runtime_error("Empty import list");
   }
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string  name;
@@ -572,7 +588,7 @@ public:
   {}
 
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
   TypeExprNodePtr  type;
@@ -594,7 +610,7 @@ public:
     , type(type)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
   TypeExprNodePtr  type;
@@ -611,7 +627,7 @@ public:
     , values(defs)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   TypeExprNodePtr  type;
   ConstDataNodePtr name;
@@ -622,41 +638,42 @@ public:
 // myprop: tititoto
 class QILANG_API PropertyDefNode : public StmtNode {
 public:
-  PropertyDefNode(const std::string& name, ConstDataNodePtr value)
+  PropertyDefNode(const std::string& name, ConstDataNodePtr data)
     : StmtNode(NodeType_PropDef)
     , name(name)
-    , value(value)
+    , data(data)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
-  ConstDataNodePtr value;
+  ConstDataNodePtr data;
 };
 
 class QILANG_API AtNode : public StmtNode {
 public:
-  AtNode(const NodePtr& sender, const NodePtr& receiver)
+  AtNode(const std::string& sender, const std::string& receiver)
     : StmtNode(NodeType_At)
     , sender(sender)
     , receiver(receiver)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
-  NodePtr sender;
-  NodePtr receiver;
+  std::string sender;
+  std::string receiver;
 };
 
 // ####################
 // # DECL Node
 // ####################
-typedef StmtNodeVisitor DeclNodeVisitor;
-typedef StmtNode        DeclNode;
+typedef StmtNodeVisitor   DeclNodeVisitor;
+typedef StmtNode          DeclNode;
+typedef StmtNodePtr       DeclNodePtr;
 typedef StmtNodePtrVector DeclNodePtrVector;
 
-//class QILANG_API DeclNode : public StmtNode
+//class QILANG_API DeclNode : public Node
 //{
 //public:
 //  DeclNode(NodeType type)
@@ -674,7 +691,7 @@ public:
     , values(vardefs)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string   name;
   NodePtrVector values;
@@ -696,7 +713,7 @@ public:
     , inherits(inherits)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string       name;
   DeclNodePtrVector values;
@@ -718,7 +735,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string       name;
@@ -735,7 +752,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string           name;
@@ -750,7 +767,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visit(this); }
+  void accept(DeclNodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string           name;

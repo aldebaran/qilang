@@ -174,8 +174,7 @@ FLOAT    {UFLOAT}
 
 {ID}              {
   STEP();
-  qilang::SymbolNodePtr node = boost::make_shared<qilang::SymbolNode>(std::string(yytext));
-  RETURN_VAL(ID, node);
+  RETURN_VAL(ID, std::string(yytext));
 }
 
 {STRING}          {   // "   for indentation

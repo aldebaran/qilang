@@ -50,9 +50,7 @@ namespace qilang {
     //qi::AnyType  formatType();
     //qi::AnyStmt  formatStmt();
     std::string  format(FormatterCodeGen codegen, FormatterType type);
-  }
-  fn newFormatter(node qilang.Node)
-  fn newFormatter(nodes []qilang.Node)
+  };
 
   /* Format Options:
    * language: ast, qilang, cpp

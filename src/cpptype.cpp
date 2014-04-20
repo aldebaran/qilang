@@ -35,9 +35,14 @@ static std::string typeToCpp(const std::string& type, bool constref=true) {
   return constRefYourSelf(type, constref);
 }
 
-class TypeToCppVisitor: public TypeExprNodeVisitor, public NodeFormatter {
+
+//void typeToCppVisitor(std::ostream& o, const TypeExprNode& node);
+
+class TypeToCppVisitor: public TypeExprNodeFormatter {
 public:
   int noconstref;
+
+  virtual void type(const TypeExprNodePtr& node) { node->accept(this); }
 
   explicit TypeToCppVisitor(bool noconst) {
     noconstref = 0;
@@ -48,7 +53,7 @@ public:
   const std::string& noconst(TypeExprNodePtr node) {
     static const std::string ret;
     noconstref++;
-    accept(node);
+    type(node);
     noconstref--;
     return ret;
   }
@@ -69,12 +74,9 @@ public:
     return empt;
   }
 
-  virtual void accept(const TypeExprNodePtr& node) { node->accept(this); }
-
   void visit(SimpleTypeExprNode* node) {
     out() << typeToCpp(node->value, noconstref==0);
   }
-
   void visit(ListTypeExprNode* node) {
     out() << doconst() << "std::vector< " << noconst(node->element) << " >" << doref();
   }
