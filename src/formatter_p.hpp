@@ -34,6 +34,7 @@ namespace std {
   template <class T>
   std::ostream& operator<<(std::ostream&o, const boost::shared_ptr<T>& node) {
     o << *node.get();
+    return o;
   }
 }
 
