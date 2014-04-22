@@ -20,23 +20,124 @@ qiLogCategory("qigen.hppinterface");
 
 namespace qilang {
 
-
-class QiLangGenObjectDef : public FileFormatter,
-                           public StmtNodeFormatter,
-                           public TypeExprNodeFormatter,
-                           public ExprNodeFormatter,
-                           public ConstDataNodeFormatter {
+class DeclCppIDLFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
 public:
-  int toclose;     //number of } to close (namespace)
-  int noconstref;    //should we disable adding constref to types ?
+  virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
-  QiLangGenObjectDef()
-    : toclose(0)
-    , noconstref(0)
-  {
+  void visitDecl(InterfaceDeclNode* node) {
+    indent() << "class " << node->name << "Interface";
+    if (node->inherits.size() > 0) {
+      out() << ": ";
+      for (int i = 0; i < node->inherits.size(); ++i) {
+        out() << "public " << node->inherits.at(i);
+        if (i + 1 != node->inherits.size())
+          out() << ", ";
+      }
+    }
+    out() << " {" << std::endl;
+    indent() << "public:" << std::endl;
+    scopedDecl(node->values);
+    indent() << "};" << std::endl << std::endl;
+    indent() << "typedef qi::Object<" << node->name << "Interface> " << node->name << ";" << std::endl;
   }
 
-  //virtual void accept(const NodePtr& node) { node->accept(this); }
+  void visitDecl(FnDeclNode* node) {
+    if (node->ret)
+      indent() << type(node->ret) << " " << node->name << "(";
+    else
+      indent() << "void " << node->name << "(";
+
+    for (unsigned int i = 0; i < node->args.size(); ++i) {
+      out() << consttype(node->args[i]);
+      if (i+1 < node->args.size()) {
+        out() << ", ";
+      }
+    }
+    out() << ");" << std::endl;
+  }
+
+  void visitDecl(EmitDeclNode* node) {
+    indent() << "qi::Signal<";
+    for (unsigned int i = 0; i < node->args.size(); ++i) {
+      out() << type(node->args[i]);
+      if (i+1 < node->args.size()) {
+        out() << ", ";
+      }
+    }
+    out() << "> " << node->name << ";" << std::endl;
+  }
+  void visitDecl(PropDeclNode* node) {
+    indent() << "qi::Property<";
+    for (unsigned int i = 0; i < node->args.size(); ++i) {
+      out() << type(node->args[i]);
+      if (i+1 < node->args.size()) {
+        out() << ", ";
+      }
+    }
+    out() << "> " << node->name << ";" << std::endl;
+  }
+
+  void visitDecl(StructDeclNode* node) {
+    indent() << "struct " << node->name << " {" << std::endl;
+    noconstref++;
+    scopedField(node->fields);
+    noconstref--;
+    indent() << "};" << std::endl << std::endl;
+  }
+
+  void visitDecl(ConstDeclNode* node) {
+    indent() << "const ";
+    if (node->type)
+      out() << type(node->type) << " " << node->name;
+    else
+      out() << "qi::AnyValue " << node->name;
+    if (node->data)
+      out() << " = " << cdata(node->data);
+    out() << ";" << std::endl;
+  }
+
+  void visitDecl(FieldDeclNode* node) {
+    if (node->type)
+      indent() << type(node->type) << " " << node->name;
+    else
+      indent() << "qi::AnyValue " << node->name;
+    out() << ";" << std::endl;
+  }
+
+};
+
+class QiLangGenObjectDef : public FileFormatter
+                         , public DeclCppIDLFormatter
+                         , public StmtNodeFormatter
+{
+public:
+  QiLangGenObjectDef()
+    : toclose(0)
+  {}
+
+  int toclose;     //number of } to close (namespace)
+
+  virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
+
+  virtual void accept(const NodePtr& node) {
+    switch (node->kind()) {
+    case NodeKind_ConstData:
+      acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+      break;
+    case NodeKind_Decl:
+      acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
+      break;
+    case NodeKind_Expr:
+      acceptExpr(boost::dynamic_pointer_cast<ExprNode>(node));
+      break;
+    case NodeKind_Stmt:
+      acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
+      break;
+    case NodeKind_TypeExpr:
+      acceptTypeExpr(boost::dynamic_pointer_cast<TypeExprNode>(node));
+      break;
+    }
+  }
 
   void formatHeader() {
     indent() << "/*" << std::endl;
@@ -62,7 +163,7 @@ public:
   }
 
 protected:
-  void visit(PackageNode* node) {
+  void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
     for (int i = 0; i < ns.size(); ++i) {
       toclose++;
@@ -71,135 +172,27 @@ protected:
     out() << std::endl;
   }
 
-  void visit(ImportNode* node) {
+  void visitStmt(ImportNode* node) {
     throw std::runtime_error("unimplemented");
   }
-
-  void visit(BinaryOpExprNode *node) {
+  void visitStmt(ObjectDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(UnaryOpExprNode *node) {
+  void visitStmt(PropertyDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(VarExprNode *node) {
+  void visitStmt(AtNode* node) {
     throw std::runtime_error("unimplemented");
   }
-  void visit(ExprNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
-
-  void visit(SimpleTypeExprNode *node) {
-    out() << typeToCpp(node, noconstref==0);
-  }
-  void visit(ListTypeExprNode *node) {
-    out() << typeToCpp(node, noconstref==0);
-  }
-  void visit(MapTypeExprNode *node) {
-    out() << typeToCpp(node, noconstref==0);
-  }
-  void visit(TupleTypeExprNode *node) {
-    out() << typeToCpp(node, noconstref==0);
-  }
-
-  //indented block
-  void scopedDecl(const std::vector<qilang::NodePtr>& vec) {
-    ScopedIndent _(_indent);
-    for (unsigned int i = 0; i < vec.size(); ++i) {
-      vec[i]->accept(this);
-    }
-  }
-  void visit(ObjectDefNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
-  void visit(PropertyDefNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
-  void visit(AtNode* node) {
-    throw std::runtime_error("unimplemented");
-  }
-
-  void visit(InterfaceDeclNode* node) {
-    indent() << "class " << expr(node->name) << "Interface";
-    if (node->inherits.size() > 0) {
-      out() << ": ";
-      for (int i = 0; i < node->inherits.size(); ++i) {
-        out() << "public " << expr(node->inherits.at(i));
-        if (i + 1 != node->inherits.size())
-          out() << ", ";
-      }
-    }
-    out() << " {" << std::endl;
-    indent() << "public:" << std::endl;
-    scopedDecl(node->values);
-    indent() << "};" << std::endl << std::endl;
-    indent() << "typedef qi::Object<" << expr(node->name) << "Interface> " << expr(node->name) << ";" << std::endl;
-  }
-
-  void visit(FnDeclNode* node) {
-    if (node->ret)
-      indent() << expr(node->ret) << " " << expr(node->name) << "(";
-    else
-      indent() << "void " << expr(node->name) << "(";
-
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << expr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
-    out() << ");" << std::endl;
-  }
-
-  void visit(EmitDeclNode* node) {
-    indent() << "qi::Signal<";
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << expr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
-    out() << "> " << expr(node->name) << ";" << std::endl;
-  }
-  void visit(PropDeclNode* node) {
-    indent() << "qi::Property<";
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << expr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
-    out() << "> " << expr(node->name) << ";" << std::endl;
-  }
-
-  void visit(StructDeclNode* node) {
-    indent() << "struct " << expr(node->name) << " {" << std::endl;
-    noconstref++;
-    scopedDecl(node->values);
-    noconstref--;
-    indent() << "};" << std::endl << std::endl;
-  }
-
-  void visit(VarDefNode* node) {
+  void visitStmt(VarDefNode* node) {
     if (node->type)
-      indent() << expr(node->type) << " " << expr(node->name);
+      indent() << type(node->type) << " " << node->name;
     else
-      indent() << "qi::AnyValue " << expr(node->name);
-    if (node->value)
-      out() << " = " << expr(node->value);
+      indent() << "qi::AnyValue " << node->name;
+    if (node->data)
+      out() << " = " << cdata(node->data);
     out() << ";" << std::endl;
   }
-
-  void visit(ConstDeclNode* node) {
-    indent() << "const ";
-    if (node->type)
-      out() << expr(node->type) << " " << expr(node->name);
-    else
-      out() << "qi::AnyValue " << expr(node->name);
-    if (node->value)
-      out() << " = " << expr(node->value);
-    out() << ";" << std::endl;
-  }
-
 };
 
 

@@ -124,8 +124,6 @@ public:
 
   // Definitions
   virtual void visitStmt(VarDefNode* node) = 0;
-  //virtual void visitStmt(ConstDefNode* node) = 0;
-  // Call ?
 };
 
 

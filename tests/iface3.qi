@@ -11,5 +11,5 @@ const AudioMap = { "titi" : 42 }
 
 interface Super(Canard, Poule)
   fn start(int, int) int
-  signal
+  emit titi()
 end

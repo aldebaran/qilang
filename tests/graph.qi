@@ -1,8 +1,8 @@
 interface Audio.AudioDevice
   prop titi(Int)
 
-  in Finished(Int)
-  out Start(Any)
+  fn Finished(Int)
+  emit Start(Any)
 
   fn setTimeout(Int) dd
 end

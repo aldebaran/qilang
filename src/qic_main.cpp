@@ -68,14 +68,15 @@ int main(int argc, char *argv[])
       std::cout << e.what() << std::endl;
       exit(1);
     }
-/*    if (codegen == "cppi")
+    if (codegen == "cppi")
       *out << qilang::genCppObjectInterface(rootnode);
+    /*
     else if (codegen == "cppr")
       *out << qilang::genCppObjectRegistration(rootnode);
     else */if (codegen == "qilang")
       *out << qilang::format(rootnode);
-//    else if (codegen == "sexpr")
-//      *out << qilang::formatAST(rootnode);
+    else if (codegen == "sexpr")
+      *out << qilang::formatAST(rootnode);
   }
   of.close();
   return 0;

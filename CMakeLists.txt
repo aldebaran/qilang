@@ -19,11 +19,6 @@ set(C src/node.cpp
       src/cpptype.hpp
       src/cpptype.cpp)
 
-set(C src/node.cpp
-      src/parser.cpp
-      src/formatter_p.hpp
-      src/format_qilang.cpp)
-
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 

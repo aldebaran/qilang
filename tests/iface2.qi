@@ -9,15 +9,15 @@ from tutu import tutu, toto
 interface AudioDevice
   fn setDefaultDevice (str, str) int
 
-  in start()
-  in stop()
-  in mute()
-  in unmute()
+  fn start()
+  fn stop()
+  fn mute()
+  fn unmute()
 
-  out started(cacaca, dsldslksdflk)
-  out stopped(prout)
-  out muted()
-  out unmuted()
+  emit started(cacaca, dsldslksdflk)
+  emit stopped(prout)
+  emit muted()
+  emit unmuted()
 
   prop velocity(int)
 end

@@ -31,7 +31,7 @@
     ;; @attr
     ("@[a-zA-Z]+" . font-lock-preprocessor-face)
     ;; fn/in/out/prop names
-    ("^[ ]*\\(fn\\|in\\|out\\|prop\\)[ ]*\\([a-zA-Z]+\\)"
+    ("^[ ]*\\(fn\\|emit\\|prop\\)[ ]*\\([a-zA-Z]+\\)"
      2 font-lock-function-name-face))
 
   '("\\.qi$")                                     ;; files that trigger this mode
