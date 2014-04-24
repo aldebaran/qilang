@@ -1,29 +1,28 @@
 /*
-** bar.hpp
-** Login : <ctaf@torchbook>
-** Started on  Sun Apr 20 21:49:41 2014
-** $Id$
-**
-** Author(s):
-**  -  <gestes@aldebaran-robotics.com>
-**
-** Copyright (C) 2014
+** qiLang generated file. DO NOT EDIT
 */
+#pragma once
+#ifndef YEAH_d768ca12_33e0_4447_94b4_151bbad67632
+#define YEAH_d768ca12_33e0_4447_94b4_151bbad67632
 
-#ifndef   	BAR_HPP_
-# define   	BAR_HPP_
-
-#include <std::string>
+#include <qitype/signal.hpp>
+#include <qitype/property.hpp>
+#include <qitype/anyobject.hpp>
+#include <string>
+#include <vector>
+#include <map>
 
 namespace pimpl {
 
-  class BarInterface {
-  public:
-    void bar(const std::string& value) = 0;
-  };
-  typedef qi::Object<BarInterface> Bar;
+class BarInterface {
+public:
+  virtual ~BarInterface() {}
+  virtual void foo(const std::string&) = 0;
+};
 
-  Bar newBar();
+typedef qi::Object<BarInterface> BarObj;
+
+//Bar newBar();
 }
 
-#endif	    /* !BAR_PP_ */
+#endif

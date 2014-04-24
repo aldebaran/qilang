@@ -5,17 +5,14 @@ qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
 
 include_directories(".")
 
-set(H bar.hpp)
-set(C bar.cpp barimpl.cpp)
+set(H pimpl/bar.hpp)
+set(C src/bar.cpp src/barimpl.cpp)
 
-qi_create_lib(qipimpl
-  #${H}
-  ${C})
+qi_create_lib(qipimpl ${H} ${C})
 
-qi_use_lib(qilang qi qitype)
-qi_stage_lib(qilang)
+qi_use_lib(qipimpl qi qitype)
+qi_stage_lib(qipimpl)
 
 
-qi_create_bin(qic src/qic_main.cpp)
-
-qi_use_lib(qic qilang)
+qi_create_bin(pimp test.cpp)
+qi_use_lib(pimp qipimpl)

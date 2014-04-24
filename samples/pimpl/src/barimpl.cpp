@@ -24,9 +24,9 @@
 */
 
 #include <iostream>
-#include "bar.hpp"
+#include <pimpl/bar.hpp>
 
-class BarImpl : public BarInterface {
+class BarImpl : public pimpl::BarInterface {
 public:
   void foo(const std::string& value) {
     std::cout << "foo:" << value << std::endl;
@@ -35,13 +35,13 @@ public:
 
 //QI_REGISTER_IMPL(BarImpl, BarInterface);
 
-Bar newBar() {
-  return Bar(new BarImpl);
+pimpl::Bar pimpl::newBar() {
+  return pimpl::Bar(new BarImpl);
 }
 
 
 //Declare the content of the pimpl package
-QI_PACKAGE(pimpl) {
-  registerImpl<BarImpl, Bar>();
+//QI_PACKAGE(pimpl) {
+  //registerImpl<BarImpl, Bar>();
   //registerRemote<BarRemoteImpl, Bar>();  //object that take a session?
-}
+//}

@@ -1,0 +1,10 @@
+
+from titi import Egg
+from titi import *
+
+package pimpl
+
+interface Foo
+  fn foo(str)
+  fn bar(str) Bar
+end
