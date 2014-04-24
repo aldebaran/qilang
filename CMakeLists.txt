@@ -8,17 +8,22 @@ include_directories(".")
 set(H qilang/node.hpp
       qilang/visitor.hpp
       qilang/parser.hpp
-      qilang/formatter.hpp)
+      qilang/formatter.hpp
+      qilang/packagemanager.hpp
+   )
 
 set(C src/node.cpp
       src/parser.cpp
+      src/parser_p.hpp
       src/formatter_p.hpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
       src/format_cppi.cpp
       src/format_cppr.cpp
       src/cpptype.hpp
-      src/cpptype.cpp)
+      src/cpptype.cpp
+      src/packagemanager.cpp
+)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)

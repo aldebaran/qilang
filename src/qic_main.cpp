@@ -11,6 +11,7 @@
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/packagemanager.hpp>
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -57,23 +58,27 @@ int main(int argc, char *argv[])
     out = &std::cout;
   }
 
+  qilang::PackageManager pm;
+
   files = vm["input-file"].as< std::vector<std::string> >();
   for (int i = 0; i < files.size(); ++i) {
     std::cout << "Generating " << codegen << " for " << files.at(i) << std::endl;
 
     qilang::NodePtrVector rootnode;
     try {
-      rootnode = qilang::parse(files.at(i));
+      rootnode = pm.parseFile(files.at(i));
     } catch(const std::exception& e) {
       std::cout << e.what() << std::endl;
       exit(1);
     }
+
+    //pm.anal();
+
     if (codegen == "cppi")
       *out << qilang::genCppObjectInterface(rootnode);
-    /*
     else if (codegen == "cppr")
       *out << qilang::genCppObjectRegistration(rootnode);
-    else */if (codegen == "qilang")
+    else if (codegen == "qilang")
       *out << qilang::format(rootnode);
     else if (codegen == "sexpr")
       *out << qilang::formatAST(rootnode);
