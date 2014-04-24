@@ -6,6 +6,7 @@ qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
 include_directories(".")
 
 set(H qilang/node.hpp
+      qilang/visitor.hpp
       qilang/parser.hpp
       qilang/formatter.hpp)
 
