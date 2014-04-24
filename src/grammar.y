@@ -188,7 +188,8 @@ import_defs:
 
 %type<qilang::StmtNodePtr> object;
 object:
-  OBJECT type STRING object_defs END { $$ = boost::make_shared<qilang::ObjectDefNode>($2, $3, $4); }
+  OBJECT type STRING object_defs END { qilang::StringConstDataNode* tnode = static_cast<qilang::StringConstDataNode*>($3.get());
+                                       $$ = boost::make_shared<qilang::ObjectDefNode>($2, tnode->value, $4); }
 
 %type<qilang::StmtNodePtrVector> object_defs;
 object_defs:

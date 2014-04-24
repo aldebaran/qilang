@@ -604,7 +604,7 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API ObjectDefNode : public StmtNode {
 public:
-  ObjectDefNode(const TypeExprNodePtr& type, const ConstDataNodePtr& name, const StmtNodePtrVector& defs)
+  ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs)
     : StmtNode(NodeType_ObjectDef)
     , type(type)
     , name(name)
@@ -613,9 +613,8 @@ public:
 
   void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
-  TypeExprNodePtr  type;
-  ConstDataNodePtr name;
-
+  TypeExprNodePtr   type;
+  std::string       name;
   StmtNodePtrVector values;
 };
 
