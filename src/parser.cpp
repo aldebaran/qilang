@@ -35,6 +35,16 @@ namespace qilang {
     qilang_lex_destroy(scanner);
   }
 
+  void Parser::setCurrentPackage(const std::string& pkg) {
+    package = pkg;
+  }
+
+  const std::string& Parser::currentPackage() {
+    if (package.empty())
+      throw std::runtime_error("no package specified");
+    return package;
+  }
+
   NodePtrVector Parser::parse() {
 
     loc.initialize(&filename);

@@ -165,7 +165,9 @@ toplevel_def:
 
 %type<qilang::NodePtr> package;
 package:
-  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2); }
+  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2);
+                                     context->setCurrentPackage($2);
+                                   }
 
 %type<qilang::NodePtr> import;
 import:
@@ -241,8 +243,8 @@ tuple_type_defs:
 
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $4, $6); }
-| INTERFACE ID interface_defs END                      { $$ = boost::make_shared<qilang::InterfaceDeclNode>($2, $3); }
+  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>(context->currentPackage(), $2, $4, $6); }
+| INTERFACE ID interface_defs END                      { $$ = boost::make_shared<qilang::InterfaceDeclNode>(context->currentPackage(), $2, $3); }
 
 %type<qilang::StringVector> inherit_defs;
 inherit_defs:
@@ -308,8 +310,8 @@ function_arg:
 
 %type<qilang::NodePtr> const;
 const:
-  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDeclNode>($2, $4); }
-| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDeclNode>($2, $3, $5); }
+  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDeclNode>(context->currentPackage(), $2, $4); }
+| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDeclNode>(context->currentPackage(), $2, $3, $5); }
 
 
 // #######################################################################################
@@ -317,7 +319,7 @@ const:
 // #######################################################################################
 %type<qilang::NodePtr> struct;
 struct:
-  STRUCT ID struct_field_defs END { $$ = boost::make_shared<qilang::StructDeclNode>($2, $3); }
+  STRUCT ID struct_field_defs END { $$ = boost::make_shared<qilang::StructDeclNode>(context->currentPackage(), $2, $3); }
 
 %type<qilang::FieldDeclNodePtrVector> struct_field_defs;
 struct_field_defs:

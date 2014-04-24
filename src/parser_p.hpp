@@ -22,7 +22,11 @@ namespace qilang {
 
     NodePtrVector parse();
 
+    void setCurrentPackage(const std::string& pkg);
+    const std::string& currentPackage();
+
   public:
+    std::string          package;
     yy::location         loc;
     void*                scanner;  // flex context
     std::vector<NodePtr> root;     // parser output
