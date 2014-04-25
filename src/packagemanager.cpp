@@ -17,11 +17,16 @@ namespace fs = boost::filesystem;
 
 namespace qilang {
 
-  void packageVisitor(const NodePtr& parent, const NodePtr& node, qilang::StringVector& result) {
+  void packageVisitor(const NodePtr& parent, const NodePtr& node, std::string& result) {
     switch(node->type()) {
       case NodeType_Package: {
         PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
-        result.push_back(tnode->name);
+        if (!result.empty()) {
+          qiLogInfo() << "pkg:" << tnode->loc().beg_line;
+          throw std::runtime_error("double declaration of package");
+        }
+
+        result = tnode->name;
         break;
       } default:
         break;
@@ -97,14 +102,12 @@ namespace qilang {
     NodePtrVector ret = qilang::parse(filename);
     _sources[filename] = ret;
 
-    StringVector sv;
-    visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(sv)));
+    std::string pkgname;
+    visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(pkgname)));
 
     //TODO: handle error location...
-    if (sv.size() != 1)
-      throw std::runtime_error("0 or >1 package definition");
-
-    std::string pkgname = sv[0];
+    if (pkgname.empty())
+      throw std::runtime_error("missing package definition");
 
     std::string path = checkPackagePath(filename, pkgname);
     addInclude(path);
@@ -206,8 +209,13 @@ namespace qilang {
    */
   void PackageManager::anal(const std::string &packageName) {
     qiLogVerbose() << "SemAnal pkg:" << packageName;
-
-    parsePackage(packageName);
+    if (!packageName.empty())
+      parsePackage(packageName);
+    else {
+      PackagePtrMap::iterator it;
+      for (it = _packages.begin(); it != _packages.end(); ++it) {
+        parsePackage(it->first);
+      }
+    }
   }
-
 };

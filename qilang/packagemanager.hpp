@@ -98,7 +98,7 @@ namespace qilang {
       return _packages[name];
     }
 
-    void anal(const std::string& package);
+    void anal(const std::string& package = std::string());
 
     NodePtrVector ast(const std::string& filename);
     PackagePtr    package(const std::string& packagename);

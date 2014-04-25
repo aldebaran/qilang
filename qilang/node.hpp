@@ -17,9 +17,22 @@
 #include <boost/shared_ptr.hpp>
 #include <qitype/anyvalue.hpp>
 
-
 namespace qilang {
 
+class Location {
+public:
+  Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1)
+    : beg_line(bline)
+    , beg_columns(bcols)
+    , end_line(eline)
+    , end_columns(ecols)
+  {}
+
+  int beg_line;
+  int beg_columns;
+  int end_line;
+  int end_columns;
+};
 
 class Node;
 
@@ -217,12 +230,15 @@ class QILANG_API Node
 {
 public:
   Node(NodeKind kind, NodeType type);
+  Node(NodeKind kind, NodeType type, const Location& loc);
   virtual ~Node() {}
 
   NodeKind kind() const { return _kind; }
   NodeType type() const { return _type; }
+  Location loc() const { return _loc; }
 
 private:
+  Location _loc;
   NodeKind _kind;
   NodeType _type;
 };
@@ -534,8 +550,12 @@ public:
 class QILANG_API StmtNode : public Node
 {
 public:
-  StmtNode(NodeType type)
+  explicit StmtNode(NodeType type)
     : Node(NodeKind_Stmt, type)
+  {}
+
+  StmtNode(NodeType type, const Location& loc)
+    : Node(NodeKind_Stmt, type, loc)
   {}
 
   virtual void accept(StmtNodeVisitor* visitor) = 0;
@@ -543,8 +563,8 @@ public:
 
 class QILANG_API PackageNode : public StmtNode {
 public:
-  explicit PackageNode(const std::string& packageName)
-    : StmtNode(NodeType_Package)
+  explicit PackageNode(const std::string& packageName, const Location& loc)
+    : StmtNode(NodeType_Package, loc)
     , name(packageName)
   {}
 

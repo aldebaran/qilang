@@ -22,6 +22,14 @@ namespace qilang {
     qiLogDebug() << "new node(" << _kind << ", " << _type << ")";
   }
 
+  Node::Node(NodeKind kind, NodeType type, const Location& loc)
+    : _kind(kind)
+    , _type(type)
+    , _loc(loc)
+  {
+    qiLogDebug() << "new node(" << _kind << ", " << _type << ")";
+  }
+
   const std::string &UnaryOpCodeToString(UnaryOpCode op) {
     static std::string minus("-");
     static std::string negate("!");

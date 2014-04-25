@@ -35,6 +35,7 @@ namespace qilang {
     yy::parser           parser;
   };
 
+  Location loc(const yy::location& loc);
   std::string getErrorLine(const yy::location& loc);
 
 }

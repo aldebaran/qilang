@@ -91,11 +91,9 @@ int main(int argc, char *argv[])
       *out << qilang::format(rootnode);
     else if (codegen == "sexpr")
       *out << qilang::formatAST(rootnode);
-      //qilang::PackagePtr p = pm.package("foo");
-      //p->dump();
     }
   if (codegen == "testgros") {
-    pm.anal("pimpl");
+    pm.anal();
   }
   of.close();
   return 0;

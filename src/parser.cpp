@@ -66,6 +66,10 @@ namespace qilang {
     return root;
   }
 
+  Location loc(const yy::location& loc) {
+    return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+  }
+
   std::string getErrorLine(const yy::location& loc) {
     std::ifstream is;
     std::string   ret;

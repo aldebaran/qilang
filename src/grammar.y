@@ -165,8 +165,9 @@ toplevel_def:
 
 %type<qilang::NodePtr> package;
 package:
-  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2);
+  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2, qilang::loc(@$));
                                      context->setCurrentPackage($2);
+
                                    }
 
 %type<qilang::NodePtr> import;
