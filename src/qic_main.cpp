@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
       ("help,h", "produce help message")
       ("codegen,c", po::value<std::string>()->default_value(""), "Set the codegenerator to use")
       ("input-file", po::value< std::vector< std::string> >(), "input files")
+      ("include,I", po::value< std::vector< std::string> >(), "include directories for packages")
       ("output-file,o", po::value<std::string>(), "output dir")
       ;
 
@@ -42,13 +43,14 @@ int main(int argc, char *argv[])
   std::ostream*            out;
   std::string              codegen;
   std::vector<std::string> files;
+  std::vector<std::string> includes;
   std::ofstream            of;
 
   codegen = vm["codegen"].as<std::string>();
-  if (codegen != "cppr" && codegen != "cppi" && codegen != "qilang" && codegen != "sexpr") {
-    std::cout << "Invalid codegen value: use cpp/qilang/sexpr" << std::endl;
-    exit(1);
-  }
+  //if (codegen != "cppr" && codegen != "cppi" && codegen != "qilang" && codegen != "sexpr") {
+  //  std::cout << "Invalid codegen value: use cpp/qilang/sexpr" << std::endl;
+  //  exit(1);
+ // }
 
   if (vm.count("output-file")) {
     std::string outf = vm["output-file"].as<std::string>();
@@ -58,7 +60,13 @@ int main(int argc, char *argv[])
     out = &std::cout;
   }
 
+
   qilang::PackageManager pm;
+
+  if (vm.count("include"))
+    includes = vm["include"].as< std::vector<std::string> >();
+
+  pm.setCustomIncludes(includes);
 
   files = vm["input-file"].as< std::vector<std::string> >();
   for (int i = 0; i < files.size(); ++i) {
@@ -72,8 +80,6 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-    //pm.anal();
-
     if (codegen == "cppi")
       *out << qilang::genCppObjectInterface(rootnode);
     else if (codegen == "cppr")
@@ -82,6 +88,11 @@ int main(int argc, char *argv[])
       *out << qilang::format(rootnode);
     else if (codegen == "sexpr")
       *out << qilang::formatAST(rootnode);
+      //qilang::PackagePtr p = pm.package("foo");
+      //p->dump();
+    }
+  if (codegen == "testgros") {
+    pm.anal("pimpl");
   }
   of.close();
   return 0;

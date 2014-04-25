@@ -18,6 +18,7 @@ namespace qilang {
       case NodeType_Package: {
         PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
         result.push_back(tnode->name);
+        qiLogInfo() << "found pkg:" << tnode->name;
         break;
       } default:
         break;
@@ -71,7 +72,7 @@ namespace qilang {
     StringVector sv;
     visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(sv)));
 
-    if (sv.size() != 0)
+    if (sv.size() != 1)
       throw std::runtime_error("0 or >1 package definition");
     std::string pkgname = sv[0];
 
@@ -81,6 +82,8 @@ namespace qilang {
   }
 
 
+  static void findFileOfPackage(const std::string& package) {
+  }
 
   /**
    * @brief PackageManager::parsePackage
@@ -93,14 +96,17 @@ namespace qilang {
     // locate the package...
   }
 
-  void PackageManager::anal(const std::string &package) {
+  void PackageManager::anal(const std::string &packageName) {
+    qiLogVerbose() << "Analysing pkg:" << packageName;
     // for each decl in the package. reference it into the package.
-    PackagePtr pkg = boost::make_shared<Package>(package);
+    PackagePtr pkg = package(packageName);
 
     ASTMap::iterator it;
     for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {
+      qiLogVerbose() << "Visiting: " << it->first;
       visitNode(it->second, boost::bind<void>(&exportedDeclVisitor, _1, _2, boost::ref(pkg)));
     }
+    pkg->dump();
   }
 
 };

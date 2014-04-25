@@ -50,6 +50,13 @@ namespace qilang {
       _contents[filename] = nodes;
     }
 
+    void dump() {
+      NodeMap::iterator it;
+      for (it = _refs.begin(); it != _refs.end(); ++it) {
+        std::cout << "refs:" << _name << "." << it->first << std::endl;
+      }
+    }
+
     std::string _name;
     NodeMap     _refs;      //list of exported symbol
     ASTMap      _contents;  //
@@ -82,11 +89,15 @@ namespace qilang {
     NodePtrVector ast(const std::string& filename);
     PackagePtr    package(const std::string& packagename);
 
+    void         setCustomIncludes(const StringVector& includes) { _includes = includes; }
+    StringVector customIncludes() const                          { return _includes; }
+
+    //StringVector packagePaths() const;
   protected:
     PackagePtrMap _packages;
     ASTMap        _sources;
     StringVector  _packagespath;
-
+    StringVector  _includes;
   };
 
 }
