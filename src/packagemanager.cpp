@@ -28,7 +28,7 @@ namespace qilang {
     };
   }
 
-  void exportedDeclVisitor(const NodePtr& parent, const NodePtr& node, PackagePtr& pkg) {
+  void importExportDeclVisitor(const NodePtr& parent, const NodePtr& node, PackagePtr& pkg) {
     //we care only about toplevel decl
     if (parent)
       return;
@@ -54,7 +54,12 @@ namespace qilang {
         ObjectDefNode* tnode = dynamic_cast<ObjectDefNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
-      } default: {
+      } case NodeType_Import: {
+        ImportNode* tnode = dynamic_cast<ImportNode*>(node.get());
+        pkg->addImport(tnode->name, node);
+        return;
+      }
+      default: {
         return;
       }
     }
@@ -81,15 +86,21 @@ namespace qilang {
     return fs::absolute(p.parent_path().parent_path()).string(qi::unicodeFacet());
   }
 
-  NodePtrVector PackageManager::parseFile(const std::string& filename) {
+  NodePtrVector PackageManager::parseFile(const std::string& fname) {
+    std::string filename = fs::absolute(fs::path(fname, qi::unicodeFacet())).string(qi::unicodeFacet());
     qiLogVerbose() << "Parsing file: " << filename;
 
+    if (_sources.find(filename) != _sources.end()) {
+      qiLogVerbose() << "already parsed, skipping '" << filename << "'";
+      return _sources[filename];
+    }
     NodePtrVector ret = qilang::parse(filename);
     _sources[filename] = ret;
 
     StringVector sv;
     visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(sv)));
 
+    //TODO: handle error location...
     if (sv.size() != 1)
       throw std::runtime_error("0 or >1 package definition");
 
@@ -163,8 +174,24 @@ namespace qilang {
    * locate the package... use QIPATH and -I to look for the package.
    * a folder with a "pkgname".pkg.qi file
    */
-  void PackageManager::parsePackage(const std::string& package) {
-    // locate the package...
+  void PackageManager::parsePackage(const std::string& packageName) {
+    StringVector sv = locatePackage(packageName);
+
+    for (unsigned i = 0; i < sv.size(); ++i) {
+      parseFile(sv.at(i));
+    }
+
+    // for each decl in the package. reference it into the package.
+    PackagePtr pkg = package(packageName);
+
+
+    ASTMap::iterator it;
+    for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {
+      qiLogVerbose() << "Visiting: " << it->first;
+      visitNode(it->second, boost::bind<void>(&importExportDeclVisitor, _1, _2, boost::ref(pkg)));
+    }
+    pkg->dump();
+
   }
 
   /**
@@ -180,22 +207,7 @@ namespace qilang {
   void PackageManager::anal(const std::string &packageName) {
     qiLogVerbose() << "SemAnal pkg:" << packageName;
 
-    StringVector sv = locatePackage(packageName);
-
-    for (unsigned i = 0; i < sv.size(); ++i) {
-      parseFile(sv.at(i));
-    }
-
-    // for each decl in the package. reference it into the package.
-    PackagePtr pkg = package(packageName);
-
-
-    ASTMap::iterator it;
-    for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {
-      qiLogVerbose() << "Visiting: " << it->first;
-      visitNode(it->second, boost::bind<void>(&exportedDeclVisitor, _1, _2, boost::ref(pkg)));
-    }
-    pkg->dump();
+    parsePackage(packageName);
   }
 
 };

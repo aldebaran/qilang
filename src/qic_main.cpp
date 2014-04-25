@@ -6,6 +6,7 @@
 */
 
 #include <iostream>
+#include <qi/application.hpp>
 #include <qi/log.hpp>
 #include <fstream>
 #include <qilang/node.hpp>
@@ -18,6 +19,8 @@ namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
+  qi::Application app(argc, argv);
+
   po::options_description desc("qilang options");
   desc.add_options()
       ("help,h", "produce help message")
