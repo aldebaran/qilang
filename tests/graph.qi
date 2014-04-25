@@ -1,3 +1,5 @@
+package tests
+
 interface Audio.AudioDevice
   prop titi(Int)
 

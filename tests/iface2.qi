@@ -1,5 +1,5 @@
+package tests
 
-package titi
 from tutu import *
 from tutu import toto
 from tutu import tutu, toto

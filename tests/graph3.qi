@@ -1,3 +1,5 @@
+package tests
+
 object Graph "g"
   direction: "forward"
   directions: "forwardd"
