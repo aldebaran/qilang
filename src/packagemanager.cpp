@@ -10,6 +10,10 @@
 #include <qilang/parser.hpp>
 #include <qilang/visitor.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/filesystem.hpp>
+#include <qi/qi.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace qilang {
 
@@ -18,7 +22,6 @@ namespace qilang {
       case NodeType_Package: {
         PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
         result.push_back(tnode->name);
-        qiLogInfo() << "found pkg:" << tnode->name;
         break;
       } default:
         break;
@@ -65,7 +68,22 @@ namespace qilang {
     return it->second;
   }
 
+  //check the path of a file is correct. (package match)
+  //return the fullpath of the package
+  static std::string checkPackagePath(const std::string& filename, const std::string& package)
+  {
+    fs::path p(filename, qi::unicodeFacet());
+
+    std::string par = p.parent_path().filename().string(qi::unicodeFacet());
+    if (par != package)
+      throw std::runtime_error("Error: '" + filename + "' define package '" + package +
+                               "' but the parent folder is not correct: '" + par + "'. Package and directory should match");
+    return fs::absolute(p.parent_path().parent_path()).string(qi::unicodeFacet());
+  }
+
   NodePtrVector PackageManager::parseFile(const std::string& filename) {
+    qiLogVerbose() << "Parsing file: " << filename;
+
     NodePtrVector ret = qilang::parse(filename);
     _sources[filename] = ret;
 
@@ -74,7 +92,11 @@ namespace qilang {
 
     if (sv.size() != 1)
       throw std::runtime_error("0 or >1 package definition");
+
     std::string pkgname = sv[0];
+
+    std::string path = checkPackagePath(filename, pkgname);
+    addInclude(path);
 
     addPackage(pkgname);
     package(pkgname)->setContent(filename, ret);
@@ -82,8 +104,57 @@ namespace qilang {
   }
 
 
-  static void findFileOfPackage(const std::string& package) {
+  static bool locateFileInPackage(const std::string& path, const std::string& package, StringVector* result) {
+    fs::directory_iterator dit(fs::path(path, qi::unicodeFacet()));
+    bool ret = false;
+    for (; dit != fs::directory_iterator(); ++dit) {
+      fs::path p = *dit;
+
+      if (fs::is_directory(p)) {
+        StringVector sv;
+        bool b = locateFileInPackage(p.string(qi::unicodeFacet()), package, &sv);
+        if (b) {
+          result->insert(result->end(), sv.begin(), sv.end());
+          ret = true;
+        }
+      }
+      if (fs::is_regular_file(p)) {
+        if (p.extension() == ".qi") {
+          qiLogVerbose() << "locate file in '" << package << "' found:" << p.string(qi::unicodeFacet());
+          result->push_back(p.string(qi::unicodeFacet()));
+          ret = true;
+        }
+      }
+    }
+    return ret;
   }
+
+  void         PackageManager::addInclude(const std::string& include) {
+    if (std::find(_includes.begin(), _includes.end(), include) == _includes.end())
+      _includes.insert(_includes.begin(), include);
+  }
+
+  StringVector PackageManager::locatePackage(const std::string& pkgName) {
+    StringVector ret;
+
+    for (unsigned i = 0; i < _includes.size(); ++i) {
+      fs::path p(_includes.at(i), qi::unicodeFacet());
+      fs::directory_iterator dit(p);
+
+      for (; dit != fs::directory_iterator(); ++dit) {
+        fs::path pd = *dit;
+        if (fs::is_directory(pd) && pd.filename().string(qi::unicodeFacet()) == pkgName) {
+          bool b = locateFileInPackage(fs::absolute(pd).string(qi::unicodeFacet()), pkgName, &ret);
+          if (b) {
+            qiLogVerbose() << "Found pkg '" << pkgName << "'";
+            return ret;
+          }
+        }
+      }
+    }
+    return ret;
+  }
+
 
   /**
    * @brief PackageManager::parsePackage
@@ -96,10 +167,28 @@ namespace qilang {
     // locate the package...
   }
 
+  /**
+   * @brief PackageManager::anal
+   * @param packageName
+   *
+   * let's annalyse what we have..
+   * precond: we have a list of files already parsed in the asked package.
+   *
+   * first pass: we find all exported symbols of a package
+   * second pass: we resolve all TypeExpr
+   */
   void PackageManager::anal(const std::string &packageName) {
-    qiLogVerbose() << "Analysing pkg:" << packageName;
+    qiLogVerbose() << "SemAnal pkg:" << packageName;
+
+    StringVector sv = locatePackage(packageName);
+
+    for (unsigned i = 0; i < sv.size(); ++i) {
+      parseFile(sv.at(i));
+    }
+
     // for each decl in the package. reference it into the package.
     PackagePtr pkg = package(packageName);
+
 
     ASTMap::iterator it;
     for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {

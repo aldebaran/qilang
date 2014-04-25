@@ -67,7 +67,14 @@ namespace qilang {
 
 
   /**
+   *  PackageManager...
    *
+   *  goals? gain knowledge about package and vars. (semantic pass)
+   *
+   *  we have files to compile...
+   *
+   *  we need to find the package they belong. we need to parse all files of the package.
+   *  we need to parse all dependents packages.
    *
    */
   class QILANG_API PackageManager {
@@ -89,14 +96,16 @@ namespace qilang {
     NodePtrVector ast(const std::string& filename);
     PackagePtr    package(const std::string& packagename);
 
-    void         setCustomIncludes(const StringVector& includes) { _includes = includes; }
-    StringVector customIncludes() const                          { return _includes; }
+    void         addInclude(const std::string& include);
+    void         setIncludes(const StringVector& includes) { _includes = includes; }
+    StringVector includes() const                          { return _includes; }
 
-    //StringVector packagePaths() const;
+    //return all the files composing a package  (their may be false)
+    StringVector locatePackage(const std::string& pkgName);
   protected:
     PackagePtrMap _packages;
     ASTMap        _sources;
-    StringVector  _packagespath;
+    //StringVector  _packagespath;
     StringVector  _includes;
   };
 

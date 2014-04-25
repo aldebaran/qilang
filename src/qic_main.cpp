@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   if (vm.count("include"))
     includes = vm["include"].as< std::vector<std::string> >();
 
-  pm.setCustomIncludes(includes);
+  pm.setIncludes(includes);
 
   files = vm["input-file"].as< std::vector<std::string> >();
   for (int i = 0; i < files.size(); ++i) {
