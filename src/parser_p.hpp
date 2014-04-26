@@ -5,38 +5,63 @@
 ** Copyright (C) 2014 Aldebaran Robotics
 */
 
-#ifndef  PARSER_P_HPP_
-# define PARSER_P_HPP_
+#ifndef  QILANG_PARSER_P_HPP_
+# define QILANG_PARSER_P_HPP_
 
 #include <string>
 #include <qilang/node.hpp>
+#include <qilang/parser.hpp>
 #include "location.hh"
 #include "grammar.tab.hpp"
 
 
 namespace qilang {
-  class QILANG_API Parser {
+
+  struct ParserContext {
+  };
+
+  class ParseException {
   public:
-    Parser(std::istream *stream, const std::string &filename);
+    ParseException(const Location& loc, const std::string& what)
+      : _loc(loc)
+      , _what(what)
+    {}
+    const Location&    loc() const  { return _loc; }
+    const std::string& what() const { return _what; }
+
+  protected:
+    Location    _loc;
+    std::string _what;
+  };
+
+  class QILANG_API Parser: public ParserContext {
+  public:
+    Parser(const FileReaderPtr &file);
     ~Parser();
 
-    NodePtrVector parse();
+    void parse();
+
+    ParseResult   result();
 
     void setCurrentPackage(const std::string& pkg);
     const std::string& currentPackage();
 
-  public:
+    //parser context
+    FileReaderPtr        file;
+    ParseResult          _result;
+    bool                 _parsed;
+
     std::string          package;
     yy::location         loc;
+
+    // flex / bison struct
     void*                scanner;  // flex context
-    std::vector<NodePtr> root;     // parser output
-    std::istream*        in;       // input stream
-    std::string          filename;
     yy::parser           parser;
+
   };
 
-  Location loc(const yy::location& loc);
-  std::string getErrorLine(const yy::location& loc);
+  Location makeLocation(const yy::location& loc);
+  std::string getErrorLine(const std::string& filename, const Location& loc);
 
 }
 

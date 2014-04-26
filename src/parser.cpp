@@ -21,9 +21,9 @@ void qilang_set_debug(int debug_flag, void* yyscanner);
 
 namespace qilang {
 
-  Parser::Parser(std::istream *stream, const std::string &filename)
-    : in(stream)
-    , filename(filename)
+  Parser::Parser(const FileReaderPtr &file)
+    : file(file)
+    , _parsed(false)
     , parser(this)
   {
     qilang_lex_init(&scanner);
@@ -45,9 +45,11 @@ namespace qilang {
     return package;
   }
 
-  NodePtrVector Parser::parse() {
-
-    loc.initialize(&filename);
+  void Parser::parse() {
+    if (_parsed)
+      return;
+    _parsed = true;
+    loc.initialize();
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");
     if (!pdebug.empty() && pdebug != "0") {
       parser.set_debug_level(1);
@@ -62,30 +64,69 @@ namespace qilang {
     else {
       qilang_set_debug(0, scanner);
     }
-    parser.parse();
-    return root;
+    try {
+      parser.parse();
+    } catch (const ParseException& pe) {
+      _result.ast.clear();
+      _result.messages.push_back(Message(MessageType_Error, pe.what(), file->filename(), pe.loc()));
+    }
   }
 
-  Location loc(const yy::location& loc) {
+  void ParseResult::printMessage(std::ostream &out) {
+
+    for (unsigned i = 0; i < messages.size(); ++i) {
+      Message& msg = messages.at(i);
+
+      switch (msg.type()) {
+        case MessageType_Error:
+          out << "error: ";
+          break;
+        case MessageType_Warning:
+          out << "warning: ";
+          break;
+        case MessageType_Info:
+          out << "info: ";
+          break;
+        default:
+          break;
+      }
+
+      if (!msg.filename().empty())
+        out << msg.filename();
+      if (msg.loc().beg_line >= 0)
+        out << msg.loc().beg_line << ":" << msg.loc().beg_column;
+      out << ":" << msg.what();
+      out << std::endl;
+      out << qilang::getErrorLine(msg.filename(), msg.loc());
+    }
+  }
+
+  ParseResult Parser::result() {
+    parse();
+    return _result;
+  }
+
+  Location makeLocation(const yy::location& loc) {
     return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
   }
 
-  std::string getErrorLine(const yy::location& loc) {
+  std::string getErrorLine(const std::string& filename, const Location& loc) {
     std::ifstream is;
     std::string   ret;
-    if (loc.begin.filename == 0)
-      return "";
-    is.open(loc.begin.filename->c_str());
+
+    is.open(filename.c_str());
+    if (!is.is_open())
+      return std::string();
 
     std::string ln;
-    unsigned int lico = loc.begin.line;
+    unsigned int lico = loc.beg_line;
     for (int i = 0; i < lico; ++i)
       getline(is, ln);
     ret = "in:";
     ret += ln + "\n";
     ret += "   ";
-    unsigned int cbeg = loc.begin.column;
-    unsigned int cend = loc.end.column;
+    unsigned int cbeg = loc.beg_column;
+    unsigned int cend = loc.end_column;
     int count = cend - cbeg;
     int space = cbeg;
     space = space < 0 ? 0 : space;
@@ -98,19 +139,22 @@ namespace qilang {
     return ret;
   }
 
-  NodePtrVector parse(const std::string &filename) {
-    std::ifstream is;
-    is.open(filename.c_str());
-    if (!is.is_open())
-      throw std::runtime_error("Can't open file: " + filename);
+  //public interface
+  ParseResult parse(const FileReaderPtr& file) {
+    ParseResult ret;
 
-    Parser p(&is, filename);
-    return p.parse();
+    if (!file->isOpen()) {
+      ret.messages.push_back(Message(MessageType_Error, "Can't open file", file->filename()));
+      return ret;
+    }
+    Parser p(file);
+    return p.result();
   }
 
-  NodePtrVector parse(std::istream *stream, const std::string& filename) {
-    Parser p(stream, filename);
-    return p.parse();
-  }
+
+//  std::stringstream ss;
+//  ss << "error: " << loc << ": " << msg << std::endl;
+//  ss << qilang::getErrorLine(loc);
+
 
 }

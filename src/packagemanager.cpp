@@ -91,19 +91,19 @@ namespace qilang {
     return fs::absolute(p.parent_path().parent_path()).string(qi::unicodeFacet());
   }
 
-  NodePtrVector PackageManager::parseFile(const std::string& fname) {
-    std::string filename = fs::absolute(fs::path(fname, qi::unicodeFacet())).string(qi::unicodeFacet());
+  ParseResult PackageManager::parseFile(const FileReaderPtr& file) {
+    std::string filename = fs::absolute(fs::path(file->filename(), qi::unicodeFacet())).string(qi::unicodeFacet());
     qiLogVerbose() << "Parsing file: " << filename;
 
     if (_sources.find(filename) != _sources.end()) {
       qiLogVerbose() << "already parsed, skipping '" << filename << "'";
       return _sources[filename];
     }
-    NodePtrVector ret = qilang::parse(filename);
+    ParseResult ret = qilang::parse(file);
     _sources[filename] = ret;
 
     std::string pkgname;
-    visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(pkgname)));
+    visitNode(ret.ast, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(pkgname)));
 
     //TODO: handle error location...
     if (pkgname.empty())
@@ -113,7 +113,7 @@ namespace qilang {
     addInclude(path);
 
     addPackage(pkgname);
-    package(pkgname)->setContent(filename, ret);
+    package(pkgname)->setContent(filename, ret.ast);
     return ret;
   }
 
@@ -181,7 +181,7 @@ namespace qilang {
     StringVector sv = locatePackage(packageName);
 
     for (unsigned i = 0; i < sv.size(); ++i) {
-      parseFile(sv.at(i));
+      parseFile(newFileReader(sv.at(i)));
     }
 
     // for each decl in the package. reference it into the package.

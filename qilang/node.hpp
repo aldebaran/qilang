@@ -23,15 +23,15 @@ class Location {
 public:
   Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1)
     : beg_line(bline)
-    , beg_columns(bcols)
+    , beg_column(bcols)
     , end_line(eline)
-    , end_columns(ecols)
+    , end_column(ecols)
   {}
 
   int beg_line;
-  int beg_columns;
+  int beg_column;
   int end_line;
-  int end_columns;
+  int end_column;
 };
 
 class Node;
@@ -563,7 +563,7 @@ public:
 
 class QILANG_API PackageNode : public StmtNode {
 public:
-  explicit PackageNode(const std::string& packageName, const Location& loc)
+  explicit PackageNode(const Location& loc, const std::string& packageName)
     : StmtNode(NodeType_Package, loc)
     , name(packageName)
   {}

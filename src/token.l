@@ -75,22 +75,22 @@
 
   static void qilang_readsome(qilang::Parser* p, char* buf, size_t *result, size_t max_size)
   {
-    if (p->in->eof() || p->in->fail()) {
+    if (p->file->in().eof() || p->file->in().fail()) {
       *result = 0;
       return;
     }
-    p->in->readsome(buf, max_size);
-    if (!p->in->gcount() && !p->in->eof())
+    p->file->in().readsome(buf, max_size);
+    if (!p->file->in().gcount() && !p->file->in().eof())
     {
-      p->in->peek();
-      p->in->readsome(buf, max_size);
+      p->file->in().peek();
+      p->file->in().readsome(buf, max_size);
     }
-    if (p->in->bad())
+    if (p->file->in().bad())
     {
       *result = -1;
       return;
     }
-    *result = p->in->gcount();
+    *result = p->file->in().gcount();
   }
 
 #define yyterminate()                                   \

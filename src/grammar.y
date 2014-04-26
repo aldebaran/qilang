@@ -39,6 +39,9 @@
   namespace qilang {
     class Parser;
   }
+
+  #define NODE(TYPE, LOC, ...) \
+    boost::make_shared< qilang::TYPE >(qilang::makeLocation(LOC), __VA_ARGS__)
 }
 
 %code {
@@ -141,7 +144,7 @@
 %type<qilang::NodePtrVector> toplevel;
 toplevel:
   %empty         {}
-| toplevel.1 { context->root.insert(context->root.end(), $1.begin(), $1.end()); }
+| toplevel.1 { context->_result.ast.insert(context->_result.ast.end(), $1.begin(), $1.end()); }
 
 %type<qilang::NodePtrVector> toplevel.1;
 toplevel.1:
@@ -158,14 +161,13 @@ toplevel_def:
 | struct  { $$ = $1; }
 | exp     { $$ = $1; }
 
-
 // #######################################################################################
 // # PACKAGE MANAGEMENT
 // #######################################################################################
 
 %type<qilang::NodePtr> package;
 package:
-  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2, qilang::loc(@$));
+  PACKAGE ID                       { $$ = NODE(PackageNode, @$, $2);
                                      context->setCurrentPackage($2);
 
                                    }
@@ -455,11 +457,7 @@ list_defs.1:
 
 %%
 
-
 void yy::parser::error(const yy::parser::location_type& loc, const std::string& msg)
 {
-  std::stringstream ss;
-  ss << "error: " << loc << ": " << msg << std::endl;
-  ss << qilang::getErrorLine(loc);
-  throw std::runtime_error(ss.str());
+  throw qilang::ParseException(qilang::makeLocation(loc), msg);
 }

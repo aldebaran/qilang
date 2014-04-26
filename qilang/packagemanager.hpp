@@ -10,6 +10,7 @@
 
 #include <qilang/api.hpp>
 #include <qilang/node.hpp>
+#include <qilang/parser.hpp>
 #include <qilang/formatter.hpp>
 #include <map>
 #include <boost/make_shared.hpp>
@@ -18,6 +19,7 @@ qiLogCategory("qilang.pm");
 
 namespace qilang {
 
+  typedef std::map<std::string, ParseResult>   ParseResultMap;
   typedef std::map<std::string, NodePtrVector> ASTMap;
   typedef std::map<std::string, NodePtr>       NodeMap;
 
@@ -88,7 +90,7 @@ namespace qilang {
   public:
     PackageManager() {}
 
-    NodePtrVector parseFile(const std::string& filename);
+    ParseResult parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
     PackagePtr addPackage(const std::string& name) {
@@ -110,8 +112,8 @@ namespace qilang {
     //return all the files composing a package  (their may be false)
     StringVector locatePackage(const std::string& pkgName);
   protected:
-    PackagePtrMap _packages;
-    ASTMap        _sources;
+    PackagePtrMap  _packages;
+    ParseResultMap _sources;
     //StringVector  _packagespath;
     StringVector  _includes;
   };

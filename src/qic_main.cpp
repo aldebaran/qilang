@@ -75,22 +75,24 @@ int main(int argc, char *argv[])
   for (int i = 0; i < files.size(); ++i) {
     std::cout << "Generating " << codegen << " for " << files.at(i) << std::endl;
 
-    qilang::NodePtrVector rootnode;
+    qilang::ParseResult pr;
     try {
-      rootnode = pm.parseFile(files.at(i));
+      pr = pm.parseFile(qilang::newFileReader(files.at(i)));
     } catch(const std::exception& e) {
       std::cout << e.what() << std::endl;
       exit(1);
     }
+    if (pr.hasError())
+      pr.printMessage(std::cout);
 
     if (codegen == "cppi")
-      *out << qilang::genCppObjectInterface(rootnode);
+      *out << qilang::genCppObjectInterface(pr.ast);
     else if (codegen == "cppr")
-      *out << qilang::genCppObjectRegistration(rootnode);
+      *out << qilang::genCppObjectRegistration(pr.ast);
     else if (codegen == "qilang")
-      *out << qilang::format(rootnode);
+      *out << qilang::format(pr.ast);
     else if (codegen == "sexpr")
-      *out << qilang::formatAST(rootnode);
+      *out << qilang::formatAST(pr.ast);
     }
   if (codegen == "testgros") {
     pm.anal();
