@@ -90,11 +90,11 @@ namespace qilang {
     NodePtrVector ast;
     MessageVector messages;
 
-    bool hasError() {
+    bool hasError() const {
       return messages.size();
     }
 
-    void printMessage(std::ostream& out);
+    void printMessage(std::ostream& out) const;
   };
 
   QILANG_API ParseResult parse(const FileReaderPtr& filename);

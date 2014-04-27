@@ -142,6 +142,12 @@ std::vector<std::string> splitPkgName(const std::string& name) {
   return ret;
 }
 
+std::string pkgNameToDir(const std::string& name) {
+  std::string ret(name);
+  boost::replace_all(ret, ".", "/");
+  return ret;
+}
+
 std::string formatNs(const std::string& package) {
   std::string ret;
   std::vector<std::string> v;

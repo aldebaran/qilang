@@ -66,6 +66,7 @@ namespace qilang {
 
 
   //std::string typeToCpp(TypeExprNode* type, bool constref=true);
+  std::string pkgNameToDir(const std::string& name);
   std::vector<std::string> splitPkgName(const std::string& name);
   std::string formatNs(const std::string& package);
 }

@@ -74,10 +74,10 @@ namespace qilang {
     }
   }
 
-  void ParseResult::printMessage(std::ostream &out) {
+  void ParseResult::printMessage(std::ostream &out) const {
 
     for (unsigned i = 0; i < messages.size(); ++i) {
-      Message& msg = messages.at(i);
+      const Message& msg = messages.at(i);
 
       out << msg.filename() << ":";
       out << msg.loc().beg_line << ":" << msg.loc().beg_column << ": ";

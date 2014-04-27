@@ -67,6 +67,9 @@ namespace qilang {
       }
     }
 
+    bool hasError() const;
+    void printMessage(std::ostream& os) const;
+
     std::string    _name;      // package name
     ParseResultMap _contents;  // map<filename, Nodes>  file of the package
     NodeMap        _exports;   // map<membername, Node> package exported symbol
@@ -96,6 +99,8 @@ namespace qilang {
     ParseResult parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
+    void parse(const std::string& fileOrPkg);
+
 
     void anal(const std::string& package = std::string());
 
@@ -108,6 +113,11 @@ namespace qilang {
 
     //return all the files composing a package  (their may be false)
     StringVector locatePackage(const std::string& pkgName);
+
+    bool hasError() const;
+    void printMessage(std::ostream& os) const;
+
+    void parseDir(const std::string &dirname);
 
   protected:
     PackagePtr addPackage(const std::string& name) {

@@ -131,7 +131,10 @@ namespace qilang {
 
   ParseResult PackageManager::_parseFile(const FileReaderPtr& file)
   {
-    std::string filename = fs::absolute(fs::path(file->filename(), qi::unicodeFacet())).string(qi::unicodeFacet());
+    fs::path fsfname = fs::path(file->filename(), qi::unicodeFacet());
+    std::string filename = fs::absolute(fsfname).string(qi::unicodeFacet());
+    if (!fs::is_regular_file(fsfname))
+      throw std::runtime_error(file->filename() + " is not a regular file");
     qiLogVerbose() << "Parsing file: " << filename;
     if (_sources.find(filename) != _sources.end()) {
       qiLogVerbose() << "already parsed, skipping '" << filename << "'";
@@ -145,24 +148,18 @@ namespace qilang {
   }
 
 
-  static bool locateFileInPackage(const std::string& path, const std::string& package, StringVector* result) {
+  static bool locateFileInDir(const std::string& path, StringVector* resultfile, StringVector* resultdir) {
     fs::directory_iterator dit(fs::path(path, qi::unicodeFacet()));
     bool ret = false;
     for (; dit != fs::directory_iterator(); ++dit) {
       fs::path p = *dit;
 
       if (fs::is_directory(p)) {
-        StringVector sv;
-        bool b = locateFileInPackage(p.string(qi::unicodeFacet()), package, &sv);
-        if (b) {
-          result->insert(result->end(), sv.begin(), sv.end());
-          ret = true;
-        }
+        resultdir->push_back(p.string(qi::unicodeFacet()));
       }
       if (fs::is_regular_file(p)) {
         if (p.extension() == ".qi") {
-          qiLogVerbose() << "locate file in '" << package << "' found:" << p.string(qi::unicodeFacet());
-          result->push_back(p.string(qi::unicodeFacet()));
+          resultfile->push_back(p.string(qi::unicodeFacet()));
           ret = true;
         }
       }
@@ -178,24 +175,45 @@ namespace qilang {
   }
 
   StringVector PackageManager::locatePackage(const std::string& pkgName) {
-    StringVector ret;
+
+    if (pkgName.empty())
+      throw std::runtime_error("empty package name");
+
+    fs::path pkgPath(pkgNameToDir(pkgName), qi::unicodeFacet());
 
     for (unsigned i = 0; i < _includes.size(); ++i) {
       fs::path p(_includes.at(i), qi::unicodeFacet());
-      fs::directory_iterator dit(p);
-
-      for (; dit != fs::directory_iterator(); ++dit) {
-        fs::path pd = *dit;
-        if (fs::is_directory(pd) && pd.filename().string(qi::unicodeFacet()) == pkgName) {
-          bool b = locateFileInPackage(fs::absolute(pd).string(qi::unicodeFacet()), pkgName, &ret);
-          if (b) {
-            qiLogVerbose() << "Found pkg '" << pkgName << "'";
-            return ret;
-          }
+      p /= pkgPath;
+      if (fs::is_directory(p))
+      {
+        StringVector retfile;
+        StringVector retdir;
+        bool b = locateFileInDir(p.string(qi::unicodeFacet()), &retfile, &retdir);
+        if (b) {
+          qiLogVerbose() << "Found pkg '" << pkgName << "'";
+          return retfile;
         }
       }
     }
-    return ret;
+    return StringVector();
+  }
+
+  bool PackageManager::hasError() const
+  {
+    PackagePtrMap::const_iterator it;
+    for (it = _packages.begin(); it != _packages.end(); ++it) {
+      if (it->second->hasError())
+        return true;
+    }
+    return false;
+  }
+
+  void PackageManager::printMessage(std::ostream &os) const
+  {
+    PackagePtrMap::const_iterator it;
+    for (it = _packages.begin(); it != _packages.end(); ++it) {
+      it->second->printMessage(os);
+    }
   }
 
 
@@ -207,7 +225,7 @@ namespace qilang {
    * a folder with a "pkgname".pkg.qi file
    */
   void PackageManager::parsePackage(const std::string& packageName) {
-
+    addPackage(packageName);
     PackagePtr pkg = package(packageName);
     if (pkg && pkg->_parsed) {
       qiLogVerbose() << "skipping pkg '" << packageName << "': already parsed";
@@ -228,6 +246,36 @@ namespace qilang {
     qiLogVerbose() << "parsed pkg '" << packageName << "'";
     pkg->_parsed = true;
     pkg->dump();
+  }
+
+  void PackageManager::parseDir(const std::string& dirname)
+  {
+    qiLogVerbose() << "parsing dir: " << dirname;
+    fs::path fsp(dirname, qi::unicodeFacet());
+    if (!fs::is_directory(fsp))
+      throw std::runtime_error(dirname + " is not a directory");
+
+    StringVector resdir;
+    StringVector resfile;
+    locateFileInDir(dirname, &resfile, &resdir);
+    for (unsigned i = 0; i < resfile.size(); ++i)
+      parseFile(newFileReader(resfile.at(i)));
+    for (unsigned i = 0; i < resdir.size(); ++i)
+      parseDir(dirname + "/" + resdir.at(i));
+  }
+
+  void PackageManager::parse(const std::string &fileOrPkg)
+  {
+    fs::path fsp(fileOrPkg, qi::unicodeFacet());
+    if (fs::is_regular_file(fsp)) {
+      parseFile(newFileReader(fileOrPkg));
+      return;
+    }
+    if (fs::is_directory(fsp)) {
+      parseDir(fileOrPkg);
+      return;
+    }
+    parsePackage(fileOrPkg);
   }
 
   /** parse all dependents packages
@@ -276,4 +324,23 @@ namespace qilang {
       }
     }
   }
+
+  bool Package::hasError() const
+  {
+    ParseResultMap::const_iterator it;
+    for (it = _contents.begin(); it != _contents.end(); ++it) {
+      if (it->second.hasError())
+        return true;
+    }
+    return false;
+  }
+
+  void Package::printMessage(std::ostream &os) const
+  {
+    ParseResultMap::const_iterator it;
+    for (it = _contents.begin(); it != _contents.end(); ++it) {
+      it->second.printMessage(os);
+    }
+  }
+
 };

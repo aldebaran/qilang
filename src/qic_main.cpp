@@ -77,13 +77,13 @@ int main(int argc, char *argv[])
 
     qilang::ParseResult pr;
     try {
-      pr = pm.parseFile(qilang::newFileReader(files.at(i)));
+      pm.parse(files.at(i));
     } catch(const std::exception& e) {
       std::cout << e.what() << std::endl;
       exit(1);
     }
-    if (pr.hasError())
-      pr.printMessage(std::cout);
+    if (pm.hasError())
+      pm.printMessage(std::cout);
 
     std::cout << " * Generation Done." << std::endl;
     if (codegen == "cppi")
