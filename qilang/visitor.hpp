@@ -177,11 +177,8 @@ namespace qilang {
   }
 
   NodePtrVector findNode(NodePtrVector nodes, NodeType type) {
-    NodePtrVector::iterator it;
     NodePtrVector result;
-    for (it = nodes.begin(); it != nodes.end(); ++it) {
-      qilang::visitNode(nodes, boost::bind<void>(&findNodeVisitor, _1, _2, type, boost::ref(result)));
-    }
+    qilang::visitNode(nodes, boost::bind<void>(&findNodeVisitor, _1, _2, type, boost::ref(result)));
     return result;
   }
 

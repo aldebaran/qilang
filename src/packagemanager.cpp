@@ -17,19 +17,13 @@ namespace fs = boost::filesystem;
 
 namespace qilang {
 
-  void packageVisitor(const NodePtr& parent, const NodePtr& node, std::string& result) {
+  std::string extractPackageName(const NodePtr& node) {
     switch(node->type()) {
       case NodeType_Package: {
         PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
-        if (!result.empty()) {
-          qiLogInfo() << "pkg:" << tnode->loc().beg_line;
-          throw std::runtime_error("double declaration of package");
-        }
-
-        result = tnode->name;
-        break;
+        return tnode->name;
       } default:
-        break;
+        throw std::runtime_error("node is not a package");
     };
   }
 
@@ -103,8 +97,24 @@ namespace qilang {
     _sources[filename] = ret;
 
     std::string pkgname;
-    visitNode(ret.ast, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(pkgname)));
+    NodePtrVector result;
+    result = findNode(ret.ast, NodeType_Package);
+    if (result.size() == 0) {
+      ret.messages.push_back(Message(MessageType_Error, "missing package declaration", file->filename()));
+      return ret;
+    }
 
+    if (result.size() > 1) {
+      for (unsigned i = 1; i < result.size(); ++i) {
+        std::cout << "i:" << i << " => " << qilang::formatAST(result.at(i)) << std::endl;
+        ret.messages.push_back(Message(MessageType_Error, "extra package declaration", file->filename(), result.at(i)->loc()));
+
+      }
+      ret.messages.push_back(Message(MessageType_Info, "previous declared here", file->filename(), result.at(0)->loc()));
+      return ret;
+    }
+
+    pkgname = extractPackageName(result.at(0));
     //TODO: handle error location...
     if (pkgname.empty())
       throw std::runtime_error("missing package definition");
