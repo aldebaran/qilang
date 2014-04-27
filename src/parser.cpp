@@ -51,7 +51,7 @@ namespace qilang {
     if (_parsed)
       return;
     _parsed = true;
-    loc.initialize();
+    loc.initialize(const_cast<std::string*>(&file->filename()));
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");
     if (!pdebug.empty() && pdebug != "0") {
       parser.set_debug_level(1);
@@ -80,7 +80,7 @@ namespace qilang {
       const Message& msg = messages.at(i);
 
       out << msg.filename() << ":";
-      out << msg.loc().beg_line << ":" << msg.loc().beg_column << ": ";
+      out << msg.loc().filename << ":" << msg.loc().beg_line << ":" << msg.loc().beg_column << ": ";
 
       switch (msg.type()) {
         case MessageType_Error:
@@ -107,7 +107,12 @@ namespace qilang {
   }
 
   Location makeLocation(const yy::location& loc) {
-    return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+    if (loc.begin.filename)
+      return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column, *loc.begin.filename);
+    else {
+      qiLogWarning() << "missing filename for location";
+      return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+    }
   }
 
   std::string getErrorLine(const std::string& filename, const Location& loc) {

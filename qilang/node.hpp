@@ -21,17 +21,19 @@ namespace qilang {
 
 class Location {
 public:
-  Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1)
+  Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1, const std::string& filename = std::string())
     : beg_line(bline)
     , beg_column(bcols)
     , end_line(eline)
     , end_column(ecols)
+    , filename(filename)
   {}
 
   int beg_line;
   int beg_column;
   int end_line;
   int end_column;
+  std::string filename;
 };
 
 class Node;
