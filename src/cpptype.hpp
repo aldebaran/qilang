@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <qilang/node.hpp>
+#include <qilang/packagemanager.hpp>
 #include "formatter_p.hpp"
 
 namespace qilang {
@@ -65,6 +66,9 @@ namespace qilang {
     void visitExpr(ConstDataExprNode* node);
   };
 
+
+  // if self == true then and include on self is returned
+  StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult& nodes, bool self);
 
   //std::string typeToCpp(TypeExprNode* type, bool constref=true);
   std::string pkgNameToDir(const std::string& name);

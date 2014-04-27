@@ -15,7 +15,6 @@
 #include <map>
 #include <boost/make_shared.hpp>
 
-qiLogCategory("qilang.pm");
 
 namespace qilang {
 
@@ -32,18 +31,21 @@ namespace qilang {
    */
   class QILANG_API Package {
   public:
+
     Package(const std::string& name)
       : _name(name)
       , _parsed(false)
     {}
 
     void addImport(const std::string& import, const NodePtr& node) {
+      qiLogCategory("qilang.pm");
       qiLogVerbose() << "Added import '" << import << "' to package " << _name;
       //ok add the symbol
       _imports[import].push_back(node);
     }
 
     void addMember(const std::string& member, const NodePtr& node) {
+      qiLogCategory("qilang.pm");
       NodeMap::iterator it;
       for (it = _exports.begin(); it != _exports.end(); ++it) {
         if (it->first == member)
@@ -67,13 +69,30 @@ namespace qilang {
       }
     }
 
+    StringVector files() {
+      ParseResultMap::const_iterator it;
+      StringVector ret;
+      for (it = _contents.begin(); it != _contents.end(); ++it) {
+        ret.push_back(it->first);
+      }
+      return ret;
+    }
+
+    std::string fileFromExport(const std::string& name) {
+      NodeMap::const_iterator it = _exports.find(name);
+
+      if (it == _exports.end())
+        throw std::runtime_error("export symbol '" + name + "' not found in package '" + this->_name + "'");
+      return _exports.at(name)->loc().filename;
+    }
+
     bool hasError() const;
     void printMessage(std::ostream& os) const;
 
     std::string    _name;      // package name
-    ParseResultMap _contents;  // map<filename, Nodes>  file of the package
+    ParseResultMap _contents;  // map<filename, ParseResult>  file of the package
     NodeMap        _exports;   // map<membername, Node> package exported symbol
-    ASTMap         _imports;   // map<pkgname, Nodes>   list of depends packages
+    ASTMap         _imports;   // map<pkgname, Nodes>   list of declared imports
     bool           _parsed;    // true if each files of the package are parsed
   };
 
@@ -135,6 +154,8 @@ namespace qilang {
     FilenameToPackageMap _sources;  // abs filename , packagename
     StringVector         _includes;
   };
+  typedef boost::shared_ptr<PackageManager> PackageManagerPtr;
+  inline PackageManagerPtr newPackageManager() { return boost::make_shared<PackageManager>(); }
 
 }
 

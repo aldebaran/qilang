@@ -15,6 +15,7 @@
 #include <qilang/packagemanager.hpp>
 #include <boost/program_options.hpp>
 
+qiLogCategory("qic");
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
@@ -64,12 +65,12 @@ int main(int argc, char *argv[])
   }
 
 
-  qilang::PackageManager pm;
+  qilang::PackageManagerPtr pm = qilang::newPackageManager();
 
   if (vm.count("include"))
     includes = vm["include"].as< std::vector<std::string> >();
 
-  pm.setIncludes(includes);
+  pm->setIncludes(includes);
 
   files = vm["input-file"].as< std::vector<std::string> >();
   for (int i = 0; i < files.size(); ++i) {
@@ -77,26 +78,35 @@ int main(int argc, char *argv[])
 
     qilang::ParseResult pr;
     try {
-      pm.parse(files.at(i));
+      pr = pm->parseFile(qilang::newFileReader(files.at(i)));
     } catch(const std::exception& e) {
       std::cout << e.what() << std::endl;
       exit(1);
     }
-    if (pm.hasError())
-      pm.printMessage(std::cout);
-
+    qiLogInfo() << "File: " << pr.filename;
+    pm->anal();
+    if (pr.hasError()) {
+      qiLogError() << "PR";
+      pr.printMessage(std::cout);
+      return 1;
+    }
+    if (pm->hasError()) {
+      qiLogError() << "PM";
+      pm->printMessage(std::cout);
+      return 1;
+    }
     std::cout << " * Generation Done." << std::endl;
-    if (codegen == "cppi")
-      *out << qilang::genCppObjectInterface(pr.ast);
+    if      (codegen == "cppi")
+      *out << qilang::genCppObjectInterface(pm, pr);
     else if (codegen == "cppr")
-      *out << qilang::genCppObjectRegistration(pr.ast);
+      *out << qilang::genCppObjectRegistration(pm, pr);
     else if (codegen == "qilang")
       *out << qilang::format(pr.ast);
     else if (codegen == "sexpr")
       *out << qilang::formatAST(pr.ast);
     }
   if (codegen == "testgros") {
-    pm.anal();
+    pm->anal();
   }
   of.close();
   return 0;

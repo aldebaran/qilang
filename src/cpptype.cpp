@@ -8,6 +8,12 @@
 #include "cpptype.hpp"
 #include "formatter_p.hpp"
 #include <boost/algorithm/string.hpp>
+#include <qilang/visitor.hpp>
+#include <qi/qi.hpp>
+#include <qi/path.hpp>
+
+qiLogCategory("qilang.cpp");
+
 
 namespace qilang {
 
@@ -189,5 +195,128 @@ std::string formatNs(const std::string& package) {
   return ret;
 }
 
+template <typename T, typename U>
+void pushIfNot(std::vector<T>& v, const U& elt) {
+  if (std::find(v.begin(), v.end(), elt) == v.end())
+    v.push_back(elt);
+}
+
+static StringVector filenameFromImport(const PackagePtr& pkg, ImportNode* tnode) {
+  StringVector ret;
+  //for each symbol in importnode
+  if (tnode->importType == ImportType_Package || tnode->importType == ImportType_All) {
+    return pkg->files();
+  }
+  for (unsigned i = 0; i < tnode->imports.size(); ++i) {
+    std::string& name = tnode->imports.at(i);
+    pushIfNot(ret, pkg->fileFromExport(name));
+  }
+  return ret;
+}
+
+static std::string stripQiLangExtension(const std::string& name)
+{
+  if (boost::ends_with(name, ".idl.qi"))
+    return name.substr(0, name.size() - 7);
+  if (boost::ends_with(name, ".qi"))
+    return name.substr(0, name.size() - 3);
+  return name;
+}
+
+static std::string qiLangToCppInclude(const PackagePtr& pkg, const std::string& filename) {
+  qi::Path pkgpath(pkgNameToDir(pkg->_name));
+  qiLogInfo() << "PKG: " << pkg->_name << " : " << pkgNameToDir(pkg->_name) << " FILE: " << filename << "," << stripQiLangExtension(filename);
+  qi::Path fpath(stripQiLangExtension(filename));
+  return "<" + (std::string)(pkgpath / fpath.filename()) + ".hpp>";
+}
+
+static StringVector cppFilenameFromImport(const PackagePtr& pkg, ImportNode* tnode) {
+  StringVector ret;
+  StringVector fnames = filenameFromImport(pkg, tnode);
+
+  for (unsigned j = 0; j < fnames.size(); ++j) {
+    std::string& name = fnames.at(j);
+    ret.push_back(qiLangToCppInclude(pkg, name));
+  }
+  return ret;
+}
+
+StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult& pr, bool self) {
+  StringVector  includes;
+  NodePtrVector imports;
+  NodePtrVector typeExprs;
+  NodePtrVector decls;
+
+  if (self) {
+    pushIfNot(includes, qiLangToCppInclude(pm->package(pr.package), pr.filename) + " //self");
+  }
+  //for each import generate the include.
+  imports = findNode(pr.ast, NodeType_Import);
+  for (unsigned i = 0; i < imports.size(); ++i) {
+    ImportNode* tnode = static_cast<ImportNode*>(imports.at(i).get());
+    PackagePtr pkg = pm->package(tnode->name);
+    StringVector sv = cppFilenameFromImport(pkg, tnode);
+    for (unsigned j = 0; j < sv.size(); ++j) {
+      pushIfNot(includes, sv.at(i));
+    }
+  }
+
+  //for each TypeExpr generate include as appropriated  (for builtin types)
+  typeExprs = findNode(pr.ast, NodeKind_TypeExpr);
+  for (unsigned i = 0; i < typeExprs.size(); ++i) {
+    NodePtr& node = typeExprs.at(i);
+    switch (node->type()) {
+      case NodeType_TupleTypeExpr:
+        throw std::runtime_error("mierda");
+      case NodeType_ListTypeExpr:
+        pushIfNot(includes, "<vector>");
+        break;
+      case NodeType_MapTypeExpr:
+        pushIfNot(includes, "<map>");
+        break;
+      case NodeType_BuiltinTypeExpr: {
+        BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(node.get());
+        if (tnode->value == "str") {
+          pushIfNot(includes, "<string>");
+        } else if (tnode->value == "any") {
+          pushIfNot(includes, "<qitype/anyvalue.hpp>");
+        } else if (tnode->value == "obj") {
+          pushIfNot(includes, "<qitype/anyobject.hpp>");
+        } else {
+          pushIfNot(includes, "<qi/types.hpp>");
+        }
+        break;
+      }
+      case NodeType_CustomTypeExpr: {
+        CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(node.get());
+        //TODO
+        qiLogWarning() << "Unimplemented custom type include detector";
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  //for each TypeExpr generate include as appropriated  (for builtin types)
+  decls = findNode(pr.ast, NodeKind_Decl);
+  for (unsigned i = 0; i < decls.size(); ++i) {
+    NodePtr& node = decls.at(i);
+    switch (node->type()) {
+      case NodeType_EmitDecl:
+        pushIfNot(includes, "<qitype/signal.hpp>");
+        break;
+      case NodeType_PropDecl:
+        pushIfNot(includes, "<qitype/property.hpp>");
+        break;
+      case NodeType_InterfaceDecl:
+        pushIfNot(includes, "<qitype/anyobject.hpp>");
+        break;
+      default:
+        break;
+    }
+  }
+  return includes;
+}
 
 }

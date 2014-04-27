@@ -11,14 +11,44 @@
 #include <qilang/api.hpp>
 #include <qilang/node.hpp>
 #include <sstream>
+#include <fstream>
+#include <boost/make_shared.hpp>
 
 namespace qilang {
 
-  QILANG_API std::string genCppObjectInterface(const NodePtr& node);
-  QILANG_API std::string genCppObjectInterface(const NodePtrVector& nodes);
+  class PackageManager;
+  class ParseResult;
+  typedef boost::shared_ptr<PackageManager> PackageManagerPtr;
 
-  QILANG_API std::string genCppObjectRegistration(const NodePtr& node);
-  QILANG_API std::string genCppObjectRegistration(const NodePtrVector& nodes);
+  class QILANG_API FileWriter {
+  public:
+    explicit FileWriter(const std::string& filename)
+      : _filename(filename)
+      , _fileout(filename.c_str())
+      , _out(&_fileout)
+    {}
+
+    explicit FileWriter(std::ostream *out, const std::string& filename)
+      : _filename(filename)
+      , _out(out)
+    {}
+
+    bool isOpen()                       { return _out->good(); }
+    const std::string& filename() const { return _filename; }
+    std::ostream& out()                 { return *_out; }
+
+  protected:
+    std::string   _filename;
+    std::ofstream _fileout;
+    std::ostream* _out;
+  };
+  typedef boost::shared_ptr<FileWriter> FileWriterPtr;
+  inline FileWriterPtr newFileWriter(const std::string& fname) { return boost::make_shared<FileWriter>(fname); }
+  inline FileWriterPtr newFileWriter(std::ostream* o, const std::string& fname) { return boost::make_shared<FileWriter>(o, fname); }
+
+  QILANG_API std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes);
+
+  QILANG_API std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes);
 
   QILANG_API std::string formatAST(const NodePtrVector& node);
   QILANG_API std::string format(const NodePtrVector& node);

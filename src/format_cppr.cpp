@@ -19,6 +19,10 @@ namespace qilang {
 
   class DeclCppGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
   public:
+    DeclCppGenFormatter()
+      : id(0)
+    {}
+
     int id;
     std::string currentParent;
 
@@ -71,7 +75,13 @@ class QiLangGenObjectDecl  : public FileFormatter,
                              public DeclCppGenFormatter
 {
 public:
+  QiLangGenObjectDecl(const PackageManagerPtr& pm, const StringVector& includes)
+    : toclose(0)
+    , _includes(includes)
+  {}
+
   int toclose;
+  StringVector _includes;
 
   virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
 
@@ -101,19 +111,9 @@ public:
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
     indent() << "#include <qitype/objecttypebuilder.hpp>" << std::endl;
-    indent() << "#include <string>" << std::endl;
-    indent() << "#include <vector>" << std::endl;
-    indent() << "#include <map>" << std::endl;
-
-    qilang::StringVector includes;
-
-    //TODO: find all include needed for type registration...
-    //includes = qilang::cpp::includes(pm, nodes);
-
-    for (unsigned i = 0; i < includes.size(); ++i) {
-      indent() << "#include <" << includes.at(i) << ">" << std::endl;
+    for (unsigned i = 0; i < _includes.size(); ++i) {
+      indent() << "#include " << _includes.at(i) << std::endl;
     }
-
     indent() << std::endl;
   }
 
@@ -134,7 +134,6 @@ protected:
   }
 
   void visitStmt(ImportNode* node) {
-    throw std::runtime_error("unimplemented");
   }
 
   void visitStmt(ObjectDefNode *node) {
@@ -152,14 +151,11 @@ protected:
 
 };
 
-
-std::string genCppObjectRegistration(const NodePtr& node) {
-  return QiLangGenObjectDecl().format(node);
+std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes) {
+  StringVector sv = extractCppIncludeDir(pm, nodes, true);
+  return QiLangGenObjectDecl(pm, sv).format(nodes.ast);
 }
 
-std::string genCppObjectRegistration(const NodePtrVector& nodes) {
-  return QiLangGenObjectDecl().format(nodes);
-}
 
 
 }

@@ -9,6 +9,7 @@
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/packagemanager.hpp>
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
 #include <boost/uuid/random_generator.hpp>
@@ -114,11 +115,15 @@ class QiLangGenObjectDef : public FileFormatter
                          , public StmtNodeFormatter
 {
 public:
-  QiLangGenObjectDef()
+  QiLangGenObjectDef(const PackageManagerPtr& pm, const StringVector& includes)
     : toclose(0)
+    , _pm(pm)
+    , _includes(includes)
   {}
 
   int toclose;     //number of } to close (namespace)
+  PackageManagerPtr _pm;
+  StringVector      _includes;
 
   virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
 
@@ -153,12 +158,9 @@ public:
     indent() << "#ifndef YEAH_" << uuid << std::endl;
     indent() << "#define YEAH_" << uuid << std::endl;
     indent() << std::endl;
-    indent() << "#include <qitype/signal.hpp>" << std::endl;
-    indent() << "#include <qitype/property.hpp>" << std::endl;
-    indent() << "#include <qitype/anyobject.hpp>" << std::endl;
-    indent() << "#include <string>" << std::endl;
-    indent() << "#include <vector>" << std::endl;
-    indent() << "#include <map>" << std::endl;
+    for (unsigned i = 0; i < _includes.size(); ++i) {
+      indent() << "#include " << _includes.at(i) << std::endl;
+    }
     indent() << std::endl;
   }
 
@@ -181,7 +183,6 @@ protected:
   }
 
   void visitStmt(ImportNode* node) {
-    throw std::runtime_error("unimplemented");
   }
   void visitStmt(ObjectDefNode *node) {
     throw std::runtime_error("unimplemented");
@@ -203,13 +204,9 @@ protected:
   }
 };
 
-
-std::string genCppObjectInterface(const NodePtr& node) {
-  return QiLangGenObjectDef().format(node);
-}
-
-std::string genCppObjectInterface(const NodePtrVector& nodes) {
-  return QiLangGenObjectDef().format(nodes);
+std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes) {
+  StringVector sv = extractCppIncludeDir(pm, nodes, false);
+  return QiLangGenObjectDef(pm, sv).format(nodes.ast);
 }
 
 }
