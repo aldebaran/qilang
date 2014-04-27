@@ -171,14 +171,26 @@ namespace qilang {
     DefaultNodeVisitor(nvc).each(nodes);
   }
 
-  void findNodeVisitor(const NodePtr& parent, const NodePtr& node, NodeType wanted, NodePtrVector& result) {
+
+  inline void findNodeTypeVisitor(const NodePtr& parent, const NodePtr& node, NodeType wanted, NodePtrVector& result) {
     if (node->type() == wanted)
       result.push_back(node);
   }
 
-  NodePtrVector findNode(NodePtrVector nodes, NodeType type) {
+  inline void findNodeKindVisitor(const NodePtr& parent, const NodePtr& node, NodeKind wanted, NodePtrVector& result) {
+    if (node->kind() == wanted)
+      result.push_back(node);
+  }
+
+  inline NodePtrVector findNode(NodePtrVector nodes, NodeType type) {
     NodePtrVector result;
-    qilang::visitNode(nodes, boost::bind<void>(&findNodeVisitor, _1, _2, type, boost::ref(result)));
+    qilang::visitNode(nodes, boost::bind<void>(&findNodeTypeVisitor, _1, _2, type, boost::ref(result)));
+    return result;
+  }
+
+  inline NodePtrVector findNode(NodePtrVector nodes, NodeKind kind) {
+    NodePtrVector result;
+    qilang::visitNode(nodes, boost::bind<void>(&findNodeKindVisitor, _1, _2, kind, boost::ref(result)));
     return result;
   }
 
