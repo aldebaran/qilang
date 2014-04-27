@@ -60,6 +60,28 @@
     return qilang_lex(context->scanner);
   }
 
+  qilang::TypeExprNodePtr makeType(const yy::location& loc, const std::string& id) {
+    //warning keep in sync with node.hpp enum BuiltinType
+    const char *builtin[] = {"bool", "char",
+                             "int", "uint",
+                             "int8", "uint8",
+                             "int16", "uint16",
+                             "int32", "uint32",
+                             "float",
+                             "float32", "float64",
+                             "str", "any", "obj", 0 };
+    int index = 0;
+    const char *t = builtin[index];
+    while (t != 0) {
+      if (id == t)
+        return NODE2(BuiltinTypeExprNode, loc, static_cast<qilang::BuiltinType>(index), id);
+      index++;
+      t = builtin[index];
+    }
+    return NODE1(CustomTypeExprNode, loc, id);
+
+  }
+
 
 }
 
@@ -180,11 +202,9 @@ package:
 
 %type<qilang::NodePtr> import;
 import:
-  IMPORT ID                        { $$ = NODE1(ImportNode, @$, $2); }
-| FROM ID IMPORT import_defs       { $$ = NODE2(ImportNode, @$, $2, $4); }
-| FROM ID IMPORT "*"               { qilang::StringVector v;
-                                     v.push_back("*");
-                                     $$ = NODE2(ImportNode, @$, $2, v); }
+  IMPORT ID                        { $$ = NODE2(ImportNode, @$, qilang::ImportType_Package, $2); }
+| FROM ID IMPORT "*"               { $$ = NODE2(ImportNode, @$, qilang::ImportType_All, $2); }
+| FROM ID IMPORT import_defs       { $$ = NODE3(ImportNode, @$, qilang::ImportType_List, $2, $4); }
 
 %type<qilang::StringVector> import_defs;
 import_defs:
@@ -234,7 +254,7 @@ at_expr:
 // #######################################################################################
 %type<qilang::TypeExprNodePtr> type;
 type:
-  ID                      { $$ = NODE1(SimpleTypeExprNode, @$, $1); }
+  ID                      { $$ = makeType(@$, $1); }
 | "[" "]" type            { $$ = NODE1(ListTypeExprNode, @$, $3); }
 | "[" type "]" type       { $$ = NODE2(MapTypeExprNode, @$, $2, $4); }
 | "(" tuple_type_defs ")" { $$ = NODE1(TupleTypeExprNode, @$, $2); }

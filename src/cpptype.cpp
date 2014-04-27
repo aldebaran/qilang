@@ -17,23 +17,45 @@ static std::string constRefYourSelf(const std::string& type, bool constref) {
   return "const " + type + "&";
 }
 
-static std::string typeToCpp(const std::string& type, bool constref) {
-  const char* pod[] = { "bool", "char", "int",
-                        "int8", "uint8",
-                        "int16", "uint16",
-                        "int32", "uint32",
-                        "int64", "uint64",
-                        "float32", "float64",
-                        0 };
-  int i = 0;
-  while (pod[i]) {
-    if (type == pod[i])
-      return type;
-    ++i;
+static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
+  switch (type) {
+    case BuiltinType_Bool:
+      return "bool";
+    case BuiltinType_Char:
+      return "char";
+    case BuiltinType_Int:
+      return "int";
+    case BuiltinType_UInt:
+      return "unsigned int";
+    case BuiltinType_Int8:
+      return "qi::int8_t";
+    case BuiltinType_UInt8:
+      return "qi::uint8_t";
+    case BuiltinType_Int16:
+      return "qi::int16_t";
+    case BuiltinType_UInt16:
+      return "qi::uint16_t";
+    case BuiltinType_Int32:
+      return "qi::int32_t";
+    case BuiltinType_UInt32:
+      return "qi::uint32_t";
+    case BuiltinType_Int64:
+      return "qi::int64_t";
+    case BuiltinType_UInt64:
+      return "qi::uint64_t";
+    case BuiltinType_Float:
+      return "float";
+    case BuiltinType_Float32:
+      return "float";
+    case BuiltinType_Float64:
+      return "double";
+    case BuiltinType_String:
+      return constRefYourSelf("std::string", constref);
+    case BuiltinType_Value:
+      return constRefYourSelf("qi::AnyValue", constref);
+    case BuiltinType_Object:
+      return constRefYourSelf("qi::AnyObject", constref);
   }
-  if (type == "str")
-    return constRefYourSelf("std::string", constref);
-  return constRefYourSelf(type, constref);
 }
 
 
@@ -80,8 +102,11 @@ const std::string& CppTypeFormatter::addref() {
   return empt;
 }
 
-void CppTypeFormatter::visitTypeExpr(SimpleTypeExprNode* node) {
-  out() << typeToCpp(node->value, (noconstref==0 && addconstref));
+void CppTypeFormatter::visitTypeExpr(BuiltinTypeExprNode* node) {
+  out() << builtinTypeToCpp(node->builtinType, (noconstref==0 && addconstref));
+}
+void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
+  out() << constRefYourSelf(node->value, (noconstref==0 && addconstref));
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << addconst() << "std::vector< " << noconst(node->element) << " >" << addref();

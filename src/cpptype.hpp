@@ -33,7 +33,8 @@ namespace qilang {
     //ask for a const ref expression.
     const std::string& consttype(const TypeExprNodePtr& node);
 
-    void visitTypeExpr(SimpleTypeExprNode* node);
+    void visitTypeExpr(BuiltinTypeExprNode* node);
+    void visitTypeExpr(CustomTypeExprNode* node);
     void visitTypeExpr(ListTypeExprNode* node);
     void visitTypeExpr(MapTypeExprNode* node);
     void visitTypeExpr(TupleTypeExprNode* node);

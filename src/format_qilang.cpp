@@ -73,7 +73,10 @@ namespace qilang {
   public:
     virtual void acceptTypeExpr(const TypeExprNodePtr& node)  { node->accept((TypeExprNodeVisitor*)this); }
 
-    void visitTypeExpr(SimpleTypeExprNode *node) {
+    void visitTypeExpr(BuiltinTypeExprNode *node) {
+      out() << node->value;
+    }
+    void visitTypeExpr(CustomTypeExprNode *node) {
       out() << node->value;
     }
     void visitTypeExpr(ListTypeExprNode *node) {
@@ -193,13 +196,15 @@ namespace qilang {
       indent() << "package " << node->name << std::endl;
     }
     void visitStmt(ImportNode* node) {
-      if (node->imported.size() == 0)
+      if (node->importType == ImportType_Package)
         indent() << "import " << node->name;
+      else if (node->importType == ImportType_All)
+        indent() << "from " << node->name << " import *";
       else {
         indent() << "from " << node->name << " import ";
-        for (unsigned int i = 0; i < node->imported.size(); ++i) {
-          out() << node->imported.at(i);
-          if (i+1 < node->imported.size()) {
+        for (unsigned int i = 0; i < node->imports.size(); ++i) {
+          out() << node->imports.at(i);
+          if (i+1 < node->imports.size()) {
             out() << ", ";
           }
         }

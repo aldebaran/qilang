@@ -97,7 +97,9 @@ namespace qilang {
       //TODO: each(node->values);
     }
 
-    void visitTypeExpr(SimpleTypeExprNode *node) {
+    void visitTypeExpr(BuiltinTypeExprNode *node) {
+    }
+    void visitTypeExpr(CustomTypeExprNode *node) {
     }
     void visitTypeExpr(ListTypeExprNode *node) {
       acceptTypeExpr(node->element);

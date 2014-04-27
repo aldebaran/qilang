@@ -82,7 +82,8 @@ class TupleConstDataNode;
 
 // EXPR: Type Expr
 class TypeExprNode;        //VIRTUAL
-class SimpleTypeExprNode;
+class BuiltinTypeExprNode;
+class CustomTypeExprNode;
 class ListTypeExprNode;
 class MapTypeExprNode;
 class TupleTypeExprNode;
@@ -198,7 +199,8 @@ protected:
 public:
   virtual void acceptTypeExpr(const TypeExprNodePtr& node) = 0;
 
-  virtual void visitTypeExpr(SimpleTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(BuiltinTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(CustomTypeExprNode* node) = 0;
   virtual void visitTypeExpr(ListTypeExprNode* node) = 0;
   virtual void visitTypeExpr(MapTypeExprNode* node) = 0;
   virtual void visitTypeExpr(TupleTypeExprNode* node) = 0;
@@ -222,7 +224,8 @@ enum NodeType {
   NodeType_VarExpr,
   NodeType_ConstDataExpr,
 
-  NodeType_SimpleTypeExpr,
+  NodeType_BuiltinTypeExpr,
+  NodeType_CustomTypeExpr,
   NodeType_MapTypeExpr,
   NodeType_ListTypeExpr,
   NodeType_TupleTypeExpr,
@@ -517,15 +520,50 @@ public:
   virtual void accept(TypeExprNodeVisitor* visitor) = 0;
 };
 
-class QILANG_API SimpleTypeExprNode : public TypeExprNode {
+class QILANG_API CustomTypeExprNode : public TypeExprNode {
 public:
-  explicit SimpleTypeExprNode(const std::string& sym, const Location& loc)
-    : TypeExprNode(NodeType_SimpleTypeExpr, loc)
+  explicit CustomTypeExprNode(const std::string& sym, const Location& loc)
+    : TypeExprNode(NodeType_CustomTypeExpr, loc)
     , value(sym)
   {}
 
   void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
+  std::string value;
+};
+//warning keep in sync with makeType in grammar.y
+enum BuiltinType {
+  BuiltinType_Bool,
+  BuiltinType_Char,
+  BuiltinType_Int,
+  BuiltinType_UInt,
+  BuiltinType_Int8,
+  BuiltinType_UInt8,
+  BuiltinType_Int16,
+  BuiltinType_UInt16,
+  BuiltinType_Int32,
+  BuiltinType_UInt32,
+  BuiltinType_Int64,
+  BuiltinType_UInt64,
+  BuiltinType_Float,
+  BuiltinType_Float32,
+  BuiltinType_Float64,
+  BuiltinType_String,
+  BuiltinType_Value,
+  BuiltinType_Object,
+};
+
+class QILANG_API BuiltinTypeExprNode : public TypeExprNode {
+public:
+  explicit BuiltinTypeExprNode(BuiltinType builtinType, const std::string& sym, const Location& loc)
+    : TypeExprNode(NodeType_BuiltinTypeExpr, loc)
+    , builtinType(builtinType)
+    , value(sym)
+  {}
+
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+
+  BuiltinType builtinType;
   std::string value;
 };
 
@@ -595,19 +633,28 @@ public:
   std::string name;
 };
 
+enum ImportType {
+  ImportType_Package,
+  ImportType_List,
+  ImportType_All
+};
+
 class QILANG_API ImportNode : public StmtNode {
 public:
-  explicit ImportNode(const std::string& packageName, const Location& loc)
+  explicit ImportNode(ImportType importType, const std::string& packageName, const Location& loc)
     : StmtNode(NodeType_Import, loc)
     , name(packageName)
+    , importType(importType)
   {}
 
-  ImportNode(const std::string& packageName, const StringVector& imported, const Location& loc)
+
+  ImportNode(ImportType importType, const std::string& packageName, const StringVector& imports, const Location& loc)
     : StmtNode(NodeType_Import, loc)
     , name(packageName)
-    , imported(imported)
+    , importType(importType)
+    , imports(imports)
   {
-    if (imported.size() == 0)
+    if (imports.size() == 0)
       throw std::runtime_error("Empty import list");
   }
 
@@ -615,7 +662,8 @@ public:
 
 public:
   std::string  name;
-  StringVector imported;
+  ImportType   importType;
+  StringVector imports;
 };
 
 
