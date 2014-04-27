@@ -60,3 +60,4 @@ qi_stage_lib(qilang)
 qi_create_bin(qic src/qic_main.cpp)
 
 qi_use_lib(qic qilang)
+qi_stage_bin(qic)

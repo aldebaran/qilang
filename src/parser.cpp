@@ -28,6 +28,7 @@ namespace qilang {
     , _parsed(false)
     , parser(this)
   {
+    _result.filename = file->filename();
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
   }
@@ -70,7 +71,7 @@ namespace qilang {
       parser.parse();
     } catch (const ParseException& pe) {
       _result.ast.clear();
-      _result.messages.push_back(Message(MessageType_Error, pe.what(), file->filename(), pe.loc()));
+      _result.messages.push_back(Message(MessageType_Error, pe.what(), pe.loc()));
     }
   }
 
@@ -79,8 +80,7 @@ namespace qilang {
     for (unsigned i = 0; i < messages.size(); ++i) {
       const Message& msg = messages.at(i);
 
-      out << msg.filename() << ":";
-      out << msg.loc().filename << ":" << msg.loc().beg_line << ":" << msg.loc().beg_column << ": ";
+      out << msg.loc() << ":";
 
       switch (msg.type()) {
         case MessageType_Error:
@@ -154,7 +154,7 @@ namespace qilang {
     ParseResult ret;
     ret.filename = file->filename();
     if (!file->isOpen()) {
-      ret.messages.push_back(Message(MessageType_Error, "Can't open file", file->filename()));
+      ret.messages.push_back(Message(MessageType_Error, "Can't open file '" + file->filename() + "'"));
       return ret;
     }
     Parser p(file);

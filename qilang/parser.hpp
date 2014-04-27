@@ -31,26 +31,19 @@ namespace qilang {
       : _type(type)
       , _what(what)
     {}
-    explicit Message(MessageType type, const std::string& what, const std::string& filename)
+    explicit Message(MessageType type, const std::string& what, Location loc)
       : _type(type)
       , _what(what)
-      , _filename(filename)
-    {}
-    explicit Message(MessageType type, const std::string& what, const std::string& filename, Location loc)
-      : _type(type)
-      , _what(what)
-      , _filename(filename)
       , _loc(loc)
     {}
 
     MessageType  type() const           { return _type; }
     const char*  what() const           { return _what.c_str(); }
-    const std::string& filename() const { return _filename; }
+    const std::string& filename() const { return _loc.filename; }
     const Location&    loc() const      { return _loc; }
   protected:
     MessageType _type;
     std::string _what;
-    std::string _filename;
     Location    _loc;
   };
 
@@ -81,6 +74,7 @@ namespace qilang {
 
   typedef boost::shared_ptr<FileReader> FileReaderPtr;
 
+
   inline FileReaderPtr newFileReader(const std::string& fname) { return boost::make_shared<FileReader>(fname); }
 
   class QILANG_API ParseResult {
@@ -91,7 +85,7 @@ namespace qilang {
     MessageVector messages;
 
     bool hasError() const {
-      return messages.size();
+      return messages.size() > 0;
     }
 
     void printMessage(std::ostream& out) const;

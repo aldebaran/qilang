@@ -15,6 +15,7 @@
 #include <qi/qi.hpp>
 
 namespace fs = boost::filesystem;
+qiLogCategory("qilang.pm");
 
 namespace qilang {
 
@@ -83,15 +84,15 @@ namespace qilang {
     NodePtrVector result;
     result = findNode(ret.ast, NodeType_Package);
     if (result.size() == 0) {
-      ret.messages.push_back(Message(MessageType_Error, "missing package declaration", file->filename()));
+      ret.messages.push_back(Message(MessageType_Error, "missing package declaration", Location(file->filename())));
       return false;
     }
     if (result.size() > 1) {
       for (unsigned i = 1; i < result.size(); ++i) {
-        ret.messages.push_back(Message(MessageType_Error, "extra package declaration", file->filename(), result.at(i)->loc()));
+        ret.messages.push_back(Message(MessageType_Error, "extra package declaration", result.at(i)->loc()));
 
       }
-      ret.messages.push_back(Message(MessageType_Info, "previous declared here", file->filename(), result.at(0)->loc()));
+      ret.messages.push_back(Message(MessageType_Info, "previous declared here", result.at(0)->loc()));
       return false;
     }
     std::string pkgname = extractPackageName(result.at(0));
@@ -104,8 +105,8 @@ namespace qilang {
       std::string par = p.parent_path().filename().string(qi::unicodeFacet());
       if (par != leafs.at(i)) {
         ret.messages.push_back(Message(MessageType_Error,
-                                       "package name '" + pkgname + "' do not match parent directory name '" + pf.string(qi::unicodeFacet()) + "'",
-                                       file->filename()));
+                                       "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
+                                       result.at(0)->loc()));
         return false;
       }
       p = p.parent_path();

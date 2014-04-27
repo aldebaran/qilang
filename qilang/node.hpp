@@ -21,7 +21,14 @@ namespace qilang {
 
 class Location {
 public:
-  Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1, const std::string& filename = std::string())
+  explicit Location(const std::string& filename)
+    : beg_line(-1)
+    , beg_column(0)
+    , end_line(-1)
+    , end_column(0)
+    , filename(filename)
+  {}
+  Location(int bline = -1, int bcols = 0, int eline = -1, int ecols = 0, const std::string& filename = std::string())
     : beg_line(bline)
     , beg_column(bcols)
     , end_line(eline)
@@ -34,7 +41,23 @@ public:
   int end_line;
   int end_column;
   std::string filename;
+
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Location& loc) {
+  if (loc.filename.empty() && loc.beg_line == -1) {
+    os << "<noloc>";
+    return os;
+  }
+  if (!loc.filename.empty()) {
+    os << loc.filename;
+    if (loc.beg_line != -1)
+      os << ":";
+  }
+  if (loc.beg_line != -1)
+    os << loc.beg_line << ":" << loc.beg_column;
+  return os;
+}
 
 class Node;
 
