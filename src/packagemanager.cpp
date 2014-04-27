@@ -11,10 +11,8 @@
 #include <qilang/visitor.hpp>
 #include "cpptype.hpp"
 #include <boost/make_shared.hpp>
-#include <boost/filesystem.hpp>
 #include <qi/qi.hpp>
-
-namespace fs = boost::filesystem;
+#include <qi/path.hpp>
 qiLogCategory("qilang.pm");
 
 namespace qilang {
@@ -97,22 +95,33 @@ namespace qilang {
     }
     std::string pkgname = extractPackageName(result.at(0));
     // 2
-    fs::path pf(file->filename(), qi::unicodeFacet());
+    qi::Path pf(file->filename());
     StringVector leafs = splitPkgName(pkgname);
 
-    fs::path p = pf;
+
+    qi::Path dirname;
+    qi::Path cur = pf.parent().absolute();
+    for (unsigned i = 0; i < leafs.size(); ++i)
+    {
+      dirname = qi::Path(cur.filename()) / dirname;
+      cur = cur.parent();
+      if (cur.isEmpty())
+        break;
+    }
+
+    qi::Path p = pf;
     for (int i = leafs.size() - 1; i >= 0; --i) {
-      std::string par = p.parent_path().filename().string(qi::unicodeFacet());
+      std::string par = p.parent().filename();
       if (par != leafs.at(i)) {
         ret.messages.push_back(Message(MessageType_Error,
                                        "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
                                        result.at(0)->loc()));
         return false;
       }
-      p = p.parent_path();
+      p = p.parent();
     }
 
-    std::string pkgpath = fs::absolute(p.parent_path()).string(qi::unicodeFacet());
+    std::string pkgpath = p.parent().absolute();
 
     addInclude(pkgpath);
     addPackage(pkgname);
@@ -132,9 +141,9 @@ namespace qilang {
 
   ParseResult PackageManager::_parseFile(const FileReaderPtr& file)
   {
-    fs::path fsfname = fs::path(file->filename(), qi::unicodeFacet());
-    std::string filename = fs::absolute(fsfname).string(qi::unicodeFacet());
-    if (!fs::is_regular_file(fsfname))
+    qi::Path fsfname = qi::Path(file->filename());
+    std::string filename = fsfname.absolute();
+    if (!fsfname.isRegularFile())
       throw std::runtime_error(file->filename() + " is not a regular file");
     qiLogVerbose() << "Parsing file: " << filename;
     if (_sources.find(filename) != _sources.end()) {
@@ -150,17 +159,19 @@ namespace qilang {
 
 
   static bool locateFileInDir(const std::string& path, StringVector* resultfile, StringVector* resultdir) {
-    fs::directory_iterator dit(fs::path(path, qi::unicodeFacet()));
+    qi::PathVector pv = qi::Path(path).dirs();
     bool ret = false;
-    for (; dit != fs::directory_iterator(); ++dit) {
-      fs::path p = *dit;
+    for (unsigned i = 0; i < pv.size(); ++i) {
+      qi::Path& p = pv.at(i);
+      resultdir->push_back(p);
+    }
 
-      if (fs::is_directory(p)) {
-        resultdir->push_back(p.string(qi::unicodeFacet()));
-      }
-      if (fs::is_regular_file(p)) {
+    pv = qi::Path(path).files();
+    for (unsigned i = 0; i < pv.size(); ++i) {
+      qi::Path& p = pv.at(i);
+      if (p.isRegularFile()) {
         if (p.extension() == ".qi") {
-          resultfile->push_back(p.string(qi::unicodeFacet()));
+          resultfile->push_back(p);
           ret = true;
         }
       }
@@ -180,16 +191,16 @@ namespace qilang {
     if (pkgName.empty())
       throw std::runtime_error("empty package name");
 
-    fs::path pkgPath(pkgNameToDir(pkgName), qi::unicodeFacet());
+    qi::Path pkgPath(pkgNameToDir(pkgName));
 
     for (unsigned i = 0; i < _includes.size(); ++i) {
-      fs::path p(_includes.at(i), qi::unicodeFacet());
+      qi::Path p(_includes.at(i));
       p /= pkgPath;
-      if (fs::is_directory(p))
+      if (p.isDir())
       {
         StringVector retfile;
         StringVector retdir;
-        bool b = locateFileInDir(p.string(qi::unicodeFacet()), &retfile, &retdir);
+        bool b = locateFileInDir(p, &retfile, &retdir);
         if (b) {
           qiLogVerbose() << "Found pkg '" << pkgName << "'";
           return retfile;
@@ -252,27 +263,27 @@ namespace qilang {
   void PackageManager::parseDir(const std::string& dirname)
   {
     qiLogVerbose() << "parsing dir: " << dirname;
-    fs::path fsp(dirname, qi::unicodeFacet());
-    if (!fs::is_directory(fsp))
+    qi::Path fsp(dirname);
+    if (!fsp.isDir())
       throw std::runtime_error(dirname + " is not a directory");
 
     StringVector resdir;
     StringVector resfile;
     locateFileInDir(dirname, &resfile, &resdir);
     for (unsigned i = 0; i < resfile.size(); ++i)
-      parseFile(newFileReader(resfile.at(i)));
+      _parseFile(newFileReader(resfile.at(i)));
     for (unsigned i = 0; i < resdir.size(); ++i)
       parseDir(dirname + "/" + resdir.at(i));
   }
 
   void PackageManager::parse(const std::string &fileOrPkg)
   {
-    fs::path fsp(fileOrPkg, qi::unicodeFacet());
-    if (fs::is_regular_file(fsp)) {
+    qi::Path fsp(fileOrPkg);
+    if (fsp.isRegularFile()) {
       parseFile(newFileReader(fileOrPkg));
       return;
     }
-    if (fs::is_directory(fsp)) {
+    if (fsp.isDir()) {
       parseDir(fileOrPkg);
       return;
     }
