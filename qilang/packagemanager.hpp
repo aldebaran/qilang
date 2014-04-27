@@ -19,10 +19,11 @@ qiLogCategory("qilang.pm");
 
 namespace qilang {
 
+  typedef std::map<std::string, std::string>   FilenameToPackageMap;
   typedef std::map<std::string, ParseResult>   ParseResultMap;
+  typedef std::vector<ParseResult>             ParseResultVector;
   typedef std::map<std::string, NodePtrVector> ASTMap;
   typedef std::map<std::string, NodePtr>       NodeMap;
-
 
   /** Describe a package
    *
@@ -33,6 +34,7 @@ namespace qilang {
   public:
     Package(const std::string& name)
       : _name(name)
+      , _parsed(false)
     {}
 
     void addImport(const std::string& import, const NodePtr& node) {
@@ -52,10 +54,10 @@ namespace qilang {
       _exports[member] = node;
     }
 
-    void setContent(const std::string& filename, const NodePtrVector& nodes) {
+    void setContent(const std::string& filename, const ParseResult& result) {
       if (_contents.find(filename) != _contents.end())
         throw std::runtime_error("content already set for file: " + filename);
-      _contents[filename] = nodes;
+      _contents[filename] = result;
     }
 
     void dump() {
@@ -65,10 +67,11 @@ namespace qilang {
       }
     }
 
-    std::string  _name;      // package name
-    NodeMap      _exports;   // map<membername, Node> package exported symbol
-    ASTMap       _contents;  // map<filename, Nodes>  file of the package
-    ASTMap       _imports;   // map<pkgname, Nodes>   list of depends packages
+    std::string    _name;      // package name
+    ParseResultMap _contents;  // map<filename, Nodes>  file of the package
+    NodeMap        _exports;   // map<membername, Node> package exported symbol
+    ASTMap         _imports;   // map<pkgname, Nodes>   list of depends packages
+    bool           _parsed;    // true if each files of the package are parsed
   };
 
   typedef boost::shared_ptr<Package>        PackagePtr;
@@ -93,12 +96,6 @@ namespace qilang {
     ParseResult parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
-    PackagePtr addPackage(const std::string& name) {
-      if (_packages.find(name) != _packages.end())
-        return _packages[name];
-      _packages[name] = boost::make_shared<Package>(name);
-      return _packages[name];
-    }
 
     void anal(const std::string& package = std::string());
 
@@ -111,11 +108,22 @@ namespace qilang {
 
     //return all the files composing a package  (their may be false)
     StringVector locatePackage(const std::string& pkgName);
+
   protected:
-    PackagePtrMap  _packages;
-    ParseResultMap _sources;
-    //StringVector  _packagespath;
-    StringVector  _includes;
+    PackagePtr addPackage(const std::string& name) {
+      if (_packages.find(name) != _packages.end())
+        return _packages[name];
+      _packages[name] = boost::make_shared<Package>(name);
+      return _packages[name];
+    }
+    bool addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResult& ret);
+    void resolvePackage(const std::string &packageName);
+    ParseResult _parseFile(const FileReaderPtr &file);
+
+  protected:
+    PackagePtrMap        _packages; // packagename , packageptr
+    FilenameToPackageMap _sources;  // abs filename , packagename
+    StringVector         _includes;
   };
 
 }

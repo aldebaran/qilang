@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
   files = vm["input-file"].as< std::vector<std::string> >();
   for (int i = 0; i < files.size(); ++i) {
-    std::cout << "Generating " << codegen << " for " << files.at(i) << std::endl;
+    std::cout << " * Generating " << codegen << " for " << files.at(i) << std::endl;
 
     qilang::ParseResult pr;
     try {
@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
     if (pr.hasError())
       pr.printMessage(std::cout);
 
+    std::cout << " * Generation Done." << std::endl;
     if (codegen == "cppi")
       *out << qilang::genCppObjectInterface(pr.ast);
     else if (codegen == "cppr")

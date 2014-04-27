@@ -19,6 +19,8 @@ void qilang_set_extra(qilang::Parser*, void *);
 struct yyscan_t;
 void qilang_set_debug(int debug_flag, void* yyscanner);
 
+qiLogCategory("qilang.parser");
+
 namespace qilang {
 
   Parser::Parser(const FileReaderPtr &file)
@@ -145,7 +147,7 @@ namespace qilang {
   //public interface
   ParseResult parse(const FileReaderPtr& file) {
     ParseResult ret;
-
+    ret.filename = file->filename();
     if (!file->isOpen()) {
       ret.messages.push_back(Message(MessageType_Error, "Can't open file", file->filename()));
       return ret;
@@ -153,6 +155,5 @@ namespace qilang {
     Parser p(file);
     return p.result();
   }
-
 
 }

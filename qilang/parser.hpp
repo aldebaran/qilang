@@ -43,10 +43,10 @@ namespace qilang {
       , _loc(loc)
     {}
 
-    MessageType  type() const { return _type; }
-    const char*  what() const { return _what.c_str(); }
+    MessageType  type() const           { return _type; }
+    const char*  what() const           { return _what.c_str(); }
     const std::string& filename() const { return _filename; }
-    const Location&    loc() const { return _loc; }
+    const Location&    loc() const      { return _loc; }
   protected:
     MessageType _type;
     std::string _what;
@@ -69,9 +69,9 @@ namespace qilang {
       , _in(in)
     {}
 
-    bool isOpen() { return _in->good(); }
+    bool isOpen()                       { return _in->good(); }
     const std::string& filename() const { return _filename; }
-    std::istream& in() { return *_in; }
+    std::istream& in()                  { return *_in; }
 
   protected:
     std::string   _filename;
@@ -85,6 +85,8 @@ namespace qilang {
 
   class QILANG_API ParseResult {
   public:
+    std::string   filename;
+    std::string   package;
     NodePtrVector ast;
     MessageVector messages;
 
@@ -93,7 +95,6 @@ namespace qilang {
     }
 
     void printMessage(std::ostream& out);
-
   };
 
   QILANG_API ParseResult parse(const FileReaderPtr& filename);
