@@ -15,12 +15,6 @@ qiLogCategory("qilang.node");
 
 namespace qilang {
 
-  Node::Node(NodeKind kind, NodeType type)
-    : _kind(kind)
-    , _type(type)
-  {
-    qiLogDebug() << "new node(" << _kind << ", " << _type << ")";
-  }
 
   Node::Node(NodeKind kind, NodeType type, const Location& loc)
     : _kind(kind)

@@ -229,7 +229,6 @@ enum NodeType {
 class QILANG_API Node
 {
 public:
-  Node(NodeKind kind, NodeType type);
   Node(NodeKind kind, NodeType type, const Location& loc);
   virtual ~Node() {}
 
@@ -238,9 +237,9 @@ public:
   Location loc() const { return _loc; }
 
 private:
-  Location _loc;
   NodeKind _kind;
   NodeType _type;
+  Location _loc;
 };
 
 
@@ -319,11 +318,11 @@ QILANG_API const std::string &BinaryOpCodeToString(BinaryOpCode op);
 
 class QILANG_API ExprNode : public Node {
 protected:
-  explicit ExprNode(NodeKind kind, NodeType type)
-    : Node(kind, type)
+  explicit ExprNode(NodeKind kind, NodeType type, const Location& loc)
+    : Node(kind, type, loc)
   {}
-  explicit ExprNode(NodeType type)
-    : Node(NodeKind_Expr, type)
+  explicit ExprNode(NodeType type, const Location& loc)
+    : Node(NodeKind_Expr, type, loc)
   {}
 public:
   virtual void accept(ExprNodeVisitor *visitor) = 0;
@@ -331,8 +330,8 @@ public:
 
 class QILANG_API BinaryOpExprNode : public ExprNode {
 public:
-  BinaryOpExprNode(ExprNodePtr n1, ExprNodePtr n2, BinaryOpCode boc)
-    : ExprNode(NodeType_BinOpExpr)
+  BinaryOpExprNode(ExprNodePtr n1, ExprNodePtr n2, BinaryOpCode boc, const Location& loc)
+    : ExprNode(NodeType_BinOpExpr, loc)
     , op(boc)
     , n1(n1)
     , n2(n2)
@@ -347,8 +346,8 @@ public:
 
 class QILANG_API  UnaryOpExprNode : public ExprNode {
 public:
-  UnaryOpExprNode(ExprNodePtr node, UnaryOpCode op)
-    : ExprNode(NodeType_UOpExpr)
+  UnaryOpExprNode(ExprNodePtr node, UnaryOpCode op, const Location& loc)
+    : ExprNode(NodeType_UOpExpr, loc)
     , op(op)
     , n1(node)
   {}
@@ -362,8 +361,8 @@ public:
 
 class QILANG_API VarExprNode : public ExprNode {
 public:
-  explicit VarExprNode(const std::string &name)
-    : ExprNode(NodeType_VarExpr)
+  explicit VarExprNode(const std::string &name, const Location& loc)
+    : ExprNode(NodeType_VarExpr, loc)
     , value(name)
   {}
 
@@ -374,8 +373,8 @@ public:
 
 class QILANG_API ConstDataExprNode : public ExprNode {
 public:
-  explicit ConstDataExprNode(const ConstDataNodePtr& data)
-    : ExprNode(NodeType_ConstDataExpr)
+  explicit ConstDataExprNode(const ConstDataNodePtr& data, const Location& loc)
+    : ExprNode(NodeType_ConstDataExpr, loc)
     , data(data)
   {}
 
@@ -389,8 +388,8 @@ public:
 // ####################
 class QILANG_API ConstDataNode : public Node {
 public:
-  explicit ConstDataNode(NodeType type)
-    : Node(NodeKind_ConstData, type)
+  explicit ConstDataNode(NodeType type, const Location& loc)
+    : Node(NodeKind_ConstData, type, loc)
   {}
 
   virtual void accept(ConstDataNodeVisitor* visitor) = 0;
@@ -398,8 +397,8 @@ public:
 
 class QILANG_API BoolConstDataNode: public ConstDataNode {
 public:
-  explicit BoolConstDataNode(bool val)
-    : ConstDataNode(NodeType_BoolData)
+  explicit BoolConstDataNode(bool val, const Location& loc)
+    : ConstDataNode(NodeType_BoolData, loc)
     , value(val)
   {}
 
@@ -410,8 +409,8 @@ public:
 
 class QILANG_API IntConstDataNode: public ConstDataNode {
 public:
-  explicit IntConstDataNode(qi::uint64_t val)
-    : ConstDataNode(NodeType_IntData)
+  explicit IntConstDataNode(qi::uint64_t val, const Location& loc)
+    : ConstDataNode(NodeType_IntData, loc)
     , value(val)
   {}
 
@@ -422,8 +421,8 @@ public:
 
 class QILANG_API FloatConstDataNode: public ConstDataNode {
 public:
-  explicit FloatConstDataNode(double val)
-    : ConstDataNode(NodeType_FloatData)
+  explicit FloatConstDataNode(double val, const Location& loc)
+    : ConstDataNode(NodeType_FloatData, loc)
     , value(val)
   {}
 
@@ -434,8 +433,8 @@ public:
 
 class QILANG_API StringConstDataNode: public ConstDataNode {
 public:
-  explicit StringConstDataNode(const std::string& value)
-    : ConstDataNode(NodeType_StringData)
+  explicit StringConstDataNode(const std::string& value, const Location& loc)
+    : ConstDataNode(NodeType_StringData, loc)
     , value(value)
   {}
 
@@ -446,8 +445,8 @@ public:
 
 class QILANG_API ListConstDataNode: public ConstDataNode {
 public:
-  explicit ListConstDataNode(const ConstDataNodePtrVector& values)
-    : ConstDataNode(NodeType_ListData)
+  explicit ListConstDataNode(const ConstDataNodePtrVector& values, const Location& loc)
+    : ConstDataNode(NodeType_ListData, loc)
     , values(values)
   {}
 
@@ -458,8 +457,8 @@ public:
 
 class QILANG_API TupleConstDataNode: public ConstDataNode {
 public:
-  explicit TupleConstDataNode(const ConstDataNodePtrVector& values)
-    : ConstDataNode(NodeType_TupleData)
+  explicit TupleConstDataNode(const ConstDataNodePtrVector& values, const Location& loc)
+    : ConstDataNode(NodeType_TupleData, loc)
     , values(values)
   {}
 
@@ -470,8 +469,8 @@ public:
 
 class QILANG_API DictConstDataNode: public ConstDataNode {
 public:
-  explicit DictConstDataNode(const ConstDataNodePtrPairVector& values)
-    : ConstDataNode(NodeType_MapData)
+  explicit DictConstDataNode(const ConstDataNodePtrPairVector& values, const Location& loc)
+    : ConstDataNode(NodeType_MapData, loc)
     , values(values)
   {}
 
@@ -486,8 +485,8 @@ public:
 // ####################
 class QILANG_API TypeExprNode : public Node {
 public:
-  explicit TypeExprNode(NodeType type)
-    : Node(NodeKind_TypeExpr, type)
+  explicit TypeExprNode(NodeType type, const Location& loc)
+    : Node(NodeKind_TypeExpr, type, loc)
   {}
 
   virtual void accept(TypeExprNodeVisitor* visitor) = 0;
@@ -495,8 +494,8 @@ public:
 
 class QILANG_API SimpleTypeExprNode : public TypeExprNode {
 public:
-  explicit SimpleTypeExprNode(const std::string& sym)
-    : TypeExprNode(NodeType_SimpleTypeExpr)
+  explicit SimpleTypeExprNode(const std::string& sym, const Location& loc)
+    : TypeExprNode(NodeType_SimpleTypeExpr, loc)
     , value(sym)
   {}
 
@@ -507,8 +506,8 @@ public:
 
 class QILANG_API ListTypeExprNode : public TypeExprNode {
 public:
-  explicit ListTypeExprNode(const TypeExprNodePtr& element)
-    : TypeExprNode(NodeType_ListTypeExpr)
+  explicit ListTypeExprNode(const TypeExprNodePtr& element, const Location& loc)
+    : TypeExprNode(NodeType_ListTypeExpr, loc)
     , element(element)
   {}
 
@@ -519,8 +518,8 @@ public:
 
 class QILANG_API MapTypeExprNode : public TypeExprNode {
 public:
-  explicit MapTypeExprNode(const TypeExprNodePtr& key, const TypeExprNodePtr& value)
-    : TypeExprNode(NodeType_MapTypeExpr)
+  explicit MapTypeExprNode(const TypeExprNodePtr& key, const TypeExprNodePtr& value, const Location& loc)
+    : TypeExprNode(NodeType_MapTypeExpr, loc)
     , key(key)
     , value(value)
   {}
@@ -533,8 +532,8 @@ public:
 
 class QILANG_API TupleTypeExprNode : public TypeExprNode {
 public:
-  explicit TupleTypeExprNode(const TypeExprNodePtrVector& elements)
-    : TypeExprNode(NodeType_TupleTypeExpr)
+  explicit TupleTypeExprNode(const TypeExprNodePtrVector& elements, const Location& loc)
+    : TypeExprNode(NodeType_TupleTypeExpr, loc)
     , elements(elements)
   {}
 
@@ -550,9 +549,6 @@ public:
 class QILANG_API StmtNode : public Node
 {
 public:
-  explicit StmtNode(NodeType type)
-    : Node(NodeKind_Stmt, type)
-  {}
 
   StmtNode(NodeType type, const Location& loc)
     : Node(NodeKind_Stmt, type, loc)
@@ -563,7 +559,7 @@ public:
 
 class QILANG_API PackageNode : public StmtNode {
 public:
-  explicit PackageNode(const Location& loc, const std::string& packageName)
+  explicit PackageNode(const std::string& packageName, const Location& loc)
     : StmtNode(NodeType_Package, loc)
     , name(packageName)
   {}
@@ -576,13 +572,13 @@ public:
 
 class QILANG_API ImportNode : public StmtNode {
 public:
-  explicit ImportNode(const std::string& packageName)
-    : StmtNode(NodeType_Import)
+  explicit ImportNode(const std::string& packageName, const Location& loc)
+    : StmtNode(NodeType_Import, loc)
     , name(packageName)
   {}
 
-  ImportNode(const std::string& packageName, const StringVector& imported)
-    : StmtNode(NodeType_Import)
+  ImportNode(const std::string& packageName, const StringVector& imported, const Location& loc)
+    : StmtNode(NodeType_Import, loc)
     , name(packageName)
     , imported(imported)
   {
@@ -601,15 +597,15 @@ public:
 
 class QILANG_API VarDefNode : public StmtNode {
 public:
-  VarDefNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
-    : StmtNode(NodeType_VarDef)
+  VarDefNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
+    : StmtNode(NodeType_VarDef, loc)
     , name(name)
     , type(type)
     , data(data)
   {}
 
-  VarDefNode(const std::string& name, const TypeExprNodePtr& type)
-    : StmtNode(NodeType_VarDef)
+  VarDefNode(const std::string& name, const TypeExprNodePtr& type, const Location& loc)
+    : StmtNode(NodeType_VarDef, loc)
     , name(name)
     , type(type)
   {}
@@ -624,8 +620,8 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API ObjectDefNode : public StmtNode {
 public:
-  ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs)
-    : StmtNode(NodeType_ObjectDef)
+  ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs, const Location& loc)
+    : StmtNode(NodeType_ObjectDef, loc)
     , type(type)
     , name(name)
     , values(defs)
@@ -641,8 +637,8 @@ public:
 // myprop: tititoto
 class QILANG_API PropertyDefNode : public StmtNode {
 public:
-  PropertyDefNode(const std::string& name, ConstDataNodePtr data)
-    : StmtNode(NodeType_PropDef)
+  PropertyDefNode(const std::string& name, ConstDataNodePtr data, const Location& loc)
+    : StmtNode(NodeType_PropDef, loc)
     , name(name)
     , data(data)
   {}
@@ -655,8 +651,8 @@ public:
 
 class QILANG_API AtNode : public StmtNode {
 public:
-  AtNode(const std::string& sender, const std::string& receiver)
-    : StmtNode(NodeType_At)
+  AtNode(const std::string& sender, const std::string& receiver, const Location& loc)
+    : StmtNode(NodeType_At, loc)
     , sender(sender)
     , receiver(receiver)
   {}
@@ -675,8 +671,8 @@ public:
 class QILANG_API DeclNode : public Node
 {
 public:
-  DeclNode(NodeType type)
-    : Node(NodeKind_Decl, type)
+  DeclNode(NodeType type, const Location& loc)
+    : Node(NodeKind_Decl, type, loc)
   {}
 
   virtual void accept(DeclNodeVisitor* visitor) = 0;
@@ -684,8 +680,8 @@ public:
 
 class QILANG_API FieldDeclNode : public DeclNode {
 public:
-  FieldDeclNode(const std::string &name, const TypeExprNodePtr& type)
-    : DeclNode(NodeType_FieldDecl)
+  FieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
+    : DeclNode(NodeType_FieldDecl, loc)
     , name(name)
     , type(type)
   {}
@@ -700,8 +696,8 @@ typedef std::vector<FieldDeclNodePtr>    FieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& pkg, const std::string& name, const FieldDeclNodePtrVector& vardefs)
-    : DeclNode(NodeType_StructDecl)
+  StructDeclNode(const std::string& pkg, const std::string& name, const FieldDeclNodePtrVector& vardefs, const Location& loc)
+    : DeclNode(NodeType_StructDecl, loc)
     , package(pkg)
     , name(name)
     , fields(vardefs)
@@ -717,15 +713,15 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
-  InterfaceDeclNode(const std::string& pkg, const std::string& name, const DeclNodePtrVector& decls)
-    : DeclNode(NodeType_InterfaceDecl)
+  InterfaceDeclNode(const std::string& pkg, const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
+    : DeclNode(NodeType_InterfaceDecl, loc)
     , package(pkg)
     , name(name)
     , values(decls)
   {}
 
-  InterfaceDeclNode(const std::string& pkg, const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls)
-    : DeclNode(NodeType_InterfaceDecl)
+  InterfaceDeclNode(const std::string& pkg, const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc)
+    : DeclNode(NodeType_InterfaceDecl, loc)
     , package(pkg)
     , name(name)
     , values(decls)
@@ -742,15 +738,15 @@ public:
 
 class QILANG_API FnDeclNode : public DeclNode {
 public:
-  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const TypeExprNodePtr& ret)
-    : DeclNode(NodeType_FnDecl)
+  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
+    : DeclNode(NodeType_FnDecl, loc)
     , name(name)
     , args(args)
     , ret(ret)
   {}
 
-  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args)
-    : DeclNode(NodeType_FnDecl)
+  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+    : DeclNode(NodeType_FnDecl, loc)
     , name(name)
     , args(args)
   {}
@@ -758,7 +754,7 @@ public:
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
-  std::string       name;
+  std::string             name;
   TypeExprNodePtrVector   args;
   TypeExprNodePtr         ret;
 };
@@ -766,8 +762,8 @@ public:
 
 class QILANG_API EmitDeclNode : public DeclNode {
 public:
-  EmitDeclNode(const std::string& name, const TypeExprNodePtrVector& args)
-    : DeclNode(NodeType_EmitDecl)
+  EmitDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+    : DeclNode(NodeType_EmitDecl, loc)
     , name(name)
     , args(args)
   {}
@@ -781,8 +777,8 @@ public:
 
 class QILANG_API PropDeclNode : public DeclNode {
 public:
-  PropDeclNode(const std::string& name, const TypeExprNodePtrVector& args)
-    : DeclNode(NodeType_PropDecl)
+  PropDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+    : DeclNode(NodeType_PropDecl, loc)
     , name(name)
     , args(args)
   {}
@@ -796,16 +792,16 @@ public:
 
 class QILANG_API ConstDeclNode : public DeclNode {
 public:
-  ConstDeclNode(const std::string& pkg, const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
-    : DeclNode(NodeType_ConstDecl)
+  ConstDeclNode(const std::string& pkg, const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
+    : DeclNode(NodeType_ConstDecl, loc)
     , package(pkg)
     , name(name)
     , type(type)
     , data(data)
   {}
 
-  ConstDeclNode(const std::string& pkg, const std::string& name, const ConstDataNodePtr& data)
-    : DeclNode(NodeType_ConstDecl)
+  ConstDeclNode(const std::string& pkg, const std::string& name, const ConstDataNodePtr& data, const Location& loc)
+    : DeclNode(NodeType_ConstDecl, loc)
     , package(pkg)
     , name(name)
     , data(data)

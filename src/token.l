@@ -43,33 +43,35 @@
 #define RETURN_OP(Symbol)         \
   do { \
     STEP();\
-    return yy::parser::make_ ## Symbol(qilang_get_extra(yyscanner)->loc); \
+    return yy::parser::make_ ## Symbol(LOC); \
   } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
    do { \
      STEP();\
-     return yy::parser::make_ ## Symbol(Value, qilang_get_extra(yyscanner)->loc); \
+     return yy::parser::make_ ## Symbol(Value, LOC); \
    } while(false)
 
 #define YY_DECL yy::parser::symbol_type qilang_lex(yyscan_t yyscanner)
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
+#define LOC qilang_get_extra(yyscanner)->loc
+
 // Called via YY_USER_ACTION each time we *advance* the cursor, in
 // which case Num is actually the number of bytes read.
 #define COLUMNS(Num)                                        \
-  qilang_get_extra(yyscanner)->loc.columns(Num)
+  LOC.columns(Num)
 
 #define YY_USER_ACTION                          \
   COLUMNS(static_cast<unsigned>(yyleng));
 
 #define LINES(Num)                                  \
   do {                                              \
-    qilang_get_extra(yyscanner)->loc.lines(Num);    \
+    LOC.lines(Num);    \
   } while (false)
 
-#define STEP() qilang_get_extra(yyscanner)->loc.step()
+#define STEP() LOC.step()
 
 #define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
@@ -94,7 +96,7 @@
   }
 
 #define yyterminate()                                   \
-  return yy::parser::make_END_OF_FILE(qilang_get_extra(yyscanner)->loc)
+  return yy::parser::make_END_OF_FILE(LOC)
 %}
 
 BLANKS   [ \t]+
@@ -162,13 +164,13 @@ FLOAT    {UFLOAT}
 
 {FLOAT}           {
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::FloatConstDataNode>(boost::lexical_cast<float>(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::FloatConstDataNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::IntConstDataNode>(boost::lexical_cast<int>(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::IntConstDataNode>(boost::lexical_cast<int>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
@@ -179,19 +181,21 @@ FLOAT    {UFLOAT}
 
 {STRING}          {   // "   for indentation
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext + 1, strlen(yytext) - 2));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext + 1, strlen(yytext) - 2), qilang::makeLocation(LOC));
   RETURN_VAL(STRING, node);
 }
 
 {BLANKS}          {
+STEP();
 }
 
 "#".*             {} // One-line comment.
 
 .                 {
+                    STEP();
                     std::stringstream ss;
-                    ss << "Invalid token: '" << std::string(yytext) << "'";
-                    qilang_get_extra(yyscanner)->parser.error(qilang_get_extra(yyscanner)->loc, ss.str());
+                    ss << "invalid token '" << std::string(yytext) << "'";
+                    qilang_get_extra(yyscanner)->parser.error(LOC, ss.str());
                   }
 \n                { LINES(1); }
 

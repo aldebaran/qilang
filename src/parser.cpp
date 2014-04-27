@@ -77,6 +77,9 @@ namespace qilang {
     for (unsigned i = 0; i < messages.size(); ++i) {
       Message& msg = messages.at(i);
 
+      out << msg.filename() << ":";
+      out << msg.loc().beg_line << ":" << msg.loc().beg_column << ": ";
+
       switch (msg.type()) {
         case MessageType_Error:
           out << "error: ";
@@ -91,12 +94,7 @@ namespace qilang {
           break;
       }
 
-      if (!msg.filename().empty())
-        out << msg.filename();
-      if (msg.loc().beg_line >= 0)
-        out << msg.loc().beg_line << ":" << msg.loc().beg_column;
-      out << ":" << msg.what();
-      out << std::endl;
+      out << msg.what() << std::endl;
       out << qilang::getErrorLine(msg.filename(), msg.loc());
     }
   }
@@ -120,15 +118,20 @@ namespace qilang {
 
     std::string ln;
     unsigned int lico = loc.beg_line;
-    for (int i = 0; i < lico; ++i)
+    for (int i = 0; i < lico; ++i) {
+      if (!is.good())
+        return std::string();
       getline(is, ln);
-    ret = "in:";
-    ret += ln + "\n";
-    ret += "   ";
+    }
+    //ret = "";
+    ret = ln + "\n";
     unsigned int cbeg = loc.beg_column;
     unsigned int cend = loc.end_column;
-    int count = cend - cbeg;
+    int count = cend - cbeg - 1;
     int space = cbeg;
+    //multiline error just display the beginning
+    if (loc.end_line != loc.beg_line)
+      count = 1;
     space = space < 0 ? 0 : space;
     count = count < 1 ? 1 : count;
     for (int i = 0; i < space; ++i)
@@ -150,11 +153,6 @@ namespace qilang {
     Parser p(file);
     return p.result();
   }
-
-
-//  std::stringstream ss;
-//  ss << "error: " << loc << ": " << msg << std::endl;
-//  ss << qilang::getErrorLine(loc);
 
 
 }
