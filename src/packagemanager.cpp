@@ -257,7 +257,6 @@ namespace qilang {
     }
     qiLogVerbose() << "parsed pkg '" << packageName << "'";
     pkg->_parsed = true;
-    pkg->dump();
   }
 
   void PackageManager::parseDir(const std::string& dirname)
@@ -301,7 +300,7 @@ namespace qilang {
 
   StringPair PackageManager::resolveImport(const PackagePtr& pkg, const std::string& type)
   {
-    qiLogInfo() << "Resolving: " << type << " from pkg " << pkg->_name;
+    qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
     std::string pkgName = type.substr(0, type.find_last_of('.'));
     std::string value = type.substr(pkgName.size(), type.size());
 
@@ -375,7 +374,7 @@ namespace qilang {
           qiLogError() << "error: " << e.what();
           throw;
         }
-        qiLogInfo() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
+        qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
         tnode->resolved_package = sp.first;
         tnode->resolved_value   = sp.second;
       }
