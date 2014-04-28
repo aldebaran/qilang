@@ -183,6 +183,7 @@ toplevel.1:
 toplevel_def:
   object  { $$ = $1; }
 | iface   { $$ = $1; }
+| function_decl { $$ = $1; }
 | package { $$ = $1; }
 | import  { $$ = $1; }
 | const   { $$ = $1; }
