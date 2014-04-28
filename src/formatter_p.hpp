@@ -40,6 +40,67 @@ namespace std {
 
 namespace qilang {
 
+  class FormatAttr {
+  public:
+    FormatAttr()
+      : _active(0)
+      , _block(0)
+    {}
+
+    void block() { _block++; }
+    void unblock() { _block--; _block = _block < 0 ? 0 : _block; }
+
+    void activate()    { _active++; }
+    void desactivate() { _active--; _active = _active < 0 ? 0 : _active; }
+
+    bool isActive() const { return _active > 0 && _block == 0; }
+    const std::string &format(const std::string& name) const {
+      static std::string empt;
+      if (isActive())
+        return name;
+      else
+        return empt;
+    }
+
+  protected:
+    std::string _name;
+    int         _active;
+    int         _block;
+  };
+
+  class ScopedFormatAttrBlock {
+  public:
+    ScopedFormatAttrBlock(FormatAttr& attr)
+      : _attr(attr)
+    {
+      _attr.block();
+    }
+
+    ~ScopedFormatAttrBlock()
+    {
+      _attr.unblock();
+    }
+  protected:
+    FormatAttr& _attr;
+  };
+
+  class ScopedFormatAttrActivate {
+  public:
+    ScopedFormatAttrActivate(FormatAttr& attr)
+      : _attr(attr)
+    {
+      _attr.activate();
+    }
+
+    ~ScopedFormatAttrActivate()
+    {
+      _attr.desactivate();
+    }
+  protected:
+    FormatAttr& _attr;
+  };
+
+
   class BasicNodeFormatter {
   public:
     //virtual void accept(const NodePtr& node) = 0;
