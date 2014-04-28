@@ -71,7 +71,12 @@ namespace qilang {
   StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult& nodes, bool self);
 
   //std::string typeToCpp(TypeExprNode* type, bool constref=true);
+  //pkgName to include dir
   std::string pkgNameToDir(const std::string& name);
+
+  //pkgName to *_API var
+  std::string pkgNameToAPI(const std::string& name);
+
   std::vector<std::string> splitPkgName(const std::string& name);
   std::string formatNs(const std::string& package);
 }

@@ -170,6 +170,14 @@ std::string pkgNameToDir(const std::string& name) {
   return ret;
 }
 
+std::string pkgNameToAPI(const std::string& name) {
+  std::string ret(name);
+  boost::replace_all(ret, ".", "_");
+  boost::to_upper(ret);
+  ret += "_API";
+  return ret;
+}
+
 std::string formatNs(const std::string& package) {
   std::string ret;
   std::vector<std::string> v;
@@ -238,6 +246,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   NodePtrVector typeExprs;
   NodePtrVector decls;
 
+  pushIfNot(includes, qiLangToCppInclude(pm->package(pr.package), "api"));
   if (self) {
     pushIfNot(includes, qiLangToCppInclude(pm->package(pr.package), pr.filename) + " //self");
   }

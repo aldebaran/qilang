@@ -24,13 +24,22 @@ namespace qilang {
 
 class DeclCppIDLFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
 public:
-  FormatAttr virtualAttr;
+  FormatAttr  virtualAttr;
+  FormatAttr  apiAttr;
+  std::string apiExport;
+
+  DeclCppIDLFormatter() {
+    //force api export activation by default
+    apiAttr.activate();
+  }
 
   virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
   void visitDecl(InterfaceDeclNode* node) {
     ScopedFormatAttrActivate _(virtualAttr);
-    indent() << "class " << node->name << "Interface";
+    ScopedFormatAttrBlock    _2(apiAttr);
+
+    indent() << "class " << apiExport << " " << node->name << "Interface";
     if (node->inherits.size() > 0) {
       out() << ": ";
       for (int i = 0; i < node->inherits.size(); ++i) {
@@ -49,10 +58,11 @@ public:
   }
 
   void visitDecl(FnDeclNode* node) {
+    indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
     if (node->ret)
-      indent() << virtualAttr("virtual ") << type(node->ret) << " " << node->name << "(";
+      out() << type(node->ret) << " " << node->name << "(";
     else
-      indent() << virtualAttr("virtual ") << "void " << node->name << "(";
+      out() << "void " << node->name << "(";
 
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << consttype(node->args[i]);
@@ -117,14 +127,18 @@ class QiLangGenObjectDef : public FileFormatter
                          , public StmtNodeFormatter
 {
 public:
-  QiLangGenObjectDef(const PackageManagerPtr& pm, const StringVector& includes)
+  QiLangGenObjectDef(const PackageManagerPtr& pm, const std::string& pkgName, const StringVector& includes)
     : toclose(0)
     , _pm(pm)
+    , _pkgName(pkgName)
     , _includes(includes)
-  {}
+  {
+    apiExport = pkgNameToAPI(pkgName);
+  }
 
   int toclose;     //number of } to close (namespace)
   PackageManagerPtr _pm;
+  std::string       _pkgName;
   StringVector      _includes;
 
   virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
@@ -208,7 +222,7 @@ protected:
 
 std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes) {
   StringVector sv = extractCppIncludeDir(pm, nodes, false);
-  return QiLangGenObjectDef(pm, sv).format(nodes.ast);
+  return QiLangGenObjectDef(pm, nodes.package, sv).format(nodes.ast);
 }
 
 }
