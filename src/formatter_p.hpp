@@ -54,10 +54,10 @@ namespace qilang {
     void desactivate() { _active--; _active = _active < 0 ? 0 : _active; }
 
     bool isActive() const { return _active > 0 && _block == 0; }
-    const std::string &format(const std::string& name) const {
+    const std::string &operator()(const std::string& str) const {
       static std::string empt;
       if (isActive())
-        return name;
+        return str;
       else
         return empt;
     }

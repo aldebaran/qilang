@@ -50,9 +50,9 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     if (node->ret)
-      indent() << virtualAttr.format("virtual ") << type(node->ret) << " " << node->name << "(";
+      indent() << virtualAttr("virtual ") << type(node->ret) << " " << node->name << "(";
     else
-      indent() << virtualAttr.format("virtual ") << "void " << node->name << "(";
+      indent() << virtualAttr("virtual ") << "void " << node->name << "(";
 
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << consttype(node->args[i]);
@@ -60,7 +60,7 @@ public:
         out() << ", ";
       }
     }
-    out() << ")" << virtualAttr.format("= 0") << ";" << std::endl;
+    out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
 
   void visitDecl(EmitDeclNode* node) {
