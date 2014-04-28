@@ -156,6 +156,14 @@ void ExprCppFormatter::visitExpr(VarExprNode *node) {
 void ExprCppFormatter::visitExpr(ConstDataExprNode* node) {
   throw std::runtime_error("unimplemented");
 }
+static std::string stripQiLangExtension(const std::string& name)
+{
+  if (boost::ends_with(name, ".idl.qi"))
+    return name.substr(0, name.size() - 7);
+  if (boost::ends_with(name, ".qi"))
+    return name.substr(0, name.size() - 3);
+  return name;
+}
 
 std::vector<std::string> splitPkgName(const std::string& name) {
   std::vector<std::string> ret;
@@ -177,6 +185,20 @@ std::string pkgNameToAPI(const std::string& name) {
   ret += "_API";
   return ret;
 }
+
+std::string filenameToCppHeaderGuard(const std::string &pkgName, const std::string &filename)
+{
+  qi::Path p(filename);
+  p = p.filename();
+
+  std::string ret(pkgName);
+  boost::replace_all(ret, ".", "_");
+  ret += "_" + stripQiLangExtension(p);
+  boost::to_upper(ret);
+  ret = "_QILANG_GEN_" + ret + "_";
+  return ret;
+}
+
 
 std::string formatNs(const std::string& package) {
   std::string ret;
@@ -213,14 +235,6 @@ static StringVector filenameFromImport(const PackagePtr& pkg, ImportNode* tnode)
   return ret;
 }
 
-static std::string stripQiLangExtension(const std::string& name)
-{
-  if (boost::ends_with(name, ".idl.qi"))
-    return name.substr(0, name.size() - 7);
-  if (boost::ends_with(name, ".qi"))
-    return name.substr(0, name.size() - 3);
-  return name;
-}
 
 static std::string qiLangToCppInclude(const PackagePtr& pkg, const std::string& filename) {
   qi::Path pkgpath(pkgNameToDir(pkg->_name));
@@ -328,5 +342,6 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   }
   return includes;
 }
+
 
 }

@@ -79,4 +79,7 @@ namespace qilang {
 
   std::vector<std::string> splitPkgName(const std::string& name);
   std::string formatNs(const std::string& package);
+
+  std::string filenameToCppHeaderGuard(const std::string& pkgName, const std::string& filename);
+
 }

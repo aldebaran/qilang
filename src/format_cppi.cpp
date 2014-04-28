@@ -12,8 +12,6 @@
 #include <qilang/packagemanager.hpp>
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include "cpptype.hpp"
 
@@ -127,19 +125,19 @@ class QiLangGenObjectDef : public FileFormatter
                          , public StmtNodeFormatter
 {
 public:
-  QiLangGenObjectDef(const PackageManagerPtr& pm, const std::string& pkgName, const StringVector& includes)
+  QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResult& pr, const StringVector& includes)
     : toclose(0)
     , _pm(pm)
-    , _pkgName(pkgName)
+    , _pr(pr)
     , _includes(includes)
   {
-    apiExport = pkgNameToAPI(pkgName);
+    apiExport = pkgNameToAPI(pr.package);
   }
 
   int toclose;     //number of } to close (namespace)
-  PackageManagerPtr _pm;
-  std::string       _pkgName;
-  StringVector      _includes;
+  PackageManagerPtr  _pm;
+  const ParseResult& _pr;
+  StringVector       _includes;
 
   virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
 
@@ -168,11 +166,9 @@ public:
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
     indent() << "#pragma once" << std::endl;
-    boost::uuids::uuid u = boost::uuids::random_generator()();
-    std::string uuid = boost::uuids::to_string(u);
-    boost::algorithm::replace_all(uuid, "-", "_");
-    indent() << "#ifndef YEAH_" << uuid << std::endl;
-    indent() << "#define YEAH_" << uuid << std::endl;
+    std::string headGuard = filenameToCppHeaderGuard(_pr.package, _pr.filename);
+    indent() << "#ifndef " << headGuard << std::endl;
+    indent() << "#define " << headGuard << std::endl;
     indent() << std::endl;
     for (unsigned i = 0; i < _includes.size(); ++i) {
       indent() << "#include " << _includes.at(i) << std::endl;
@@ -222,7 +218,7 @@ protected:
 
 std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes) {
   StringVector sv = extractCppIncludeDir(pm, nodes, false);
-  return QiLangGenObjectDef(pm, nodes.package, sv).format(nodes.ast);
+  return QiLangGenObjectDef(pm, nodes, sv).format(nodes.ast);
 }
 
 }
