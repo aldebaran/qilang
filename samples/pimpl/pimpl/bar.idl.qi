@@ -4,3 +4,4 @@ package pimpl
 interface Bar
   fn foo(str)
 end
+fn newBar() Bar
