@@ -287,9 +287,11 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         break;
       }
       case NodeType_CustomTypeExpr: {
+        //break;
+        //already handled by imports
         CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(node.get());
-        //TODO
-        qiLogWarning() << "Unimplemented custom type include detector";
+        PackagePtr pkg = pm->package(tnode->resolved_package);
+        pushIfNot(includes, qiLangToCppInclude(pkg, pkg->fileFromExport(tnode->resolved_value)));
         break;
       }
       default:

@@ -62,14 +62,15 @@
 
   qilang::TypeExprNodePtr makeType(const yy::location& loc, const std::string& id) {
     //warning keep in sync with node.hpp enum BuiltinType
-    const char *builtin[] = {"bool", "char",
-                             "int", "uint",
-                             "int8", "uint8",
-                             "int16", "uint16",
-                             "int32", "uint32",
-                             "float",
-                             "float32", "float64",
-                             "str", "any", "obj", 0 };
+    const char *builtin[] = { "bool" , "char",
+                              "int"  , "uint",
+                              "int8" , "uint8",
+                              "int16", "uint16",
+                              "int32", "uint32",
+                              "int64", "uint64",
+                              "float",
+                              "float32", "float64",
+                              "str", "any", "obj", 0 };
     int index = 0;
     const char *t = builtin[index];
     while (t != 0) {
@@ -79,7 +80,6 @@
       t = builtin[index];
     }
     return NODE1(CustomTypeExprNode, loc, id);
-
   }
 
 

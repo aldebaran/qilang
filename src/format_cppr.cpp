@@ -22,6 +22,7 @@ namespace qilang {
     DeclCppGenFormatter()
       : id(0)
     {}
+    FormatAttr methodAttr;
 
     int id;
     std::string currentParent;
@@ -35,10 +36,13 @@ namespace qilang {
       indent() << "static int initType" << current << "() {" << std::endl;
       {
         ScopedIndent _(_indent);
+        ScopedFormatAttrActivate _2(methodAttr);
         indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           decl(node->values.at(i));
         }
+        indent() << "builder.registerType();" << std::endl;
+
         currentParent = "";
         indent() << "return 42;" << std::endl;
       }
@@ -47,8 +51,12 @@ namespace qilang {
       indent() << std::endl;
     }
     void visitDecl(FnDeclNode* node) {
-      indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
+      if (methodAttr.isActive()) {
+        indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
+        out() << ");" << std::endl;
+      } else {
+        indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
+      }
     }
     void visitDecl(EmitDeclNode* node) {
       indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;

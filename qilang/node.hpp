@@ -106,12 +106,13 @@ class FieldDeclNode;
 class ConstDeclNode;
 
 
-typedef std::vector<std::string>          StringVector;
+typedef std::vector<std::string>            StringVector;
+typedef std::pair<std::string, std::string> StringPair;
 
 typedef boost::shared_ptr<Node>           NodePtr;
 typedef std::vector<NodePtr>              NodePtrVector;
 
-typedef boost::shared_ptr<DeclNode>        DeclNodePtr;
+typedef boost::shared_ptr<DeclNode>       DeclNodePtr;
 typedef std::vector<DeclNodePtr>          DeclNodePtrVector;
 
 typedef boost::shared_ptr<StmtNode>       StmtNodePtr;
@@ -520,20 +521,9 @@ public:
   virtual void accept(TypeExprNodeVisitor* visitor) = 0;
 };
 
-class QILANG_API CustomTypeExprNode : public TypeExprNode {
-public:
-  explicit CustomTypeExprNode(const std::string& sym, const Location& loc)
-    : TypeExprNode(NodeType_CustomTypeExpr, loc)
-    , value(sym)
-  {}
-
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
-
-  std::string value;
-};
 //warning keep in sync with makeType in grammar.y
 enum BuiltinType {
-  BuiltinType_Bool,
+  BuiltinType_Bool = 0,
   BuiltinType_Char,
   BuiltinType_Int,
   BuiltinType_UInt,
@@ -564,6 +554,20 @@ public:
   void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   BuiltinType builtinType;
+  std::string value;
+};
+
+class QILANG_API CustomTypeExprNode : public TypeExprNode {
+public:
+  explicit CustomTypeExprNode(const std::string& sym, const Location& loc)
+    : TypeExprNode(NodeType_CustomTypeExpr, loc)
+    , value(sym)
+  {}
+
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+
+  std::string resolved_package;
+  std::string resolved_value;
   std::string value;
 };
 

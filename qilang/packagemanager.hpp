@@ -56,6 +56,17 @@ namespace qilang {
       _exports[member] = node;
     }
 
+    NodePtr getExport(const std::string& decl) {
+       NodeMap::const_iterator it;
+       qiLogCategory("qilang.pm");
+       qiLogVerbose() << _name << " looking for export: " << decl;
+       it = _exports.find(decl);
+       if (it == _exports.end())
+         return NodePtr();
+       qiLogVerbose() << _name << " found export: " << decl;
+       return it->second;
+    }
+
     void setContent(const std::string& filename, const ParseResult& result) {
       if (_contents.find(filename) != _contents.end())
         throw std::runtime_error("content already set for file: " + filename);
@@ -124,7 +135,7 @@ namespace qilang {
     void anal(const std::string& package = std::string());
 
     NodePtrVector ast(const std::string& filename);
-    PackagePtr    package(const std::string& packagename);
+    PackagePtr    package(const std::string& packagename) const;
 
     void         addInclude(const std::string& include);
     void         setIncludes(const StringVector& includes) { _includes = includes; }
@@ -137,6 +148,8 @@ namespace qilang {
     void printMessage(std::ostream& os) const;
 
     void parseDir(const std::string &dirname);
+
+    StringPair resolveImport(const PackagePtr &pkg, const std::string &type);
 
   protected:
     PackagePtr addPackage(const std::string& name) {

@@ -64,8 +64,8 @@ namespace qilang {
     }
   }
 
-  PackagePtr    PackageManager::package(const std::string& packagename) {
-    PackagePtrMap::iterator it;
+  PackagePtr    PackageManager::package(const std::string& packagename) const {
+    PackagePtrMap::const_iterator it;
     it = _packages.find(packagename);
     if (it == _packages.end())
       throw std::runtime_error("package not found '" + packagename + "'");
@@ -121,7 +121,7 @@ namespace qilang {
       p = p.parent();
     }
 
-    std::string pkgpath = p.parent().absolute();
+    std::string pkgpath = p.absolute();
 
     addInclude(pkgpath);
     addPackage(pkgname);
@@ -290,6 +290,55 @@ namespace qilang {
     parsePackage(fileOrPkg);
   }
 
+  static StringPair checkImport(const PackageManager& pm, const std::string& pkgName, const std::string& type)
+  {
+    PackagePtr pkg = pm.package(pkgName);
+    NodePtr node = pkg->getExport(type);
+    if (node)
+      return StringPair(pkgName, type);
+    throw std::runtime_error("Can't find import");
+  }
+
+  StringPair PackageManager::resolveImport(const PackagePtr& pkg, const std::string& type)
+  {
+    qiLogInfo() << "Resolving: " << type << " from pkg " << pkg->_name;
+    std::string pkgName = type.substr(0, type.find_last_of('.'));
+    std::string value = type.substr(pkgName.size(), type.size());
+
+    //package name provided
+    if (!pkgName.empty() && pkgName != type)
+      return checkImport(*this, pkgName, value);
+    value = type;
+
+    //no package name. find the package name
+    NodePtr exportnode = pkg->getExport(type);
+    if (exportnode)
+      return checkImport(*this, pkg->_name, type);
+
+    ASTMap::const_iterator it;
+    for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
+      const NodePtrVector& v = it->second;
+      for (unsigned i = 0; i < v.size(); ++i) {
+        ImportNode* tnode = static_cast<ImportNode*>(v.at(i).get());
+        switch (tnode->importType) {
+          case ImportType_All: {
+            return checkImport(*this, tnode->name, type);
+          }
+          case ImportType_List: {
+            StringVector::iterator it = std::find(tnode->imports.begin(), tnode->imports.end(), type);
+            if (it != tnode->imports.end()) {
+              return checkImport(*this, tnode->name, type);
+            }
+            break;
+          }
+          case ImportType_Package:
+            break;
+        }
+      }
+    }
+    throw std::runtime_error("cant find id");
+  }
+
   /** parse all dependents packages
    */
   void PackageManager::resolvePackage(const std::string& packageName) {
@@ -311,6 +360,26 @@ namespace qilang {
     for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
     }
 
+    //for each customtype expr resolve name
+    //for each files in the package
+    ParseResultMap::iterator it2;
+    for (it2 = pkg->_contents.begin(); it2 != pkg->_contents.end(); ++it2) {
+      NodePtrVector customs = findNode(it2->second.ast, NodeType_CustomTypeExpr);
+
+      for (unsigned j = 0; j < customs.size(); ++j) {
+        CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(customs.at(j).get());
+        StringPair sp;
+        try {
+          sp = resolveImport(pkg, tnode->value);
+        } catch(const std::exception& e) {
+          qiLogError() << "error: " << e.what();
+          throw;
+        }
+        qiLogInfo() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
+        tnode->resolved_package = sp.first;
+        tnode->resolved_value   = sp.second;
+      }
+    }
   }
 
   /**
