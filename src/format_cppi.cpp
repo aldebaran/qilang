@@ -24,9 +24,12 @@ namespace qilang {
 
 class DeclCppIDLFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
 public:
+  FormatAttr virtualAttr;
+
   virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
   void visitDecl(InterfaceDeclNode* node) {
+    ScopedFormatAttrActivate _(virtualAttr);
     indent() << "class " << node->name << "Interface";
     if (node->inherits.size() > 0) {
       out() << ": ";
@@ -47,9 +50,9 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     if (node->ret)
-      indent() << "virtual " << type(node->ret) << " " << node->name << "(";
+      indent() << virtualAttr.format("virtual ") << type(node->ret) << " " << node->name << "(";
     else
-      indent() << "virtual void " << node->name << "(";
+      indent() << virtualAttr.format("virtual ") << "void " << node->name << "(";
 
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << consttype(node->args[i]);
@@ -57,35 +60,34 @@ public:
         out() << ", ";
       }
     }
-    out() << ") = 0;" << std::endl;
+    out() << ")" << virtualAttr.format("= 0") << ";" << std::endl;
   }
 
   void visitDecl(EmitDeclNode* node) {
-    indent() << "qi::Signal<";
+    indent() << "qi::Signal< ";
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << type(node->args[i]);
       if (i+1 < node->args.size()) {
         out() << ", ";
       }
     }
-    out() << "> " << node->name << ";" << std::endl;
+    out() << " > " << node->name << ";" << std::endl;
   }
   void visitDecl(PropDeclNode* node) {
-    indent() << "qi::Property<";
+    indent() << "qi::Property< ";
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << type(node->args[i]);
       if (i+1 < node->args.size()) {
         out() << ", ";
       }
     }
-    out() << "> " << node->name << ";" << std::endl;
+    out() << " > " << node->name << ";" << std::endl;
   }
 
   void visitDecl(StructDeclNode* node) {
     indent() << "struct " << node->name << " {" << std::endl;
-    noconstref++;
+    ScopedFormatAttrBlock _(constattr);
     scopedField(node->fields);
-    noconstref--;
     indent() << "};" << std::endl << std::endl;
   }
 

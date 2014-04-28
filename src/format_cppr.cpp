@@ -59,13 +59,19 @@ namespace qilang {
       out() << ");" << std::endl;
     }
     void visitDecl(StructDeclNode* node) {
-      throw std::runtime_error("unimplemented");
+      indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
+      for (unsigned int i = 0; i < node->fields.size(); ++i) {
+        acceptDecl(node->fields.at(i));
+        if (i + 1 < node->fields.size())
+          out() << ", ";
+      }
+      out() << ");" << std::endl;
     }
     void visitDecl(ConstDeclNode* node) {
       throw std::runtime_error("unimplemented");
     }
     void visitDecl(FieldDeclNode* node) {
-      throw std::runtime_error("unimplemented");
+      out() << node->name;
     }
   };
 

@@ -23,13 +23,15 @@ namespace qilang {
    */
   class CppTypeFormatter: public TypeExprNodeFormatter {
   public:
+    //should we add const if possible? (for function params)
+    //contextual disable const ref.  (const std::vector<std::string>&)
+    FormatAttr constattr;
+
     explicit CppTypeFormatter();
 
     virtual void acceptTypeExpr(const TypeExprNodePtr& node);
 
     const std::string& noconst(TypeExprNodePtr node);
-    const std::string& addconst();
-    const std::string& addref();
 
     //ask for a const ref expression.
     const std::string& consttype(const TypeExprNodePtr& node);
@@ -40,8 +42,6 @@ namespace qilang {
     void visitTypeExpr(MapTypeExprNode* node);
     void visitTypeExpr(TupleTypeExprNode* node);
 
-    int addconstref;   //should we add const if possible? (for function params)
-    int noconstref;    //contextual disable const ref.  (const std::vector<std::string>&)
   };
 
   class DataCppFormatter : public ConstDataNodeFormatter {

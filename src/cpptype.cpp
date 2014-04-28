@@ -71,57 +71,43 @@ void CppTypeFormatter::acceptTypeExpr(const TypeExprNodePtr& node) {
 
 
 CppTypeFormatter::CppTypeFormatter()
-  : addconstref(0)
-  , noconstref(0)
 {
 }
 
 const std::string& CppTypeFormatter::noconst(TypeExprNodePtr node) {
   static const std::string ret;
-  noconstref++;
+  ScopedFormatAttrBlock _(constattr);
   type(node);
-  noconstref--;
   return ret;
 }
 
 const std::string& CppTypeFormatter::consttype(const TypeExprNodePtr& node) {
   static const std::string ret;
-  addconstref++;
+  ScopedFormatAttrActivate _(constattr);
   acceptTypeExpr(node);
-  addconstref--;
   return ret;
 }
 
-const std::string& CppTypeFormatter::addconst() {
-  static const std::string constt("const ");
-  static const std::string empt;
-  if (addconstref && noconstref==0)
-    return constt;
-  return empt;
-}
-
-const std::string& CppTypeFormatter::addref() {
-  static const std::string constt("&");
-  static const std::string empt;
-  if (addconstref && noconstref==0)
-    return constt;
-  return empt;
-}
-
 void CppTypeFormatter::visitTypeExpr(BuiltinTypeExprNode* node) {
-  out() << builtinTypeToCpp(node->builtinType, (noconstref==0 && addconstref));
+  out() << builtinTypeToCpp(node->builtinType, constattr.isActive());
 }
 void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
-  out() << constRefYourSelf(node->value, (noconstref==0 && addconstref));
+  out() << constRefYourSelf(node->value, constattr.isActive());
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
-  out() << addconst() << "std::vector< " << noconst(node->element) << " >" << addref();
+  out() << constattr.format("const ") << "std::vector< " << noconst(node->element) << " >" << constattr.format("&");
 }
 void CppTypeFormatter::visitTypeExpr(MapTypeExprNode* node) {
-  out() << addconst() << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << " >" << addref();
+  out() << constattr.format("const ") << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << " >" << constattr.format("&");
 }
 void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
-  out() << "TUPLENOTIMPL";
+  if (node->elements.size() == 2)
+    out() << constattr.format("const ") << "std::pair< "
+          << noconst(node->elements.at(0)) << ", "
+          << noconst(node->elements.at(1))
+          << " >" << constattr.format("&");
+  else
+    out() << "TUPLENOTIMPL";
 }
 
 void DataCppFormatter::acceptData(const ConstDataNodePtr& node) {
@@ -266,8 +252,16 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   for (unsigned i = 0; i < typeExprs.size(); ++i) {
     NodePtr& node = typeExprs.at(i);
     switch (node->type()) {
-      case NodeType_TupleTypeExpr:
-        throw std::runtime_error("mierda");
+      case NodeType_TupleTypeExpr: {
+        TupleTypeExprNode* tnode = static_cast<TupleTypeExprNode*>(node.get());
+        if (tnode->elements.size() == 2)
+          pushIfNot(includes, "<pair>");
+        else {
+          pushIfNot(includes, "NOTIMPLTUPLE");
+          qiLogWarning() << "BUG: include handling for tuple with size != 2 not handled";
+        }
+        break;
+      }
       case NodeType_ListTypeExpr:
         pushIfNot(includes, "<vector>");
         break;
