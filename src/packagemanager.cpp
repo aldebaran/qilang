@@ -109,9 +109,9 @@ namespace qilang {
         break;
     }
 
-    qi::Path p = pf;
+    qi::Path p = pf.parent().absolute();
     for (int i = leafs.size() - 1; i >= 0; --i) {
-      std::string par = p.parent().filename();
+      std::string par = p.filename();
       if (par != leafs.at(i)) {
         ret.messages.push_back(Message(MessageType_Error,
                                        "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
