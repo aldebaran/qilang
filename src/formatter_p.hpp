@@ -42,8 +42,8 @@ namespace qilang {
 
   class FormatAttr {
   public:
-    FormatAttr()
-      : _active(0)
+    FormatAttr(bool active = false)
+      : _active(active)
       , _block(0)
     {}
 
