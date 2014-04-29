@@ -76,6 +76,7 @@ namespace qilang {
 
 
   inline FileReaderPtr newFileReader(const std::string& fname) { return boost::make_shared<FileReader>(fname); }
+  inline FileReaderPtr newFileReader(std::istream* in, const std::string& fname) { return boost::make_shared<FileReader>(in, fname); }
 
   class QILANG_API ParseResult {
   public:
