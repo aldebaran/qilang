@@ -773,9 +773,8 @@ typedef std::vector<FieldDeclNodePtr>    FieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& pkg, const std::string& name, const FieldDeclNodePtrVector& vardefs, const Location& loc)
+  StructDeclNode(const std::string& name, const FieldDeclNodePtrVector& vardefs, const Location& loc)
     : DeclNode(NodeType_StructDecl, loc)
-    , package(pkg)
     , name(name)
     , fields(vardefs)
   {}
@@ -790,16 +789,14 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
-  InterfaceDeclNode(const std::string& pkg, const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
+  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
     : DeclNode(NodeType_InterfaceDecl, loc)
-    , package(pkg)
     , name(name)
     , values(decls)
   {}
 
-  InterfaceDeclNode(const std::string& pkg, const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc)
+  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc)
     : DeclNode(NodeType_InterfaceDecl, loc)
-    , package(pkg)
     , name(name)
     , values(decls)
     , inherits(inherits)
@@ -807,7 +804,7 @@ public:
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  std::string       package;
+  //std::string       package;
   std::string       name;
   DeclNodePtrVector values;
   StringVector      inherits;
@@ -869,17 +866,15 @@ public:
 
 class QILANG_API ConstDeclNode : public DeclNode {
 public:
-  ConstDeclNode(const std::string& pkg, const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
+  ConstDeclNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
     : DeclNode(NodeType_ConstDecl, loc)
-    , package(pkg)
     , name(name)
     , type(type)
     , data(data)
   {}
 
-  ConstDeclNode(const std::string& pkg, const std::string& name, const ConstDataNodePtr& data, const Location& loc)
+  ConstDeclNode(const std::string& name, const ConstDataNodePtr& data, const Location& loc)
     : DeclNode(NodeType_ConstDecl, loc)
-    , package(pkg)
     , name(name)
     , data(data)
   {}
@@ -887,7 +882,6 @@ public:
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  std::string      package;
   std::string      name;
   TypeExprNodePtr  type;
   ConstDataNodePtr data;

@@ -17,86 +17,24 @@ qiLogCategory("qigen.cppbind");
 
 namespace qilang {
 
-
-  class CppBindGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
-  public:
-    CppBindGenFormatter()
-      : id(0)
-    {}
-    FormatAttr methodAttr;
-
-    int id;
-    std::string currentParent;
-
-    virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
-
-    void visitDecl(InterfaceDeclNode* node) {
-      int current = id;
-      id++;
-      currentParent = formatNs(node->package) + "::" + node->name + "Interface";
-      indent() << "static int initType" << current << "() {" << std::endl;
-      {
-        ScopedIndent _(_indent);
-        ScopedFormatAttrActivate _2(methodAttr);
-        indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
-        for (unsigned int i = 0; i < node->values.size(); ++i) {
-          acceptDecl(node->values.at(i));
-        }
-        indent() << "builder.registerType();" << std::endl;
-
-        currentParent = "";
-        indent() << "return 42;" << std::endl;
-      }
-      indent() << "}" << std::endl;
-      indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
-      indent() << std::endl;
-    }
-    void visitDecl(FnDeclNode* node) {
-      if (methodAttr.isActive()) {
-        indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-        out() << ");" << std::endl;
-      } else {
-        indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
-      }
-    }
-    void visitDecl(EmitDeclNode* node) {
-      indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
-    }
-    void visitDecl(PropDeclNode* node) {
-      indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
-    }
-    void visitDecl(StructDeclNode* node) {
-      indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
-      for (unsigned int i = 0; i < node->fields.size(); ++i) {
-        acceptDecl(node->fields.at(i));
-        if (i + 1 < node->fields.size())
-          out() << ", ";
-      }
-      out() << ");" << std::endl;
-    }
-    void visitDecl(ConstDeclNode* node) {
-      throw std::runtime_error("unimplemented");
-    }
-    void visitDecl(FieldDeclNode* node) {
-      out() << node->name;
-    }
-  };
-
 //Generate Type Registration Information
 class CppBindQiLangGen  : public FileFormatter,
                           public StmtNodeFormatter,
-                          public CppBindGenFormatter
+                          public DeclNodeFormatter,
+                          virtual public CppTypeFormatter,
+                          virtual public ExprCppFormatter
 {
 public:
-  CppBindQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
+  CppBindQiLangGen(const PackageManagerPtr& pm, const ParseResult& pr, const StringVector& includes)
     : toclose(0)
     , _includes(includes)
+    , _pr(pr)
+    , id(0)
   {}
 
   int toclose;
   StringVector _includes;
+  const ParseResult& _pr;
 
   virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
 
@@ -139,6 +77,66 @@ public:
   }
 
 protected:
+  FormatAttr methodAttr;
+
+  int id;
+  std::string currentParent;
+
+  virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
+
+  void visitDecl(InterfaceDeclNode* node) {
+    int current = id;
+    id++;
+    currentParent = formatNs(_pr.package) + "::" + node->name + "Interface";
+    indent() << "static int initType" << current << "() {" << std::endl;
+    {
+      ScopedIndent _(_indent);
+      ScopedFormatAttrActivate _2(methodAttr);
+      indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
+      for (unsigned int i = 0; i < node->values.size(); ++i) {
+        acceptDecl(node->values.at(i));
+      }
+      indent() << "builder.registerType();" << std::endl;
+
+      currentParent = "";
+      indent() << "return 42;" << std::endl;
+    }
+    indent() << "}" << std::endl;
+    indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
+    indent() << std::endl;
+  }
+  void visitDecl(FnDeclNode* node) {
+    if (methodAttr.isActive()) {
+      indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
+      out() << ");" << std::endl;
+    } else {
+      indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
+    }
+  }
+  void visitDecl(EmitDeclNode* node) {
+    indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
+    out() << ");" << std::endl;
+  }
+  void visitDecl(PropDeclNode* node) {
+    indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << currentParent << "::" << node->name;
+    out() << ");" << std::endl;
+  }
+  void visitDecl(StructDeclNode* node) {
+    indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
+    for (unsigned int i = 0; i < node->fields.size(); ++i) {
+      acceptDecl(node->fields.at(i));
+      if (i + 1 < node->fields.size())
+        out() << ", ";
+    }
+    out() << ");" << std::endl;
+  }
+  void visitDecl(ConstDeclNode* node) {
+    throw std::runtime_error("unimplemented");
+  }
+  void visitDecl(FieldDeclNode* node) {
+    out() << node->name;
+  }
+
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
     for (int i = 0; i < ns.size(); ++i) {
@@ -166,9 +164,9 @@ protected:
 
 };
 
-std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes) {
-  StringVector sv = extractCppIncludeDir(pm, nodes, true);
-  return CppBindQiLangGen(pm, sv).format(nodes.ast);
+std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& pr) {
+  StringVector sv = extractCppIncludeDir(pm, pr, true);
+  return CppBindQiLangGen(pm, pr, sv).format(pr.ast);
 }
 
 }

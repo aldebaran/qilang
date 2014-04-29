@@ -38,17 +38,6 @@ namespace qilang {
     qilang_lex_destroy(scanner);
   }
 
-  void Parser::setCurrentPackage(const std::string& pkg) {
-    qiLogVerbose() << "setCurrentPackage: " << pkg;
-    package = pkg;
-  }
-
-  const std::string& Parser::currentPackage() {
-    if (package.empty())
-      throw std::runtime_error("no package specified");
-    return package;
-  }
-
   void Parser::parse() {
     if (_parsed)
       return;
