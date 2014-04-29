@@ -92,13 +92,13 @@ int main(int argc, char *argv[])
       pm->printMessage(std::cout);
       return 1;
     }
-    if      (codegen == "cppi")
+    if      (codegen == "cpp_interface" || codegen == "cppi")
       *out << qilang::genCppObjectInterface(pm, pr);
-    else if (codegen == "cppr")
+    else if (codegen == "cpp_bind"      || codegen == "cppb")
       *out << qilang::genCppObjectRegistration(pm, pr);
-    else if (codegen == "cppl")
+    else if (codegen == "cpp_local"     || codegen == "cppl")
       *out << qilang::genCppObjectLocal(pm, pr);
-    else if (codegen == "cppp")
+    else if (codegen == "cpp_remote"    || codegen == "cppr")
       *out << qilang::genCppObjectRemote(pm, pr);
     else if (codegen == "qilang")
       *out << qilang::format(pr.ast);

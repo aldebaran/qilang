@@ -18,10 +18,10 @@ set(C src/node.cpp
       src/formatter_p.hpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
-      src/format_cppi.cpp
-      src/format_cppr.cpp
-      src/format_cppp.cpp
-      src/format_cppl.cpp
+      src/format_cpp_interface.cpp
+      src/format_cpp_bind.cpp
+      src/format_cpp_local.cpp
+      src/format_cpp_remote.cpp
       src/format_anyvalue.cpp
       src/cpptype.hpp
       src/cpptype.cpp

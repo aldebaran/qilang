@@ -21,25 +21,25 @@ function(qi_gen_idl OUT LANG PKG DIR)
       SRC "${absname}"
       COMMENT "IDL: generation headers ..."
       DEPENDS "${QIC_EXECUTABLE}" "${absname}"
-      COMMAND "${QIC_EXECUTABLE}" -c cppi "${absname}" -o "${absdir}/${PKG}/${fout}.hpp")
+      COMMAND "${QIC_EXECUTABLE}" -c cpp_interface "${absname}" -o "${absdir}/${PKG}/${fout}.hpp")
 
     qi_generate_src("${absdir}/src/${fout}.cpp"
       SRC "${absname}"
       COMMENT "IDL: generation cpp ..."
       DEPENDS "${QIC_EXECUTABLE}" "${absname}"
-      COMMAND "${QIC_EXECUTABLE}" -c cppr "${absname}" -o "${absdir}/src/${fout}.cpp")
+      COMMAND "${QIC_EXECUTABLE}" -c cpp_bind "${absname}" -o "${absdir}/src/${fout}.cpp")
 
     qi_generate_src("${absdir}/src/${fout}_p.hpp"
       SRC "${absname}"
       COMMENT "IDL: generation local hpp ..."
       DEPENDS "${QIC_EXECUTABLE}" "${absname}"
-      COMMAND "${QIC_EXECUTABLE}" -c cppl "${absname}" -o "${absdir}/src/${fout}_p.hpp")
+      COMMAND "${QIC_EXECUTABLE}" -c cpp_local "${absname}" -o "${absdir}/src/${fout}_p.hpp")
 
     qi_generate_src("${absdir}/src/${fout}remote.cpp"
       SRC "${absname}"
       COMMENT "IDL: generation remote cpp ..."
       DEPENDS "${QIC_EXECUTABLE}" "${absname}"
-      COMMAND "${QIC_EXECUTABLE}" -c cppp "${absname}" -o "${absdir}/src/${fout}remote.cpp")
+      COMMAND "${QIC_EXECUTABLE}" -c cpp_remote "${absname}" -o "${absdir}/src/${fout}remote.cpp")
 
     list(APPEND _out "${absdir}/${PKG}/${fout}.hpp")
     list(APPEND _out "${absdir}/src/${fout}.cpp")
