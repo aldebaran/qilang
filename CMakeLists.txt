@@ -20,6 +20,7 @@ set(C src/node.cpp
       src/format_sexpr.cpp
       src/format_cppi.cpp
       src/format_cppr.cpp
+      src/format_anyvalue.cpp
       src/cpptype.hpp
       src/cpptype.cpp
       src/packagemanager.cpp
