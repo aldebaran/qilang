@@ -19,9 +19,10 @@ int main(int argc, char *argv[])
 {
   qi::ApplicationSession app(argc, argv);
 
-
   po::options_description desc("qirtidl options");
   desc.add_options()
+      ("help,h", "this help")
+      ("codegen,c", po::value<std::string>(), "code generator")
       ("services,s", po::value<std::vector<std::string> >(), "list of services")
       ;
 
@@ -31,6 +32,23 @@ int main(int argc, char *argv[])
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
   po::notify(vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  std::ostream*            out;
+  std::ofstream            of;
+  std::string codegen = vm["codegen"].as<std::string>();
+
+  if (vm.count("output-file")) {
+    std::string outf = vm["output-file"].as<std::string>();
+    of.open(outf.c_str());
+    out = &of;
+  } else {
+    out = &std::cout;
+  }
 
   app.start();
 
@@ -51,9 +69,12 @@ int main(int argc, char *argv[])
     qi::AnyObject obj = app.session()->service(services.at(i));
 
     const qi::MetaObject& mo = obj.metaObject();
-    qilang::NodePtr ret = qilang::metaObjectToQiLang(services.at(i), mo);
+    qilang::NodePtrVector objs;
+    objs.push_back(qilang::metaObjectToQiLang(services.at(i), mo));
 
-    std::cout << qilang::format(ret) << std::endl;
+    bool succ = qilang::codegen(codegen, pm, pr);
+    if (!succ)
+      return 1;
   }
  return 0;
 }

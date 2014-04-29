@@ -62,6 +62,11 @@ namespace qilang {
 
   QILANG_API qi::AnyValue toAnyValue(const NodePtr& node);
 
+
+  QILANG_API bool codegen(const FileWriterPtr& out,
+                          const std::string& codegen,
+                          const PackageManagerPtr& pm,
+                          const ParseResult& pr);
   enum FormatterCodeGen {
     QiLang,
     Cpp_Header,

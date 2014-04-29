@@ -81,29 +81,9 @@ int main(int argc, char *argv[])
       std::cout << "Exception: " << e.what() << std::endl;
       exit(1);
     }
-    pm->anal();
-    if (pr.hasError()) {
-      qiLogError() << "PR";
-      pr.printMessage(std::cout);
+    bool ret = qilang::codegen(qilang::newFileWriter(out, "<stream>"), codegen, pm, pr);
+    if (!ret)
       return 1;
-    }
-    if (pm->hasError()) {
-      qiLogError() << "PM";
-      pm->printMessage(std::cout);
-      return 1;
-    }
-    if      (codegen == "cpp_interface" || codegen == "cppi")
-      *out << qilang::genCppObjectInterface(pm, pr);
-    else if (codegen == "cpp_bind"      || codegen == "cppb")
-      *out << qilang::genCppObjectRegistration(pm, pr);
-    else if (codegen == "cpp_local"     || codegen == "cppl")
-      *out << qilang::genCppObjectLocal(pm, pr);
-    else if (codegen == "cpp_remote"    || codegen == "cppr")
-      *out << qilang::genCppObjectRemote(pm, pr);
-    else if (codegen == "qilang")
-      *out << qilang::format(pr.ast);
-    else if (codegen == "sexpr")
-      *out << qilang::formatAST(pr.ast);
   }
   of.close();
   return 0;

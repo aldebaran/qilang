@@ -241,7 +241,7 @@ namespace qilang {
       out() << std::endl;
     }
     void visitStmt(AtNode* node) {
-      indent() << "at " << node->sender << " " << node->receiver << std::endl;
+      indent() << "at " << node->sender << ": " << node->receiver << std::endl;
     }
     void visitStmt(VarDefNode* node) {
       indent() << node->name;

@@ -14,7 +14,8 @@ set(H qilang/node.hpp
       qilang/packagemanager.hpp
    )
 
-set(C src/node.cpp
+set(C src/codegen.cpp
+      src/node.cpp
       src/parser.cpp
       src/parser_p.hpp
       src/formatter_p.hpp
