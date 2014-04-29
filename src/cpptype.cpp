@@ -62,6 +62,7 @@ static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
     case BuiltinType_Object:
       return constRefYourSelf("qi::AnyObject", constref);
   }
+  throw std::runtime_error("unreachable code");
 }
 
 

@@ -3,6 +3,8 @@ project(QiLang)
 find_package(qibuild)
 qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
 
+enable_testing()
+
 include_directories(".")
 
 set(H qilang/node.hpp
@@ -26,7 +28,7 @@ set(C src/node.cpp
       src/cpptype.hpp
       src/cpptype.cpp
       src/packagemanager.cpp
-)
+      src/qilang_signature.cpp)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -64,3 +66,8 @@ qi_create_bin(qic src/qic_main.cpp)
 
 qi_use_lib(qic qilang)
 qi_stage_bin(qic)
+
+qi_create_bin(qirtidl src/qirtidl_main.cpp)
+qi_use_lib(qirtidl qilang qimessaging)
+
+add_subdirectory("tests")

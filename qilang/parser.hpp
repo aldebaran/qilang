@@ -13,6 +13,11 @@
 #include <qilang/node.hpp>
 #include <boost/make_shared.hpp>
 
+namespace qi {
+class Signature;
+class MetaObject;
+};
+
 namespace qilang {
 
   enum MessageType {
@@ -93,6 +98,8 @@ namespace qilang {
   };
 
   QILANG_API ParseResult parse(const FileReaderPtr& filename);
+  QILANG_API TypeExprNodePtr signatureToQiLang(const qi::Signature& sig);
+  QILANG_API NodePtr metaObjectToQiLang(const std::string& name, const qi::MetaObject& obj);
 
   /* parse options:
    * - interface
