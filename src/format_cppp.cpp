@@ -77,7 +77,11 @@ namespace qilang {
         ScopedIndent _(_indent);
         indent() << "qiLogInfo(\"caca\") << \"remote call\";";
         if (node->ret)
-          indent() << "return _object.call< " << type(node->ret) << " >(";
+        {
+          indent() << "return _object.call< ";
+          indent() << type(node->ret);
+          indent() << " >(";
+        }
         else
           indent() << "_object.call<void>(";
         out() << "\"" << node->name << "\"";
