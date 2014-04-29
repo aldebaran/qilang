@@ -7,7 +7,8 @@ enable_testing()
 
 include_directories(".")
 
-set(H qilang/node.hpp
+set(H qilang/api.hpp
+      qilang/node.hpp
       qilang/visitor.hpp
       qilang/parser.hpp
       qilang/formatter.hpp
@@ -62,13 +63,10 @@ qi_create_lib(qilang
 qi_use_lib(qilang qi qitype)
 qi_stage_lib(qilang)
 
+qi_stage_cmake(qilang-tools-config.cmake)
+include(qilang-tools-config.cmake)
 
-qi_create_bin(qic src/qic_main.cpp)
-
-qi_use_lib(qic qilang)
+qi_create_bin(qic src/qic_main.cpp DEPENDS qimessaging qilang)
 qi_stage_bin(qic)
-
-qi_create_bin(qirtidl src/qirtidl_main.cpp)
-qi_use_lib(qirtidl qilang qimessaging)
 
 add_subdirectory("tests")
