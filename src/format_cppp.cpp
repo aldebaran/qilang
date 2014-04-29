@@ -13,14 +13,13 @@
 #include "formatter_p.hpp"
 #include "cpptype.hpp"
 
-qiLogCategory("qigen.cppbind");
+qiLogCategory("qigen.cppremote");
 
 namespace qilang {
 
-
-  class CppBindGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
+  class CppRemoteGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
   public:
-    CppBindGenFormatter()
+    CppRemoteGenFormatter()
       : id(0)
     {}
     FormatAttr methodAttr;
@@ -34,63 +33,91 @@ namespace qilang {
       int current = id;
       id++;
       currentParent = formatNs(node->package) + "::" + node->name + "Interface";
-      indent() << "static int initType" << current << "() {" << std::endl;
+      indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface, public qi::Proxy" << " {" << std::endl;
+      indent() << "public:" << std::endl;
+
       {
         ScopedIndent _(_indent);
         ScopedFormatAttrActivate _2(methodAttr);
-        indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
+
+        indent() << node->name + "Remote(const qi::AnyObject& ao)" << std::endl;
+        indent() << "  : _object(ao)" << std::endl;
+        indent() << "{}" << std::endl;
+
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           decl(node->values.at(i));
         }
-        indent() << "builder.registerType();" << std::endl;
-
         currentParent = "";
-        indent() << "return 42;" << std::endl;
       }
-      indent() << "}" << std::endl;
-      indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
+      out() << std::endl;
+      indent() << "protected:" << std::endl;
+      indent() << "  qi::AnyObject _object;" << std::endl;
+      indent() << "};" << std::endl;
+      indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << ");" << std::endl;
       indent() << std::endl;
     }
+
     void visitDecl(FnDeclNode* node) {
-      if (methodAttr.isActive()) {
-        indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-        out() << ");" << std::endl;
-      } else {
-        indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
+      if (!methodAttr.isActive())
+        return;
+      if (node->ret)
+        indent() << type(node->ret) << " " << node->name << "(";
+      else
+        indent() << "void " << node->name << "(";
+
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        out() << consttype(node->args[i]);
+        out() << " arg" << i;
+        if (i+1 < node->args.size()) {
+          out() << ", ";
+        }
       }
+      out() << ") {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "qiLogInfo(\"caca\") << \"remote call\";";
+        if (node->ret)
+          indent() << "return _object.call< " << type(node->ret) << " >(";
+        else
+          indent() << "_object.call<void>(";
+        out() << "\"" << node->name << "\"";
+        if (node->args.size() != 0)
+          out() << ", ";
+        for (unsigned int i = 0; i < node->args.size(); ++i) {
+          out() << "arg" << i;
+          if (i+1 < node->args.size()) {
+            out() << ", ";
+          }
+        }
+        out() << ");" << std::endl;
+      }
+      indent() << "}" << std::endl;
     }
+
     void visitDecl(EmitDeclNode* node) {
-      indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
+      qiLogError() << "EmitDeclNode not implemented";
     }
     void visitDecl(PropDeclNode* node) {
-      indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
+      qiLogError() << "PropDeclNode not implemented";
     }
     void visitDecl(StructDeclNode* node) {
-      indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
-      for (unsigned int i = 0; i < node->fields.size(); ++i) {
-        acceptDecl(node->fields.at(i));
-        if (i + 1 < node->fields.size())
-          out() << ", ";
-      }
-      out() << ");" << std::endl;
+      qiLogError() << "StructDeclNode not implemented";
     }
     void visitDecl(ConstDeclNode* node) {
-      throw std::runtime_error("unimplemented");
+      qiLogError() << "FieldDeclNode not implemented";
     }
     void visitDecl(FieldDeclNode* node) {
-      out() << node->name;
+      qiLogError() << "FieldDeclNode not implemented";
     }
   };
 
 //Generate Type Registration Information
-class CppBindQiLangGen  : public FileFormatter,
+class CppRemoteQiLangGen: public FileFormatter,
                           public StmtNodeFormatter,
-                          public CppBindGenFormatter
+                          public CppRemoteGenFormatter
 {
 public:
-  CppBindQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
+  CppRemoteQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
     : toclose(0)
     , _includes(includes)
   {}
@@ -166,9 +193,12 @@ protected:
 
 };
 
-std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes) {
+std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResult& nodes) {
   StringVector sv = extractCppIncludeDir(pm, nodes, true);
-  return CppBindQiLangGen(pm, sv).format(nodes.ast);
+  return CppRemoteQiLangGen(pm, sv).format(nodes.ast);
 }
 
+
+
 }
+

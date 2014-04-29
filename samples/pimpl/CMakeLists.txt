@@ -20,16 +20,31 @@ function(qi_gen_idl OUT LANG PKG DIR)
     qi_generate_src("${DIR}/${PKG}/${fout}.hpp"
       SRC "${absname}"
       COMMENT "IDL: generation headers ..."
-      DEPENDS "${QIC_EXECUTABLE}"
+      DEPENDS "${QIC_EXECUTABLE}" "${absname}"
       COMMAND "${QIC_EXECUTABLE}" -c cppi "${absname}" -o "${absdir}/${PKG}/${fout}.hpp")
 
     qi_generate_src("${absdir}/src/${fout}.cpp"
       SRC "${absname}"
       COMMENT "IDL: generation cpp ..."
-      DEPENDS "${QIC_EXECUTABLE}"
+      DEPENDS "${QIC_EXECUTABLE}" "${absname}"
       COMMAND "${QIC_EXECUTABLE}" -c cppr "${absname}" -o "${absdir}/src/${fout}.cpp")
+
+    qi_generate_src("${absdir}/src/${fout}_p.hpp"
+      SRC "${absname}"
+      COMMENT "IDL: generation local hpp ..."
+      DEPENDS "${QIC_EXECUTABLE}" "${absname}"
+      COMMAND "${QIC_EXECUTABLE}" -c cppl "${absname}" -o "${absdir}/src/${fout}_p.hpp")
+
+    qi_generate_src("${absdir}/src/${fout}remote.cpp"
+      SRC "${absname}"
+      COMMENT "IDL: generation remote cpp ..."
+      DEPENDS "${QIC_EXECUTABLE}" "${absname}"
+      COMMAND "${QIC_EXECUTABLE}" -c cppp "${absname}" -o "${absdir}/src/${fout}remote.cpp")
+
     list(APPEND _out "${absdir}/${PKG}/${fout}.hpp")
     list(APPEND _out "${absdir}/src/${fout}.cpp")
+    list(APPEND _out "${absdir}/src/${fout}_p.hpp")
+    list(APPEND _out "${absdir}/src/${fout}remote.cpp")
   endforeach()
   add_custom_target(${PKG}_idl_target DEPENDS ${_out})
   set(${OUT} ${_out} PARENT_SCOPE)
@@ -41,7 +56,7 @@ qi_gen_idl(titi_idlsrc CPP "titi" "${CMAKE_CURRENT_SOURCE_DIR}"  ${IDL_TITI})
 qi_create_lib(qipimpl ${C} ${pimpl_idlsrc} ${titi_idlsrc})
 add_dependencies(qipimpl pimpl_idl_target titi_idl_target)
 
-qi_use_lib(qipimpl qi qitype)
+qi_use_lib(qipimpl qi qitype qimessaging)
 qi_stage_lib(qipimpl)
 
 

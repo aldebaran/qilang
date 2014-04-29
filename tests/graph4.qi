@@ -1,6 +1,6 @@
 package tests
 
 
-object Graph "g"
+object Graph "g4"
   text: "mange ton slip mec"
 end

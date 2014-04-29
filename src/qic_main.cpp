@@ -96,6 +96,10 @@ int main(int argc, char *argv[])
       *out << qilang::genCppObjectInterface(pm, pr);
     else if (codegen == "cppr")
       *out << qilang::genCppObjectRegistration(pm, pr);
+    else if (codegen == "cppl")
+      *out << qilang::genCppObjectLocal(pm, pr);
+    else if (codegen == "cppp")
+      *out << qilang::genCppObjectRemote(pm, pr);
     else if (codegen == "qilang")
       *out << qilang::format(pr.ast);
     else if (codegen == "sexpr")

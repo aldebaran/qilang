@@ -50,6 +50,10 @@ namespace qilang {
 
   QILANG_API std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes);
 
+  QILANG_API std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResult& nodes);
+
+  QILANG_API std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResult& nodes);
+
   QILANG_API std::string formatAST(const NodePtrVector& node);
   QILANG_API std::string format(const NodePtrVector& node);
 

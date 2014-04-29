@@ -39,6 +39,7 @@ namespace qilang {
   }
 
   void Parser::setCurrentPackage(const std::string& pkg) {
+    qiLogVerbose() << "setCurrentPackage: " << pkg;
     package = pkg;
   }
 
