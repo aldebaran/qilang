@@ -28,6 +28,8 @@ namespace qilang {
     while (v) {
       if (codegen == v)
         break;
+      index++;
+      v = vals[index];
     }
     if (!v)
       throw std::runtime_error("bad value for codegen");
@@ -36,12 +38,12 @@ namespace qilang {
     if (pr.hasError()) {
       qiLogError() << "PR";
       pr.printMessage(std::cout);
-      return 1;
+      return false;
     }
     if (pm->hasError()) {
       qiLogError() << "PM";
       pm->printMessage(std::cout);
-      return 1;
+      return false;
     }
     if      (codegen == "cpp_interface" || codegen == "cppi")
       out->out() << qilang::genCppObjectInterface(pm, pr);
@@ -55,7 +57,7 @@ namespace qilang {
       out->out() << qilang::format(pr.ast);
     else if (codegen == "sexpr")
       out->out() << qilang::formatAST(pr.ast);
-    return 0;
+    return true;
   }
 
 }
