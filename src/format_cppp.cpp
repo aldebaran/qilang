@@ -53,7 +53,7 @@ namespace qilang {
       indent() << "protected:" << std::endl;
       indent() << "  qi::AnyObject _object;" << std::endl;
       indent() << "};" << std::endl;
-      indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << ");" << std::endl;
+      indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << "Interface);" << std::endl;
       indent() << std::endl;
     }
 
