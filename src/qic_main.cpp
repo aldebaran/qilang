@@ -38,7 +38,6 @@ int main(int argc, char *argv[])
   po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
   po::notify(vm);
 
-
   if (vm.count("help")) {
       std::cout << desc << std::endl;
       return 1;
@@ -79,7 +78,7 @@ int main(int argc, char *argv[])
     try {
       pr = pm->parseFile(qilang::newFileReader(files.at(i)));
     } catch(const std::exception& e) {
-      std::cout << e.what() << std::endl;
+      std::cout << "Exception: " << e.what() << std::endl;
       exit(1);
     }
     pm->anal();
@@ -101,9 +100,6 @@ int main(int argc, char *argv[])
       *out << qilang::format(pr.ast);
     else if (codegen == "sexpr")
       *out << qilang::formatAST(pr.ast);
-    }
-  if (codegen == "testgros") {
-    pm->anal();
   }
   of.close();
   return 0;
