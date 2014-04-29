@@ -20,7 +20,7 @@ namespace qilang {
   std::string extractPackageName(const NodePtr& node) {
     switch(node->type()) {
       case NodeType_Package: {
-        PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
+        PackageNode* tnode = static_cast<PackageNode*>(node.get());
         return tnode->name;
       } default:
         throw std::runtime_error("node is not a package");
@@ -34,27 +34,27 @@ namespace qilang {
 
     switch (node->type()) {
       case NodeType_InterfaceDecl: {
-        InterfaceDeclNode* tnode = dynamic_cast<InterfaceDeclNode*>(node.get());
+        InterfaceDeclNode* tnode = static_cast<InterfaceDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_StructDecl: {
-        StructDeclNode* tnode = dynamic_cast<StructDeclNode*>(node.get());
+        StructDeclNode* tnode = static_cast<StructDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_FnDecl: {
-        FnDeclNode* tnode = dynamic_cast<FnDeclNode*>(node.get());
+        FnDeclNode* tnode = static_cast<FnDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_ConstDecl: {
-        ConstDeclNode* tnode = dynamic_cast<ConstDeclNode*>(node.get());
+        ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_ObjectDef: {
-        ObjectDefNode* tnode = dynamic_cast<ObjectDefNode*>(node.get());
+        ObjectDefNode* tnode = static_cast<ObjectDefNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_Import: {
-        ImportNode* tnode = dynamic_cast<ImportNode*>(node.get());
+        ImportNode* tnode = static_cast<ImportNode*>(node.get());
         pkg->addImport(tnode->name, node);
         return;
       }
