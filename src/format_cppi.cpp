@@ -57,13 +57,14 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
-    if (node->ret)
-      out() << type(node->ret) << " " << node->name << "(";
-    else
+    if (node->ret) {
+      acceptTypeExpr(node->ret);
+      out() << " " << node->name << "(";
+    } else
       out() << "void " << node->name << "(";
 
     for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << consttype(node->args[i]);
+      consttype(node->args[i]);
       if (i+1 < node->args.size()) {
         out() << ", ";
       }
@@ -74,7 +75,7 @@ public:
   void visitDecl(EmitDeclNode* node) {
     indent() << "qi::Signal< ";
     for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << type(node->args[i]);
+      acceptTypeExpr(node->args[i]);
       if (i+1 < node->args.size()) {
         out() << ", ";
       }
@@ -84,7 +85,7 @@ public:
   void visitDecl(PropDeclNode* node) {
     indent() << "qi::Property< ";
     for (unsigned int i = 0; i < node->args.size(); ++i) {
-      out() << type(node->args[i]);
+      acceptTypeExpr(node->args[i]);
       if (i+1 < node->args.size()) {
         out() << ", ";
       }
@@ -101,18 +102,24 @@ public:
 
   void visitDecl(ConstDeclNode* node) {
     indent() << "const ";
-    if (node->type)
-      out() << type(node->type) << " " << node->name;
-    else
+    if (node->type) {
+      acceptTypeExpr(node->type);
+      out() << " " << node->name;
+    } else
       out() << "qi::AnyValue " << node->name;
-    if (node->data)
-      out() << " = " << cdata(node->data);
+    if (node->data) {
+      out() << " = ";
+      acceptData(node->data);
+    }
     out() << ";" << std::endl;
   }
 
   void visitDecl(FieldDeclNode* node) {
-    if (node->type)
-      indent() << type(node->type) << " " << node->name;
+    if (node->type) {
+      indent();
+      acceptTypeExpr(node->type);
+      out() << " " << node->name;
+    }
     else
       indent() << "qi::AnyValue " << node->name;
     out() << ";" << std::endl;
@@ -134,13 +141,6 @@ public:
     apiExport = pkgNameToAPI(pr.package);
   }
 
-  int toclose;     //number of } to close (namespace)
-  PackageManagerPtr  _pm;
-  const ParseResult& _pr;
-  StringVector       _includes;
-
-  virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
-
   virtual void accept(const NodePtr& node) {
     switch (node->kind()) {
     case NodeKind_ConstData:
@@ -160,6 +160,13 @@ public:
       break;
     }
   }
+
+  int toclose;     //number of } to close (namespace)
+  PackageManagerPtr  _pm;
+  const ParseResult& _pr;
+  StringVector       _includes;
+
+  virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
 
   void formatHeader() {
     indent() << "/*" << std::endl;
@@ -206,12 +213,17 @@ protected:
     throw std::runtime_error("unimplemented");
   }
   void visitStmt(VarDefNode* node) {
-    if (node->type)
-      indent() << type(node->type) << " " << node->name;
+    if (node->type) {
+      indent() << "";
+      acceptTypeExpr(node->type);
+      out() << " " << node->name;
+    }
     else
       indent() << "qi::AnyValue " << node->name;
-    if (node->data)
-      out() << " = " << cdata(node->data);
+    if (node->data) {
+      out() << " = ";
+      acceptData(node->data);
+    }
     out() << ";" << std::endl;
   }
 };

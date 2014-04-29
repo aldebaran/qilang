@@ -20,19 +20,13 @@ namespace qilang {
   class LocalCppGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
   public:
     LocalCppGenFormatter()
-      : id(0)
     {}
-    FormatAttr methodAttr;
 
-    int id;
-    std::string currentParent;
+    FormatAttr methodAttr;
 
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
     void visitDecl(InterfaceDeclNode* node) {
-      int current = id;
-      id++;
-      currentParent = formatNs(node->package) + "::" + node->name + "Interface";
       indent() << "template<class T>" << std::endl;
       indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface, public T {" << std::endl;
       indent() << "public:" << std::endl;
@@ -40,9 +34,8 @@ namespace qilang {
         ScopedIndent _(_indent);
         ScopedFormatAttrActivate _2(methodAttr);
         for (unsigned int i = 0; i < node->values.size(); ++i) {
-          decl(node->values.at(i));
+          acceptDecl(node->values.at(i));
         }
-        currentParent = "";
       }
       out() << std::endl;
       indent() << "protected:" << std::endl;
@@ -52,13 +45,16 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      if (node->ret)
-        indent() << type(node->ret) << " " << node->name << "(";
-      else
-        indent() << "void " << node->name << "(";
+      if (node->ret) {
+        indent() << "";
+        acceptTypeExpr(node->ret);
+      } else {
+        indent() << "void";
+      }
+      out() << " " << node->name << "(";
 
       for (unsigned int i = 0; i < node->args.size(); ++i) {
-        out() << consttype(node->args[i]);
+        consttype(node->args[i]);
         out() << " arg" << i;
         if (i+1 < node->args.size()) {
           out() << ", ";

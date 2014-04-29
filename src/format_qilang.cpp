@@ -20,24 +20,22 @@ namespace qilang {
   public:
     virtual void acceptData(const ConstDataNodePtr& node) { node->accept(this); }
 
-    const std::string &list(ConstDataNodePtrVector pv) {
-      static const std::string ret;
+    void list(ConstDataNodePtrVector pv) {
       for (int i = 0; i < pv.size(); ++i) {
-        cdata(pv.at(i));
+        acceptData(pv.at(i));
         if (i + 1 < pv.size())
           out() << ", ";
       }
-      return ret;
     }
 
-    const std::string &dict(ConstDataNodePtrPairVector pv) {
-      static const std::string ret;
+    void dict(ConstDataNodePtrPairVector pv) {
       for (int i = 0; i < pv.size(); ++i) {
-        out() << cdata(pv.at(i).first) << " : " << cdata(pv.at(i).second);
+        acceptData(pv.at(i).first);
+        out() << " : ";
+        acceptData(pv.at(i).second);
         if (i + 1 < pv.size())
           out() << ", ";
       }
-      return ret;
     }
 
     void visitData(BoolConstDataNode *node) {
@@ -56,13 +54,19 @@ namespace qilang {
       out() << node->value;
     }
     void visitData(ListConstDataNode* node) {
-      out() << "[ " << list(node->values) << " ]";
+      out() << "[ ";
+      list(node->values);
+      out() << " ]";
     }
     void visitData(TupleConstDataNode* node) {
-      out() << "( " << list(node->values) << " )";
+      out() << "( ";
+      list(node->values);
+      out() << " )";
     }
     void visitData(DictConstDataNode* node) {
-      out() << "{ " << dict(node->values) << " }";
+      out() << "{ ";
+      dict(node->values);
+      out() << " }";
     }
   };
 
@@ -80,15 +84,19 @@ namespace qilang {
       out() << node->value;
     }
     void visitTypeExpr(ListTypeExprNode *node) {
-      out() << "[]" << type(node->element);
+      out() << "[]";
+      acceptTypeExpr(node->element);
     }
     void visitTypeExpr(MapTypeExprNode *node) {
-      out() << "[" << type(node->key) << "]" << type(node->value);
+      out() << "[";
+      acceptTypeExpr(node->key);
+      out() << "]";
+      acceptTypeExpr(node->value);
     }
     void visitTypeExpr(TupleTypeExprNode *node) {
       out() << "(";
       for (int i = 0; i < node->elements.size(); ++i) {
-        out() << type(node->elements.at(i));
+        acceptTypeExpr(node->elements.at(i));
         if (i + 1 == node->elements.size())
           out() << ", ";
       }
@@ -104,16 +112,19 @@ namespace qilang {
     virtual void acceptExpr(const ExprNodePtr& node) { node->accept((ExprNodeVisitor*)this); }
 
     void visitExpr(BinaryOpExprNode *node) {
-      out() << expr(node->n1) << " " << BinaryOpCodeToString(node->op) << " " << expr(node->n2);
+      acceptExpr(node->n1);
+      out() << " " << BinaryOpCodeToString(node->op) << " ";
+      acceptExpr(node->n2);
     }
     void visitExpr(UnaryOpExprNode *node) {
-      out() << UnaryOpCodeToString(node->op) << expr(node->n1);
+      out() << UnaryOpCodeToString(node->op);
+      acceptExpr(node->n1);
     }
     void visitExpr(VarExprNode *node) {
       out() << node->value;
     }
     void visitExpr(ConstDataExprNode* node) {
-      out() << cdata(node->data);
+      acceptData(node->data);
     }
   };
 
@@ -128,14 +139,16 @@ namespace qilang {
     void declParamList(const std::string& declname, const std::string& name, const TypeExprNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
       indent() << declname << " " << name << "(";
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        out() << type(vec[i]);
+        acceptTypeExpr(vec[i]);
         if (i+1 < vec.size()) {
           out() << ", ";
         }
       }
       out() << ")";
-      if (ret)
-        out() << " " << type(ret);
+      if (ret) {
+        out() << " ";
+        acceptTypeExpr(ret);
+      }
       out() << std::endl;
     }
 
@@ -172,15 +185,19 @@ namespace qilang {
     void visitDecl(ConstDeclNode* node) {
       indent() << "const " << node->name;
       if (node->type)
-        out() << type(node->type);
-      if (node->data)
-        out() << " = " << cdata(node->data);
+        acceptTypeExpr(node->type);
+      if (node->data) {
+        out() << " = ";
+        acceptData(node->data);
+      }
       out() << std::endl;
     }
     void visitDecl(FieldDeclNode* node) {
       indent() << node->name;
-      if (node->type)
-        out() << " " << type(node->type);
+      if (node->type) {
+        out() << " ";
+        acceptTypeExpr(node->type);
+      }
       out() << std::endl;
     }
   };
@@ -212,22 +229,30 @@ namespace qilang {
       out() << std::endl;
     }
     void visitStmt(ObjectDefNode *node) {
-      indent() << "object " << type(node->type) << " " << node->name << std::endl;
+      indent() << "object ";
+      acceptTypeExpr(node->type);
+      out() << " " << node->name << std::endl;
       scopedStmt(node->values);
       indent() << "end" << std::endl << std::endl;
     }
     void visitStmt(PropertyDefNode *node) {
-      indent() << "prop " << node->name << " " << cdata(node->data) << std::endl;
+      indent() << "prop " << node->name << " ";
+      acceptData(node->data);
+      out() << std::endl;
     }
     void visitStmt(AtNode* node) {
       indent() << "at " << node->sender << " " << node->receiver << std::endl;
     }
     void visitStmt(VarDefNode* node) {
       indent() << node->name;
-      if (node->type)
-        out() << " " << type(node->type);
-      if (node->data)
-        out() << " = " << cdata(node->data);
+      if (node->type) {
+        out() << " ";
+        acceptTypeExpr(node->type);
+      }
+      if (node->data) {
+        out() << " = ";
+        acceptData(node->data);
+      }
       out() << std::endl;
     }
 

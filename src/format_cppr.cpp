@@ -40,7 +40,7 @@ namespace qilang {
         ScopedFormatAttrActivate _2(methodAttr);
         indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
         for (unsigned int i = 0; i < node->values.size(); ++i) {
-          decl(node->values.at(i));
+          acceptDecl(node->values.at(i));
         }
         indent() << "builder.registerType();" << std::endl;
 

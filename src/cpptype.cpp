@@ -74,18 +74,14 @@ CppTypeFormatter::CppTypeFormatter()
 {
 }
 
-const std::string& CppTypeFormatter::noconst(TypeExprNodePtr node) {
-  static const std::string ret;
+void CppTypeFormatter::noconst(TypeExprNodePtr node) {
   ScopedFormatAttrBlock _(constattr);
-  type(node);
-  return ret;
+  acceptTypeExpr(node);
 }
 
-const std::string& CppTypeFormatter::consttype(const TypeExprNodePtr& node) {
-  static const std::string ret;
+void CppTypeFormatter::consttype(const TypeExprNodePtr& node) {
   ScopedFormatAttrActivate _(constattr);
   acceptTypeExpr(node);
-  return ret;
 }
 
 void CppTypeFormatter::visitTypeExpr(BuiltinTypeExprNode* node) {
@@ -100,17 +96,25 @@ void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
     out() << ns << "::" << node->resolved_value << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
-  out() << constattr("const ") << "std::vector< " << noconst(node->element) << " >" << constattr("&");
+  out() << constattr("const ") << "std::vector< ";
+  noconst(node->element);
+  out() << " >" << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(MapTypeExprNode* node) {
-  out() << constattr("const ") << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << " >" << constattr("&");
+  out() << constattr("const ") << "std::map< ";
+  noconst(node->key);
+  out() << ", ";
+  noconst(node->value);
+  out() << " >" << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
-  if (node->elements.size() == 2)
-    out() << constattr("const ") << "std::pair< "
-          << noconst(node->elements.at(0)) << ", "
-          << noconst(node->elements.at(1))
-          << " >" << constattr("&");
+  if (node->elements.size() == 2) {
+    out() << constattr("const ") << "std::pair< ";
+    noconst(node->elements.at(0));
+    out() << ", ";
+    noconst(node->elements.at(1));
+    out() << " >" << constattr("&");
+  }
   else
     out() << "TUPLENOTIMPL";
 }

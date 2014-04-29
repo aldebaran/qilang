@@ -94,30 +94,12 @@ namespace qilang {
   };
 
   class ConstDataNodeFormatter : virtual public BasicNodeFormatter, public ConstDataNodeVisitor {
-  public:
-    const std::string& cdata(ConstDataNodePtr node) {
-      static const std::string ret;
-      acceptData(node);
-      return ret;
-    }
   };
 
   class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
-  public:
-    const std::string& expr(ExprNodePtr node) {
-      static const std::string ret;
-      acceptExpr(node);
-      return ret;
-    }
   };
 
   class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
-  public:
-    const std::string& type(const TypeExprNodePtr& node) {
-      static const std::string ret;
-      acceptTypeExpr(node);
-      return ret;
-    }
   };
 
   /**
@@ -174,11 +156,11 @@ namespace qilang {
   public:
     virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
-    const std::string& stmt(StmtNodePtr node) {
-      static const std::string ret;
-      acceptStmt(node);
-      return ret;
-    }
+//    void stmt(StmtNodePtr node) {
+//      static const std::string ret;
+//      acceptStmt(node);
+//      return ret;
+//    }
 
     void scopedStmt(const qilang::StmtNodePtrVector& vec) {
       ScopedIndent _(_indent);
@@ -190,13 +172,6 @@ namespace qilang {
 
   class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
   public:
-
-    const std::string& decl(DeclNodePtr node) {
-      static const std::string ret;
-      acceptDecl(node);
-      return ret;
-    }
-
     void scopedDecl(const qilang::DeclNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {

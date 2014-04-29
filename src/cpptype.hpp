@@ -31,17 +31,16 @@ namespace qilang {
 
     virtual void acceptTypeExpr(const TypeExprNodePtr& node);
 
-    const std::string& noconst(TypeExprNodePtr node);
+    void noconst(TypeExprNodePtr node);
 
     //ask for a const ref expression.
-    const std::string& consttype(const TypeExprNodePtr& node);
+    void consttype(const TypeExprNodePtr& node);
 
     void visitTypeExpr(BuiltinTypeExprNode* node);
     void visitTypeExpr(CustomTypeExprNode* node);
     void visitTypeExpr(ListTypeExprNode* node);
     void visitTypeExpr(MapTypeExprNode* node);
     void visitTypeExpr(TupleTypeExprNode* node);
-
   };
 
   class DataCppFormatter : public ConstDataNodeFormatter {
