@@ -123,7 +123,7 @@ protected:
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Float64, "float64", Location());
         break;
       case 'v':
-        ret = TypeExprNodePtr();
+        ret = boost::make_shared<qilang::CustomTypeExprNode>("void", Location());
         break;
       case 's':
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_String, "str", Location());
@@ -132,15 +132,13 @@ protected:
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Value, "any", Location());
         break;
       case 'o':
-        //name to put in the custom field: (check for empty) sig.annotation()[0];
-        ret = TypeExprNodePtr();
+        ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Object, "obj", Location());
         break;
       case 'X':
-        ret = TypeExprNodePtr();
+        ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Value, "any", Location());
         break;
       default:
-        ret = TypeExprNodePtr();
-        break;
+        throw std::runtime_error("unhandled signature type conversion");
     }
     return ret;
   }

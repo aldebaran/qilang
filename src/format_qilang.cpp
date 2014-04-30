@@ -173,7 +173,7 @@ namespace qilang {
       declParamList("fn", node->name, node->args, node->ret);
     }
     void visitDecl(EmitDeclNode* node) {
-      declParamList("out", node->name, node->args);
+      declParamList("emit", node->name, node->args);
     }
     void visitDecl(PropDeclNode* node) {
       declParamList("prop", node->name, node->args);
