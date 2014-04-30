@@ -10,7 +10,7 @@
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
 #include "formatter_p.hpp"
-
+#include "cpptype.hpp"
 
 namespace qilang {
 
@@ -260,6 +260,10 @@ namespace qilang {
       }
       out() << ")" << std::endl;
     }
+    void visitStmt(CommentNode* node) {
+      formatBlock(out(), node->comments, ";; ", _indent);
+    }
+
 
   };
 

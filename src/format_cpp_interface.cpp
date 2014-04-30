@@ -226,6 +226,10 @@ protected:
     }
     out() << ";" << std::endl;
   }
+  void visitStmt(CommentNode* node) {
+    formatBlock(out(), node->comments, "// ", _indent);
+  }
+
 };
 
 std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes) {

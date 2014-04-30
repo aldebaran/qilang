@@ -163,6 +163,8 @@ namespace qilang {
     void visitStmt(VarDefNode* node) {
       acceptData(node->data);
     }
+    void visitStmt(CommentNode* node) {
+    }
 
   };
 

@@ -81,4 +81,6 @@ namespace qilang {
 
   std::string filenameToCppHeaderGuard(const std::string& pkgName, const std::string& filename);
 
+  void formatBlock(std::ostream& os, const std::string& name, const std::string& sep, int indent);
+
 }

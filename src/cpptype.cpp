@@ -177,6 +177,18 @@ std::vector<std::string> splitPkgName(const std::string& name) {
   return ret;
 }
 
+void formatBlock(std::ostream& os, const std::string& name, const std::string& sep, int indent) {
+  StringVector lines;
+
+  lines = boost::split(lines, name, boost::is_any_of("\r\n"));
+  for (unsigned i = 0; i < lines.size(); ++i) {
+    std::string& line = lines.at(i);
+    for (unsigned j = 0; j < indent; ++j)
+      os << " ";
+    os << sep << line << std::endl;
+  }
+}
+
 std::string pkgNameToDir(const std::string& name) {
   std::string ret(name);
   boost::replace_all(ret, ".", "/");

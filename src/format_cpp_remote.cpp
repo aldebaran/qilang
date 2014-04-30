@@ -190,6 +190,9 @@ protected:
   void visitStmt(VarDefNode* node) {
     throw std::runtime_error("unimplemented");
   }
+  void visitStmt(CommentNode* node) {
+    formatBlock(out(), node->comments, "// ", _indent);
+  }
 
 };
 

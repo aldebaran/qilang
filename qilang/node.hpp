@@ -69,6 +69,7 @@ class ObjectDefNode;
 class PropertyDefNode;
 class AtNode;
 class VarDefNode;
+class CommentNode;
 
 // EXPR: Const Data
 class ConstDataNode;  // VIRTUAL
@@ -164,6 +165,8 @@ public:
 
   // Definitions
   virtual void visitStmt(VarDefNode* node) = 0;
+
+  virtual void visitStmt(CommentNode* node) = 0;
 };
 
 
@@ -251,7 +254,9 @@ enum NodeType {
 
   NodeType_StructDecl,
   NodeType_FieldDecl,
-  NodeType_ConstDecl
+  NodeType_ConstDecl,
+
+  NodeType_Comment,
 };
 
 //Base Node used to describe the AST
@@ -741,6 +746,19 @@ public:
   std::string receiver;
 };
 
+class QILANG_API CommentNode : public StmtNode {
+public:
+  CommentNode(const std::string& comments, const Location& loc)
+    : StmtNode(NodeType_Comment, loc)
+    , comments(comments)
+  {}
+
+
+  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+
+  std::string      comments;
+};
+
 // ####################
 // # DECL Node
 // ####################
@@ -886,6 +904,7 @@ public:
   TypeExprNodePtr  type;
   ConstDataNodePtr data;
 };
+
 
 }
 
