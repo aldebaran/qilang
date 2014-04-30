@@ -13,6 +13,7 @@
 #include "formatter_p.hpp"
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include "cpptype.hpp"
 
 qiLogCategory("qigen.hppinterface");
@@ -36,6 +37,8 @@ public:
     }
     out() << " {" << std::endl;
     indent() << "public:" << std::endl;
+    //add a virtual destructor
+    indent() << "  virtual ~" << node->name << "Interface() {}" << std::endl;
     scopedDecl(node->values);
     indent() << "};" << std::endl << std::endl;
     indent() << "typedef qi::Object<" << node->name << "Interface> " << node->name << ";" << std::endl;
@@ -43,9 +46,9 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     if (node->ret)
-      indent() << type(node->ret) << " " << node->name << "(";
+      indent() << "virtual " << type(node->ret) << " " << node->name << "(";
     else
-      indent() << "void " << node->name << "(";
+      indent() << "virtual void " << node->name << "(";
 
     for (unsigned int i = 0; i < node->args.size(); ++i) {
       out() << consttype(node->args[i]);
@@ -53,7 +56,7 @@ public:
         out() << ", ";
       }
     }
-    out() << ");" << std::endl;
+    out() << ") = 0;" << std::endl;
   }
 
   void visitDecl(EmitDeclNode* node) {
@@ -146,11 +149,16 @@ public:
     indent() << "#pragma once" << std::endl;
     boost::uuids::uuid u = boost::uuids::random_generator()();
     std::string uuid = boost::uuids::to_string(u);
-    indent() << "#ifndef " << uuid << std::endl;
-    indent() << "#define " << uuid << std::endl;
+    boost::algorithm::replace_all(uuid, "-", "_");
+    indent() << "#ifndef YEAH_" << uuid << std::endl;
+    indent() << "#define YEAH_" << uuid << std::endl;
     indent() << std::endl;
     indent() << "#include <qitype/signal.hpp>" << std::endl;
     indent() << "#include <qitype/property.hpp>" << std::endl;
+    indent() << "#include <qitype/anyobject.hpp>" << std::endl;
+    indent() << "#include <string>" << std::endl;
+    indent() << "#include <vector>" << std::endl;
+    indent() << "#include <map>" << std::endl;
     indent() << std::endl;
   }
 

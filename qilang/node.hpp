@@ -17,9 +17,22 @@
 #include <boost/shared_ptr.hpp>
 #include <qitype/anyvalue.hpp>
 
-
 namespace qilang {
 
+class Location {
+public:
+  Location(int bline = -1, int bcols = -1, int eline = -1, int ecols = -1)
+    : beg_line(bline)
+    , beg_columns(bcols)
+    , end_line(eline)
+    , end_columns(ecols)
+  {}
+
+  int beg_line;
+  int beg_columns;
+  int end_line;
+  int end_columns;
+};
 
 class Node;
 
@@ -217,12 +230,15 @@ class QILANG_API Node
 {
 public:
   Node(NodeKind kind, NodeType type);
+  Node(NodeKind kind, NodeType type, const Location& loc);
   virtual ~Node() {}
 
   NodeKind kind() const { return _kind; }
   NodeType type() const { return _type; }
+  Location loc() const { return _loc; }
 
 private:
+  Location _loc;
   NodeKind _kind;
   NodeType _type;
 };
@@ -534,8 +550,12 @@ public:
 class QILANG_API StmtNode : public Node
 {
 public:
-  StmtNode(NodeType type)
+  explicit StmtNode(NodeType type)
     : Node(NodeKind_Stmt, type)
+  {}
+
+  StmtNode(NodeType type, const Location& loc)
+    : Node(NodeKind_Stmt, type, loc)
   {}
 
   virtual void accept(StmtNodeVisitor* visitor) = 0;
@@ -543,8 +563,8 @@ public:
 
 class QILANG_API PackageNode : public StmtNode {
 public:
-  explicit PackageNode(const std::string& packageName)
-    : StmtNode(NodeType_Package)
+  explicit PackageNode(const std::string& packageName, const Location& loc)
+    : StmtNode(NodeType_Package, loc)
     , name(packageName)
   {}
 
@@ -604,7 +624,7 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API ObjectDefNode : public StmtNode {
 public:
-  ObjectDefNode(const TypeExprNodePtr& type, const ConstDataNodePtr& name, const StmtNodePtrVector& defs)
+  ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs)
     : StmtNode(NodeType_ObjectDef)
     , type(type)
     , name(name)
@@ -613,9 +633,8 @@ public:
 
   void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
-  TypeExprNodePtr  type;
-  ConstDataNodePtr name;
-
+  TypeExprNodePtr   type;
+  std::string       name;
   StmtNodePtrVector values;
 };
 
@@ -681,14 +700,16 @@ typedef std::vector<FieldDeclNodePtr>    FieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& name, const FieldDeclNodePtrVector& vardefs)
+  StructDeclNode(const std::string& pkg, const std::string& name, const FieldDeclNodePtrVector& vardefs)
     : DeclNode(NodeType_StructDecl)
+    , package(pkg)
     , name(name)
     , fields(vardefs)
   {}
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
+  std::string            package;
   std::string            name;
   FieldDeclNodePtrVector fields;
 };
@@ -696,14 +717,16 @@ public:
 // Object Motion.MoveTo "titi"
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
-  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls)
+  InterfaceDeclNode(const std::string& pkg, const std::string& name, const DeclNodePtrVector& decls)
     : DeclNode(NodeType_InterfaceDecl)
+    , package(pkg)
     , name(name)
     , values(decls)
   {}
 
-  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls)
+  InterfaceDeclNode(const std::string& pkg, const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls)
     : DeclNode(NodeType_InterfaceDecl)
+    , package(pkg)
     , name(name)
     , values(decls)
     , inherits(inherits)
@@ -711,6 +734,7 @@ public:
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
+  std::string       package;
   std::string       name;
   DeclNodePtrVector values;
   StringVector      inherits;
@@ -772,15 +796,17 @@ public:
 
 class QILANG_API ConstDeclNode : public DeclNode {
 public:
-  ConstDeclNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
+  ConstDeclNode(const std::string& pkg, const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data)
     : DeclNode(NodeType_ConstDecl)
+    , package(pkg)
     , name(name)
     , type(type)
     , data(data)
   {}
 
-  ConstDeclNode(const std::string& name, const ConstDataNodePtr& data)
+  ConstDeclNode(const std::string& pkg, const std::string& name, const ConstDataNodePtr& data)
     : DeclNode(NodeType_ConstDecl)
+    , package(pkg)
     , name(name)
     , data(data)
   {}
@@ -788,6 +814,7 @@ public:
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
+  std::string      package;
   std::string      name;
   TypeExprNodePtr  type;
   ConstDataNodePtr data;

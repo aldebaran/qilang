@@ -1,3 +1,5 @@
+package tests
+
 struct AudioBuffer
   buffer char
   size   int

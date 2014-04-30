@@ -1,3 +1,4 @@
+package tests
 
 type AudioBuffer struct
   size   uint32

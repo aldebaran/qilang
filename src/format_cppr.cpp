@@ -27,18 +27,19 @@ namespace qilang {
     void visitDecl(InterfaceDeclNode* node) {
       int current = id;
       id++;
-      currentParent = node->name + "Interface";
+      currentParent = formatNs(node->package) + "::" + node->name + "Interface";
       indent() << "static int initType" << current << "() {" << std::endl;
       {
         ScopedIndent _(_indent);
-        indent() << "qi::ObjectTypeBuilder<" << currentParent << "> builder;" << std::endl;
+        indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           decl(node->values.at(i));
         }
         currentParent = "";
+        indent() << "return 42;" << std::endl;
       }
       indent() << "}" << std::endl;
-      indent() << "static int myinittype" << current << " = initType" << current << "()" << std::endl;
+      indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
       indent() << std::endl;
     }
     void visitDecl(FnDeclNode* node) {
@@ -99,6 +100,21 @@ public:
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
+    indent() << "#include <qitype/objecttypebuilder.hpp>" << std::endl;
+    indent() << "#include <string>" << std::endl;
+    indent() << "#include <vector>" << std::endl;
+    indent() << "#include <map>" << std::endl;
+
+    qilang::StringVector includes;
+
+    //TODO: find all include needed for type registration...
+    //includes = qilang::cpp::includes(pm, nodes);
+
+    for (unsigned i = 0; i < includes.size(); ++i) {
+      indent() << "#include <" << includes.at(i) << ">" << std::endl;
+    }
+
+    indent() << std::endl;
   }
 
   void formatFooter() {

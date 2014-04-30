@@ -207,7 +207,7 @@ namespace qilang {
       out() << std::endl;
     }
     void visitStmt(ObjectDefNode *node) {
-      indent() << "object " << type(node->type) << " " << cdata(node->name) << std::endl;
+      indent() << "object " << type(node->type) << " " << node->name << std::endl;
       scopedStmt(node->values);
       indent() << "end" << std::endl << std::endl;
     }

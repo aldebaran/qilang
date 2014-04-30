@@ -179,7 +179,7 @@ FLOAT    {UFLOAT}
 
 {STRING}          {   // "   for indentation
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext));
+  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext + 1, strlen(yytext) - 2));
   RETURN_VAL(STRING, node);
 }
 

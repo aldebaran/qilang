@@ -87,7 +87,7 @@ void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << addconst() << "std::vector< " << noconst(node->element) << " >" << addref();
 }
 void CppTypeFormatter::visitTypeExpr(MapTypeExprNode* node) {
-  out() << addconst() << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << ">" << addref();
+  out() << addconst() << "std::map< " << noconst(node->key) << ", " << noconst(node->value) << " >" << addref();
 }
 void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
   out() << "TUPLENOTIMPL";
@@ -141,5 +141,22 @@ std::vector<std::string> splitPkgName(const std::string& name) {
   boost::split(ret, name, boost::is_any_of("."));
   return ret;
 }
+
+std::string formatNs(const std::string& package) {
+  std::string ret;
+  std::vector<std::string> v;
+
+  boost::split(v, package, boost::is_any_of("."));
+
+  if (v.size() > 0)
+    ret += "::";
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    ret += v.at(i);
+    if (i + 1 < v.size())
+      ret += "::";
+  }
+  return ret;
+}
+
 
 }
