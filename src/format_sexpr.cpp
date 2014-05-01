@@ -17,11 +17,11 @@ namespace qilang {
   // #############
   // CONST DATA
   // #############
-  class ASTConstDataFormatter : public ConstDataNodeFormatter {
+  class ASTLiteralFormatter : public LiteralNodeFormatter {
   public:
-    virtual void acceptData(const ConstDataNodePtr& node) { node->accept(this); }
+    virtual void acceptData(const LiteralNodePtr& node) { node->accept(this); }
 
-    const std::string &list(ConstDataNodePtrVector pv) {
+    const std::string &list(LiteralNodePtrVector pv) {
       static const std::string ret;
       for (unsigned int i = 0; i < pv.size(); ++i) {
         acceptData(pv.at(i));
@@ -31,7 +31,7 @@ namespace qilang {
       return ret;
     }
 
-    const std::string &dict(ConstDataNodePtrPairVector pv) {
+    const std::string &dict(LiteralNodePtrPairVector pv) {
       static const std::string ret;
       for (unsigned int i = 0; i < pv.size(); ++i) {
         out() << "(";
@@ -44,25 +44,25 @@ namespace qilang {
       }
       return ret;
     }
-    void visitData(BoolConstDataNode *node) {
+    void visitData(BoolLiteralNode *node) {
       out() << "(bool " << node->value << ")";
     }
-    void visitData(IntConstDataNode *node) {
+    void visitData(IntLiteralNode *node) {
       out() << "(int " << node->value << ")";
     }
-    void visitData(FloatConstDataNode *node) {
+    void visitData(FloatLiteralNode *node) {
       out() << "(float " << node->value << ")";
     }
-    void visitData(StringConstDataNode *node) {
+    void visitData(StringLiteralNode *node) {
       out() << "(string " << node->value << ")";
     }
-    void visitData(ListConstDataNode* node) {
+    void visitData(ListLiteralNode* node) {
       out() << "(list " << list(node->values) << ")";
     }
-    void visitData(TupleConstDataNode* node) {
+    void visitData(TupleLiteralNode* node) {
       out() << "(tuple " << list(node->values) << ")";
     }
-    void visitData(DictConstDataNode* node) {
+    void visitData(DictLiteralNode* node) {
       out() << "(dict " << dict(node->values) << ")";
     }
   };
@@ -105,7 +105,7 @@ namespace qilang {
   // #############
   // EXPR
   // #############
-  class ASTExprFormatter : virtual public ASTConstDataFormatter, public ExprNodeFormatter {
+  class ASTExprFormatter : virtual public ASTLiteralFormatter, public ExprNodeFormatter {
   public:
     virtual void acceptExpr(const ExprNodePtr& node) { node->accept((ExprNodeVisitor*)this); }
 
@@ -124,7 +124,7 @@ namespace qilang {
     void visitExpr(VarExprNode *node) {
        out() << "(var " << node->value << ")";
     }
-    void visitExpr(ConstDataExprNode* node) {
+    void visitExpr(LiteralExprNode* node) {
       acceptData(node->data);
     }
   };
@@ -132,7 +132,7 @@ namespace qilang {
   // #############
   // DECL
   // #############
-  class ASTDeclFormatter: virtual public ASTTypeExprFormatter, virtual public ASTConstDataFormatter, public DeclNodeFormatter {
+  class ASTDeclFormatter: virtual public ASTTypeExprFormatter, virtual public ASTLiteralFormatter, public DeclNodeFormatter {
   public:
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept((DeclNodeVisitor*)this); }
 
@@ -208,7 +208,7 @@ namespace qilang {
 
   };
 
-  class ASTStmtFormatter: virtual public ASTTypeExprFormatter, virtual public ASTConstDataFormatter, public StmtNodeFormatter {
+  class ASTStmtFormatter: virtual public ASTTypeExprFormatter, virtual public ASTLiteralFormatter, public StmtNodeFormatter {
   public:
     virtual void acceptStmt(const StmtNodePtr& node) { node->accept((StmtNodeVisitor*)this); }
 
@@ -275,8 +275,8 @@ namespace qilang {
   protected:
     virtual void accept(const NodePtr& node) {
       switch (node->kind()) {
-      case NodeKind_ConstData:
-        acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+      case NodeKind_Literal:
+        acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
         break;
       case NodeKind_Decl:
         acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));

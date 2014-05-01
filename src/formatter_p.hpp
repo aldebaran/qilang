@@ -93,7 +93,7 @@ namespace qilang {
     std::stringstream _ss;
   };
 
-  class ConstDataNodeFormatter : virtual public BasicNodeFormatter, public ConstDataNodeVisitor {
+  class LiteralNodeFormatter : virtual public BasicNodeFormatter, public LiteralNodeVisitor {
   };
 
   class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {

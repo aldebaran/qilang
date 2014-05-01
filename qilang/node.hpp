@@ -72,14 +72,14 @@ class VarDefNode;
 class CommentNode;
 
 // EXPR: Const Data
-class ConstDataNode;  // VIRTUAL
-class BoolConstDataNode;
-class IntConstDataNode;
-class FloatConstDataNode;
-class StringConstDataNode;
-class ListConstDataNode;
-class DictConstDataNode;
-class TupleConstDataNode;
+class LiteralNode;  // VIRTUAL
+class BoolLiteralNode;
+class IntLiteralNode;
+class FloatLiteralNode;
+class StringLiteralNode;
+class ListLiteralNode;
+class DictLiteralNode;
+class TupleLiteralNode;
 
 // EXPR: Type Expr
 class TypeExprNode;        //VIRTUAL
@@ -90,11 +90,11 @@ class MapTypeExprNode;
 class TupleTypeExprNode;
 
 // EXPR
-class ExprNode;        //VIRTUAL: dep on TypeExpr, ConstData
+class ExprNode;        //VIRTUAL: dep on TypeExpr, Literal
 class BinaryOpExprNode;
 class UnaryOpExprNode;
 class VarExprNode;
-class ConstDataExprNode;
+class LiteralExprNode;
 
 // Interface Declaration
 class DeclNode;          //VIRTUAL
@@ -125,11 +125,11 @@ typedef std::vector<TypeExprNodePtr>      TypeExprNodePtrVector;
 typedef boost::shared_ptr<ExprNode>       ExprNodePtr;
 typedef std::vector<ExprNodePtr>          ExprNodePtrVector;
 
-typedef boost::shared_ptr<ConstDataNode>  ConstDataNodePtr;
-typedef std::vector<ConstDataNodePtr>     ConstDataNodePtrVector;
+typedef boost::shared_ptr<LiteralNode>  LiteralNodePtr;
+typedef std::vector<LiteralNodePtr>     LiteralNodePtrVector;
 
-typedef std::pair<ConstDataNodePtr, ConstDataNodePtr> ConstDataNodePtrPair;
-typedef std::vector<ConstDataNodePtrPair>             ConstDataNodePtrPairVector;
+typedef std::pair<LiteralNodePtr, LiteralNodePtr> LiteralNodePtrPair;
+typedef std::vector<LiteralNodePtrPair>             LiteralNodePtrPairVector;
 
 
 /* All Statements
@@ -178,22 +178,22 @@ public:
   virtual void visitExpr(BinaryOpExprNode* node) = 0;
   virtual void visitExpr(UnaryOpExprNode* node) = 0;
   virtual void visitExpr(VarExprNode* node) = 0;
-  virtual void visitExpr(ConstDataExprNode* node) = 0;
+  virtual void visitExpr(LiteralExprNode* node) = 0;
 };
 
 /** Const Data Expression Visitor
  */
-class ConstDataNodeVisitor {
+class LiteralNodeVisitor {
 public:
-  virtual void acceptData(const ConstDataNodePtr& node) = 0;
+  virtual void acceptData(const LiteralNodePtr& node) = 0;
 
-  virtual void visitData(BoolConstDataNode* node) = 0;
-  virtual void visitData(IntConstDataNode* node) = 0;
-  virtual void visitData(FloatConstDataNode* node) = 0;
-  virtual void visitData(StringConstDataNode* node) = 0;
-  virtual void visitData(TupleConstDataNode* node) = 0;
-  virtual void visitData(ListConstDataNode* node) = 0;
-  virtual void visitData(DictConstDataNode* node) = 0;
+  virtual void visitData(BoolLiteralNode* node) = 0;
+  virtual void visitData(IntLiteralNode* node) = 0;
+  virtual void visitData(FloatLiteralNode* node) = 0;
+  virtual void visitData(StringLiteralNode* node) = 0;
+  virtual void visitData(TupleLiteralNode* node) = 0;
+  virtual void visitData(ListLiteralNode* node) = 0;
+  virtual void visitData(DictLiteralNode* node) = 0;
 };
 
 /** Type Expression Visitor
@@ -214,7 +214,7 @@ public:
 enum NodeKind {
   NodeKind_Expr,
   NodeKind_TypeExpr,
-  NodeKind_ConstData,
+  NodeKind_Literal,
   NodeKind_Decl,
   NodeKind_Stmt
 };
@@ -226,7 +226,7 @@ enum NodeType {
   NodeType_BinOpExpr,
   NodeType_UOpExpr,
   NodeType_VarExpr,
-  NodeType_ConstDataExpr,
+  NodeType_LiteralExpr,
 
   NodeType_BuiltinTypeExpr,
   NodeType_CustomTypeExpr,
@@ -303,9 +303,9 @@ public:
   NodeVector   _children;
 };
 
-class DictConstDataNode2: public Node2 {
-  DictConstDataNode2(ConstDataNodePtrPairVector datas):
-    Node2(NodeKind_ConstData)
+class DictLiteralNode2: public Node2 {
+  DictLiteralNode2(LiteralNodePtrPairVector datas):
+    Node2(NodeKind_Literal)
   {
     setAttr("data", datas);
   }
@@ -405,112 +405,112 @@ public:
   std::string value;
 };
 
-class QILANG_API ConstDataExprNode : public ExprNode {
+class QILANG_API LiteralExprNode : public ExprNode {
 public:
-  explicit ConstDataExprNode(const ConstDataNodePtr& data, const Location& loc)
-    : ExprNode(NodeType_ConstDataExpr, loc)
+  explicit LiteralExprNode(const LiteralNodePtr& data, const Location& loc)
+    : ExprNode(NodeType_LiteralExpr, loc)
     , data(data)
   {}
 
   void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
-  ConstDataNodePtr data;
+  LiteralNodePtr data;
 };
 
 // ####################
 // # CONST DATA Node
 // ####################
-class QILANG_API ConstDataNode : public Node {
+class QILANG_API LiteralNode : public Node {
 public:
-  explicit ConstDataNode(NodeType type, const Location& loc)
-    : Node(NodeKind_ConstData, type, loc)
+  explicit LiteralNode(NodeType type, const Location& loc)
+    : Node(NodeKind_Literal, type, loc)
   {}
 
-  virtual void accept(ConstDataNodeVisitor* visitor) = 0;
+  virtual void accept(LiteralNodeVisitor* visitor) = 0;
 };
 
-class QILANG_API BoolConstDataNode: public ConstDataNode {
+class QILANG_API BoolLiteralNode: public LiteralNode {
 public:
-  explicit BoolConstDataNode(bool val, const Location& loc)
-    : ConstDataNode(NodeType_BoolData, loc)
+  explicit BoolLiteralNode(bool val, const Location& loc)
+    : LiteralNode(NodeType_BoolData, loc)
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
   bool value;
 };
 
-class QILANG_API IntConstDataNode: public ConstDataNode {
+class QILANG_API IntLiteralNode: public LiteralNode {
 public:
-  explicit IntConstDataNode(qi::uint64_t val, const Location& loc)
-    : ConstDataNode(NodeType_IntData, loc)
+  explicit IntLiteralNode(qi::uint64_t val, const Location& loc)
+    : LiteralNode(NodeType_IntData, loc)
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
   qi::uint64_t value;
 };
 
-class QILANG_API FloatConstDataNode: public ConstDataNode {
+class QILANG_API FloatLiteralNode: public LiteralNode {
 public:
-  explicit FloatConstDataNode(double val, const Location& loc)
-    : ConstDataNode(NodeType_FloatData, loc)
+  explicit FloatLiteralNode(double val, const Location& loc)
+    : LiteralNode(NodeType_FloatData, loc)
     , value(val)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
   double value;
 };
 
-class QILANG_API StringConstDataNode: public ConstDataNode {
+class QILANG_API StringLiteralNode: public LiteralNode {
 public:
-  explicit StringConstDataNode(const std::string& value, const Location& loc)
-    : ConstDataNode(NodeType_StringData, loc)
+  explicit StringLiteralNode(const std::string& value, const Location& loc)
+    : LiteralNode(NodeType_StringData, loc)
     , value(value)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
   const std::string value;
 };
 
-class QILANG_API ListConstDataNode: public ConstDataNode {
+class QILANG_API ListLiteralNode: public LiteralNode {
 public:
-  explicit ListConstDataNode(const ConstDataNodePtrVector& values, const Location& loc)
-    : ConstDataNode(NodeType_ListData, loc)
+  explicit ListLiteralNode(const LiteralNodePtrVector& values, const Location& loc)
+    : LiteralNode(NodeType_ListData, loc)
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
-  ConstDataNodePtrVector values;
+  LiteralNodePtrVector values;
 };
 
-class QILANG_API TupleConstDataNode: public ConstDataNode {
+class QILANG_API TupleLiteralNode: public LiteralNode {
 public:
-  explicit TupleConstDataNode(const ConstDataNodePtrVector& values, const Location& loc)
-    : ConstDataNode(NodeType_TupleData, loc)
+  explicit TupleLiteralNode(const LiteralNodePtrVector& values, const Location& loc)
+    : LiteralNode(NodeType_TupleData, loc)
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
-  ConstDataNodePtrVector values;
+  LiteralNodePtrVector values;
 };
 
-class QILANG_API DictConstDataNode: public ConstDataNode {
+class QILANG_API DictLiteralNode: public LiteralNode {
 public:
-  explicit DictConstDataNode(const ConstDataNodePtrPairVector& values, const Location& loc)
-    : ConstDataNode(NodeType_MapData, loc)
+  explicit DictLiteralNode(const LiteralNodePtrPairVector& values, const Location& loc)
+    : LiteralNode(NodeType_MapData, loc)
     , values(values)
   {}
 
-  void accept(ConstDataNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
 
-  ConstDataNodePtrPairVector values;
+  LiteralNodePtrPairVector values;
 };
 
 
@@ -679,7 +679,7 @@ public:
 
 class QILANG_API VarDefNode : public StmtNode {
 public:
-  VarDefNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
+  VarDefNode(const std::string& name, const TypeExprNodePtr& type, const LiteralNodePtr& data, const Location& loc)
     : StmtNode(NodeType_VarDef, loc)
     , name(name)
     , type(type)
@@ -696,7 +696,7 @@ public:
 
   std::string      name;
   TypeExprNodePtr  type;
-  ConstDataNodePtr data;
+  LiteralNodePtr data;
 };
 
 // Object Motion.MoveTo "titi"
@@ -719,7 +719,7 @@ public:
 // myprop: tititoto
 class QILANG_API PropertyDefNode : public StmtNode {
 public:
-  PropertyDefNode(const std::string& name, ConstDataNodePtr data, const Location& loc)
+  PropertyDefNode(const std::string& name, LiteralNodePtr data, const Location& loc)
     : StmtNode(NodeType_PropDef, loc)
     , name(name)
     , data(data)
@@ -728,7 +728,7 @@ public:
   void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
-  ConstDataNodePtr data;
+  LiteralNodePtr data;
 };
 
 class QILANG_API AtNode : public StmtNode {
@@ -884,14 +884,14 @@ public:
 
 class QILANG_API ConstDeclNode : public DeclNode {
 public:
-  ConstDeclNode(const std::string& name, const TypeExprNodePtr& type, const ConstDataNodePtr& data, const Location& loc)
+  ConstDeclNode(const std::string& name, const TypeExprNodePtr& type, const LiteralNodePtr& data, const Location& loc)
     : DeclNode(NodeType_ConstDecl, loc)
     , name(name)
     , type(type)
     , data(data)
   {}
 
-  ConstDeclNode(const std::string& name, const ConstDataNodePtr& data, const Location& loc)
+  ConstDeclNode(const std::string& name, const LiteralNodePtr& data, const Location& loc)
     : DeclNode(NodeType_ConstDecl, loc)
     , name(name)
     , data(data)
@@ -902,7 +902,7 @@ public:
 
   std::string      name;
   TypeExprNodePtr  type;
-  ConstDataNodePtr data;
+  LiteralNodePtr data;
 };
 
 

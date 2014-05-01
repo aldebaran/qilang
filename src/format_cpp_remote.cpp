@@ -128,8 +128,8 @@ public:
 
   virtual void accept(const NodePtr& node) {
     switch (node->kind()) {
-    case NodeKind_ConstData:
-      acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+    case NodeKind_Literal:
+      acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
       break;
     case NodeKind_Decl:
       acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));

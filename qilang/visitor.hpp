@@ -19,7 +19,7 @@ namespace qilang {
   class DefaultNodeVisitor: public DeclNodeVisitor
                           , public StmtNodeVisitor
                           , public ExprNodeVisitor
-                          , public ConstDataNodeVisitor
+                          , public LiteralNodeVisitor
                           , public TypeExprNodeVisitor
   {
   public:
@@ -47,8 +47,8 @@ namespace qilang {
 
     virtual void accept(const NodePtr& node) {
       switch (node->kind()) {
-      case NodeKind_ConstData:
-        acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+      case NodeKind_Literal:
+        acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
         break;
       case NodeKind_Decl:
         acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
@@ -73,27 +73,27 @@ namespace qilang {
       }
     }
 
-    virtual void acceptData(const ConstDataNodePtr& node)    { cb(node); pushParent(node); node->accept(this); popParent(); }
+    virtual void acceptData(const LiteralNodePtr& node)    { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptTypeExpr(const TypeExprNodePtr& node) { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptExpr(const ExprNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptDecl(const DeclNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptStmt(const StmtNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
 
-    void visitData(BoolConstDataNode *node) {
+    void visitData(BoolLiteralNode *node) {
     }
-    void visitData(IntConstDataNode *node) {
+    void visitData(IntLiteralNode *node) {
     }
-    void visitData(FloatConstDataNode *node) {
+    void visitData(FloatLiteralNode *node) {
     }
-    void visitData(StringConstDataNode *node) {
+    void visitData(StringLiteralNode *node) {
     }
-    void visitData(ListConstDataNode* node) {
+    void visitData(ListLiteralNode* node) {
       each(node->values);
     }
-    void visitData(TupleConstDataNode* node) {
+    void visitData(TupleLiteralNode* node) {
       each(node->values);
     }
-    void visitData(DictConstDataNode* node) {
+    void visitData(DictLiteralNode* node) {
       //TODO: each(node->values);
     }
 
@@ -121,7 +121,7 @@ namespace qilang {
     }
     void visitExpr(VarExprNode *node) {
     }
-    void visitExpr(ConstDataExprNode* node) {
+    void visitExpr(LiteralExprNode* node) {
       acceptData(node->data);
     }
 

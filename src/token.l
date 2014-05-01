@@ -164,13 +164,13 @@ FLOAT    {UFLOAT}
 
 {FLOAT}           {
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::FloatConstDataNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::IntConstDataNode>(boost::lexical_cast<int>(yytext), qilang::makeLocation(LOC));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::IntLiteralNode>(boost::lexical_cast<int>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
@@ -181,7 +181,7 @@ FLOAT    {UFLOAT}
 
 {STRING}          {   // "   for indentation
   STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext + 1, strlen(yytext) - 2), qilang::makeLocation(LOC));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::StringLiteralNode>(std::string(yytext + 1, strlen(yytext) - 2), qilang::makeLocation(LOC));
   RETURN_VAL(STRING, node);
 }
 

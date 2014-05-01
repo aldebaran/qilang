@@ -147,7 +147,7 @@
   IF                  "if"
 
 
-%token <qilang::ConstDataNodePtr>   STRING CONSTANT
+%token <qilang::LiteralNodePtr>   STRING CONSTANT
 %token <std::string>                ID
 
 // the first item here is the last to evaluate, the last item is the first
@@ -217,7 +217,7 @@ import_defs:
 
 %type<qilang::StmtNodePtr> object;
 object:
-  OBJECT type STRING object_defs END { qilang::StringConstDataNode* tnode = static_cast<qilang::StringConstDataNode*>($3.get());
+  OBJECT type STRING object_defs END { qilang::StringLiteralNode* tnode = static_cast<qilang::StringLiteralNode*>($3.get());
                                        $$ = NODE3(ObjectDefNode, @$, $2, tnode->value, $4); }
 
 %type<qilang::StmtNodePtrVector> object_defs;
@@ -391,7 +391,7 @@ exp:
 | exp "&&" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_BoolAnd);}
 
 exp:
-  const_exp { $$ = NODE1(ConstDataExprNode, @$, $1); }
+  const_exp { $$ = NODE1(LiteralExprNode, @$, $1); }
 
 exp:
   ID       { $$ = NODE1(VarExprNode, @$, $1); }
@@ -415,18 +415,18 @@ exp:
 // # CONST DATA
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> const_data;
+%type<qilang::LiteralNodePtr> const_data;
 const_data:
   CONSTANT { $$ = $1; }
 | STRING   { $$ = $1; }
-| TRUE     { $$ = NODE1(BoolConstDataNode, @$, true); }
-| FALSE    { $$ = NODE1(BoolConstDataNode, @$, false); }
+| TRUE     { $$ = NODE1(BoolLiteralNode, @$, true); }
+| FALSE    { $$ = NODE1(BoolLiteralNode, @$, false); }
 | dict     { $$ = $1; }
 | list     { $$ = $1; }
 | tuple    { $$ = $1; }
 
 //later it will be more
-%type<qilang::ConstDataNodePtr> const_exp;
+%type<qilang::LiteralNodePtr> const_exp;
 const_exp:
   const_data { std::swap($$, $1); }
 
@@ -435,22 +435,22 @@ const_exp:
 // # CONST DATA: Dict
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> dict;
+%type<qilang::LiteralNodePtr> dict;
 dict:
-  "{" dict_defs "}" { $$ = NODE1(DictConstDataNode, @$, $2); }
+  "{" dict_defs "}" { $$ = NODE1(DictLiteralNode, @$, $2); }
 
-%type<qilang::ConstDataNodePtrPairVector> dict_defs;
+%type<qilang::LiteralNodePtrPairVector> dict_defs;
 dict_defs:
   %empty      {}
 | dict_defs.1 { std::swap($$, $1); }
 
-%type<qilang::ConstDataNodePtrPairVector> dict_defs.1;
+%type<qilang::LiteralNodePtrPairVector> dict_defs.1;
 dict_defs.1:
   dict_def               { $$.push_back($1); }
 | dict_defs "," dict_def { std::swap($$, $1); $$.push_back($3); }
 
 
-%type<qilang::ConstDataNodePtrPair> dict_def;
+%type<qilang::LiteralNodePtrPair> dict_def;
 dict_def:
   const_exp ":" const_exp { $$ = std::make_pair($1, $3); }
 
@@ -459,20 +459,20 @@ dict_def:
 // # CONST DATA: List & Tuple
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> list;
+%type<qilang::LiteralNodePtr> list;
 list:
-  "(" list_defs ")" { $$ = NODE1(ListConstDataNode, @$, $2); }
+  "(" list_defs ")" { $$ = NODE1(ListLiteralNode, @$, $2); }
 
-%type<qilang::ConstDataNodePtr> tuple;
+%type<qilang::LiteralNodePtr> tuple;
 tuple:
-  "[" list_defs "]" { $$ = NODE1(TupleConstDataNode, @$, $2); }
+  "[" list_defs "]" { $$ = NODE1(TupleLiteralNode, @$, $2); }
 
-%type<qilang::ConstDataNodePtrVector> list_defs;
+%type<qilang::LiteralNodePtrVector> list_defs;
 list_defs:
   %empty       {}
 | list_defs.1  { std::swap($$, $1); }
 
-%type<qilang::ConstDataNodePtrVector> list_defs.1;
+%type<qilang::LiteralNodePtrVector> list_defs.1;
 list_defs.1:
   const_exp                 { $$.push_back($1); }
 | list_defs.1 "," const_exp { std::swap($$, $1); $$.push_back($3); }

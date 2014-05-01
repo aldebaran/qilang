@@ -43,16 +43,16 @@ namespace qilang {
     void visitTypeExpr(TupleTypeExprNode* node);
   };
 
-  class DataCppFormatter : public ConstDataNodeFormatter {
+  class DataCppFormatter : public LiteralNodeFormatter {
   public:
-    virtual void acceptData(const ConstDataNodePtr& node);
-    void visitData(BoolConstDataNode *node);
-    void visitData(IntConstDataNode *node);
-    void visitData(FloatConstDataNode *node);
-    void visitData(StringConstDataNode *node);
-    void visitData(TupleConstDataNode* node);
-    void visitData(ListConstDataNode* node);
-    void visitData(DictConstDataNode* node);
+    virtual void acceptData(const LiteralNodePtr& node);
+    void visitData(BoolLiteralNode *node);
+    void visitData(IntLiteralNode *node);
+    void visitData(FloatLiteralNode *node);
+    void visitData(StringLiteralNode *node);
+    void visitData(TupleLiteralNode* node);
+    void visitData(ListLiteralNode* node);
+    void visitData(DictLiteralNode* node);
   };
 
   class ExprCppFormatter : public ExprNodeFormatter, virtual public DataCppFormatter {
@@ -62,7 +62,7 @@ namespace qilang {
     void visitExpr(BinaryOpExprNode *node);
     void visitExpr(UnaryOpExprNode *node);
     void visitExpr(VarExprNode *node);
-    void visitExpr(ConstDataExprNode* node);
+    void visitExpr(LiteralExprNode* node);
   };
 
 

@@ -120,32 +120,32 @@ void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
     out() << "TUPLENOTIMPL";
 }
 
-void DataCppFormatter::acceptData(const ConstDataNodePtr& node) {
+void DataCppFormatter::acceptData(const LiteralNodePtr& node) {
   node->accept(this);
 }
 
-void DataCppFormatter::visitData(BoolConstDataNode *node) {
+void DataCppFormatter::visitData(BoolLiteralNode *node) {
   if (node->value)
     out() << "true";
   else
     out() << "false";
 }
-void DataCppFormatter::visitData(IntConstDataNode *node) {
+void DataCppFormatter::visitData(IntLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(FloatConstDataNode *node) {
+void DataCppFormatter::visitData(FloatLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(StringConstDataNode *node) {
+void DataCppFormatter::visitData(StringLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(TupleConstDataNode* node) {
+void DataCppFormatter::visitData(TupleLiteralNode* node) {
   out() << "(" << "FAIL" << ")";
 }
-void DataCppFormatter::visitData(ListConstDataNode* node) {
+void DataCppFormatter::visitData(ListLiteralNode* node) {
   out() << "[" << "FAIL" << "]";
 }
-void DataCppFormatter::visitData(DictConstDataNode* node) {
+void DataCppFormatter::visitData(DictLiteralNode* node) {
   out() << "{" << "FAIL" << "}";
 }
 
@@ -158,7 +158,7 @@ void ExprCppFormatter::visitExpr(UnaryOpExprNode *node) {
 void ExprCppFormatter::visitExpr(VarExprNode *node) {
   throw std::runtime_error("unimplemented");
 }
-void ExprCppFormatter::visitExpr(ConstDataExprNode* node) {
+void ExprCppFormatter::visitExpr(LiteralExprNode* node) {
   throw std::runtime_error("unimplemented");
 }
 static std::string stripQiLangExtension(const std::string& name)

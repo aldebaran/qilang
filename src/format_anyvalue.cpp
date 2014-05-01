@@ -15,44 +15,44 @@ namespace qilang {
  * convert data to an AnyValue...
  *
  */
-  class DataToAnyValueVisitor : public ConstDataNodeVisitor {
+  class DataToAnyValueVisitor : public LiteralNodeVisitor {
   public:
     qi::AnyValue av;
 
-    qi::AnyValue convert(const ConstDataNodePtr& node)
+    qi::AnyValue convert(const LiteralNodePtr& node)
     {
       av.reset();
       acceptData(node);
       return av;
     }
 
-    virtual void acceptData(const ConstDataNodePtr &node)      { node->accept(this); }
+    virtual void acceptData(const LiteralNodePtr &node)      { node->accept(this); }
 
     /** Convert Data to AnyValue
    */
     /// to put into anyvaluedata.hpp/cpp  (its generic)
-    void visitData(BoolConstDataNode *node) {
+    void visitData(BoolLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
-    void visitData(IntConstDataNode *node) {
+    void visitData(IntLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
-    void visitData(FloatConstDataNode *node) {
+    void visitData(FloatLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
-    void visitData(StringConstDataNode *node) {
+    void visitData(StringLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
 
-    void visitData(TupleConstDataNode* node) {
+    void visitData(TupleLiteralNode* node) {
       std::cout << "TupleConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
     }
-    void visitData(ListConstDataNode* node) {
+    void visitData(ListLiteralNode* node) {
       std::cout << "ListConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
     }
-    void visitData(DictConstDataNode* node) {
+    void visitData(DictLiteralNode* node) {
       std::cout << "DictConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
     }
@@ -60,8 +60,8 @@ namespace qilang {
   };
 
   qi::AnyValue toAnyValue(const NodePtr& node) {
-    if (node->kind() == NodeKind_ConstData)
-      return DataToAnyValueVisitor().convert(boost::static_pointer_cast<ConstDataNode>(node));
+    if (node->kind() == NodeKind_Literal)
+      return DataToAnyValueVisitor().convert(boost::static_pointer_cast<LiteralNode>(node));
     throw std::runtime_error("bad node kind");
   }
 
