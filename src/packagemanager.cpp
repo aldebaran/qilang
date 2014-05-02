@@ -76,21 +76,21 @@ namespace qilang {
    *  2 / Check that the directory path and package name match
    *  3 / register the content of the file to the package
    */
-  bool PackageManager::addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResult& ret) {
+  bool PackageManager::addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResultPtr& pr) {
 
     // 1
     NodePtrVector result;
-    result = findNode(ret.ast, NodeType_Package);
+    result = findNode(pr->ast, NodeType_Package);
     if (result.size() == 0) {
-      ret.messages.push_back(Message(MessageType_Error, "missing package declaration", Location(file->filename())));
+      pr->messages.push_back(Diagnostic(DiagnosticType_Error, "missing package declaration", Location(file->filename())));
       return false;
     }
     if (result.size() > 1) {
       for (unsigned i = 1; i < result.size(); ++i) {
-        ret.messages.push_back(Message(MessageType_Error, "extra package declaration", result.at(i)->loc()));
+        pr->messages.push_back(Diagnostic(DiagnosticType_Error, "extra package declaration", result.at(i)->loc()));
 
       }
-      ret.messages.push_back(Message(MessageType_Info, "previous declared here", result.at(0)->loc()));
+      pr->messages.push_back(Diagnostic(DiagnosticType_Info, "previous declared here", result.at(0)->loc()));
       return false;
     }
     std::string pkgname = extractPackageName(result.at(0));
@@ -113,9 +113,9 @@ namespace qilang {
     for (int i = leafs.size() - 1; i >= 0; --i) {
       std::string par = p.filename();
       if (par != leafs.at(i)) {
-        ret.messages.push_back(Message(MessageType_Error,
-                                       "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
-                                       result.at(0)->loc()));
+        pr->messages.push_back(Diagnostic(DiagnosticType_Error,
+                                          "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
+                                          result.at(0)->loc()));
         return false;
       }
       p = p.parent();
@@ -125,21 +125,22 @@ namespace qilang {
 
     addInclude(pkgpath);
     addPackage(pkgname);
-    ret.package = pkgname;
-    package(pkgname)->setContent(absfile, ret);
+    pr->package = pkgname;
+    package(pkgname)->setContent(absfile, pr);
     return true;
   }
 
-  ParseResult PackageManager::parseFile(const FileReaderPtr& file)
+  ParseResultPtr PackageManager::parseFile(const FileReaderPtr& file)
   {
-    ParseResult ret = _parseFile(file);
-    if (ret.hasError())
+    ParseResultPtr ret = _parseFile(file);
+    if (ret->hasError())
       return ret;
-    parsePackage(ret.package);
+    //TODO: remove anal should do it.
+    parsePackage(ret->package);
     return ret;
   }
 
-  ParseResult PackageManager::_parseFile(const FileReaderPtr& file)
+  ParseResultPtr PackageManager::_parseFile(const FileReaderPtr& file)
   {
     qi::Path fsfname = qi::Path(file->filename());
     std::string filename = fsfname.absolute();
@@ -151,9 +152,9 @@ namespace qilang {
       return package(_sources[filename])->_contents[filename];
     }
 
-    ParseResult ret = qilang::parse(file);
+    ParseResultPtr ret = qilang::parse(file);
     if (addFileToPackage(filename, file, ret))
-      _sources[filename] = ret.package;
+      _sources[filename] = ret->package;
     return ret;
   }
 
@@ -255,7 +256,7 @@ namespace qilang {
     ParseResultMap::iterator it;
     for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {
       qiLogVerbose() << "Visiting: " << it->first;
-      visitNode(it->second.ast, boost::bind<void>(&importExportDeclVisitor, _1, _2, boost::ref(pkg)));
+      visitNode(it->second->ast, boost::bind<void>(&importExportDeclVisitor, _1, _2, boost::ref(pkg)));
     }
     qiLogVerbose() << "parsed pkg '" << packageName << "'";
     pkg->_parsed = true;
@@ -291,44 +292,46 @@ namespace qilang {
     parsePackage(fileOrPkg);
   }
 
-  static StringPair checkImport(const PackageManager& pm, const std::string& pkgName, const std::string& type)
+  static StringPair checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
   {
     PackagePtr pkg = pm.package(pkgName);
     NodePtr node = pkg->getExport(type);
     if (node)
       return StringPair(pkgName, type);
+    pr->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
     throw std::runtime_error("Can't find import");
   }
 
-  StringPair PackageManager::resolveImport(const PackagePtr& pkg, const std::string& type)
+  StringPair PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
   {
+    std::string type = tnode->value;
     qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
     std::string pkgName = type.substr(0, type.find_last_of('.'));
     std::string value = type.substr(pkgName.size(), type.size());
 
     //package name provided
     if (!pkgName.empty() && pkgName != type)
-      return checkImport(*this, pkgName, value);
+      return checkImport(*this, pr, pkgName, tnode, value);
     value = type;
 
     //no package name. find the package name
     NodePtr exportnode = pkg->getExport(type);
     if (exportnode)
-      return checkImport(*this, pkg->_name, type);
+      return checkImport(*this, pr, pkg->_name, tnode, type);
 
     ASTMap::const_iterator it;
     for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
       const NodePtrVector& v = it->second;
       for (unsigned i = 0; i < v.size(); ++i) {
-        ImportNode* tnode = static_cast<ImportNode*>(v.at(i).get());
-        switch (tnode->importType) {
+        ImportNode* inode = static_cast<ImportNode*>(v.at(i).get());
+        switch (inode->importType) {
           case ImportType_All: {
-            return checkImport(*this, tnode->name, type);
+            return checkImport(*this, pr, inode->name, tnode, type);
           }
           case ImportType_List: {
-            StringVector::iterator it = std::find(tnode->imports.begin(), tnode->imports.end(), type);
-            if (it != tnode->imports.end()) {
-              return checkImport(*this, tnode->name, type);
+            StringVector::iterator it = std::find(inode->imports.begin(), inode->imports.end(), type);
+            if (it != inode->imports.end()) {
+              return checkImport(*this, pr, inode->name, tnode, type);
             }
             break;
           }
@@ -337,6 +340,7 @@ namespace qilang {
         }
       }
     }
+    pr->messages.push_back(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
     throw std::runtime_error("cant find id");
   }
 
@@ -345,6 +349,7 @@ namespace qilang {
   void PackageManager::resolvePackage(const std::string& packageName) {
     PackagePtr pkg = package(packageName);
 
+    DiagnosticVector mv;
     ASTMap::iterator it;
     for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
 
@@ -352,7 +357,7 @@ namespace qilang {
         //throw on error? should..
         parsePackage(it->first);
       } catch (const std::exception& e) {
-        _messages.push_back(Message(MessageType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
+        mv.push_back(Diagnostic(DiagnosticType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
       }
     }
 
@@ -364,15 +369,15 @@ namespace qilang {
     //for each files in the package
     ParseResultMap::iterator it2;
     for (it2 = pkg->_contents.begin(); it2 != pkg->_contents.end(); ++it2) {
-      NodePtrVector customs = findNode(it2->second.ast, NodeType_CustomTypeExpr);
+      NodePtrVector customs = findNode(it2->second->ast, NodeType_CustomTypeExpr);
 
       for (unsigned j = 0; j < customs.size(); ++j) {
         CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(customs.at(j).get());
         StringPair sp;
         try {
-          sp = resolveImport(pkg, tnode->value);
+          sp = resolveImport(it2->second, pkg, tnode);
         } catch(const std::exception& e) {
-          _messages.push_back(Message(MessageType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
+          _messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
           continue;
         }
         qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
@@ -410,7 +415,7 @@ namespace qilang {
   {
     ParseResultMap::const_iterator it;
     for (it = _contents.begin(); it != _contents.end(); ++it) {
-      if (it->second.hasError())
+      if (it->second->hasError())
         return true;
     }
     return false;
@@ -420,7 +425,7 @@ namespace qilang {
   {
     ParseResultMap::const_iterator it;
     for (it = _contents.begin(); it != _contents.end(); ++it) {
-      it->second.printMessage(os);
+      it->second->printMessage(os);
     }
   }
 

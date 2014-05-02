@@ -16,7 +16,7 @@ namespace qilang {
   bool codegen(const FileWriterPtr&             out,
                const std::string&               codegen,
                const qilang::PackageManagerPtr& pm,
-               const qilang::ParseResult&       pr)
+               const qilang::ParseResultPtr&    pr)
   {
     static const char* vals[] = { "cpp_interface", "cppi",
                                   "cpp_bind", "cppb",
@@ -34,9 +34,9 @@ namespace qilang {
     if (!v)
       throw std::runtime_error("bad value for codegen");
 
-    if (pr.hasError()) {
+    if (pr->hasError()) {
       qiLogError() << "PR";
-      pr.printMessage(std::cout);
+      pr->printMessage(std::cout);
       return false;
     }
 
@@ -55,9 +55,9 @@ namespace qilang {
     else if (codegen == "cpp_remote"    || codegen == "cppr")
       out->out() << qilang::genCppObjectRemote(pm, pr);
     else if (codegen == "qilang")
-      out->out() << qilang::format(pr.ast);
+      out->out() << qilang::format(pr->ast);
     else if (codegen == "sexpr")
-      out->out() << qilang::formatAST(pr.ast);
+      out->out() << qilang::formatAST(pr->ast);
     return true;
   }
 

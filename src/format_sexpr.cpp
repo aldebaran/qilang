@@ -111,14 +111,14 @@ namespace qilang {
 
     void visitExpr(BinaryOpExprNode *node) {
       out() << "(" << BinaryOpCodeToString(node->op) << " ";
-      acceptExpr(node->n1);
+      acceptExpr(node->left);
       out() << " ";
-      acceptExpr(node->n2);
+      acceptExpr(node->right);
       out() << ")";
     }
     void visitExpr(UnaryOpExprNode *node) {
       out() << "(" << UnaryOpCodeToString(node->op) << " ";
-      acceptExpr(node->n1);
+      acceptExpr(node->expr);
       out() << ")";
     }
     void visitExpr(VarExprNode *node) {

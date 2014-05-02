@@ -19,6 +19,7 @@ namespace qilang {
   class PackageManager;
   class ParseResult;
   typedef boost::shared_ptr<PackageManager> PackageManagerPtr;
+  typedef boost::shared_ptr<ParseResult> ParseResultPtr;
 
   class QILANG_API FileWriter {
   public:
@@ -49,13 +50,13 @@ namespace qilang {
   inline FileWriterPtr newFileWriter(const std::string& fname) { return boost::make_shared<FileWriter>(fname); }
   inline FileWriterPtr newFileWriter(std::ostream* o, const std::string& fname) { return boost::make_shared<FileWriter>(o, fname); }
 
-  QILANG_API std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes);
+  QILANG_API std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
-  QILANG_API std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& nodes);
+  QILANG_API std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
-  QILANG_API std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResult& nodes);
+  QILANG_API std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
-  QILANG_API std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResult& nodes);
+  QILANG_API std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
   QILANG_API std::string formatAST(const NodePtrVector& node);
   QILANG_API std::string format(const NodePtrVector& node);
@@ -69,7 +70,7 @@ namespace qilang {
   QILANG_API bool codegen(const FileWriterPtr& out,
                           const std::string& codegen,
                           const PackageManagerPtr& pm,
-                          const ParseResult& pr);
+                          const ParseResultPtr& pr);
   enum FormatterCodeGen {
     QiLang,
     Cpp_Header,

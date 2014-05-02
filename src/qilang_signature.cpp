@@ -123,7 +123,7 @@ protected:
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Float64, "float64", Location());
         break;
       case 'v':
-        ret = boost::make_shared<qilang::CustomTypeExprNode>("void", Location());
+        ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Nothing, "nothing", Location());
         break;
       case 's':
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_String, "str", Location());
@@ -210,7 +210,6 @@ NodePtr metaObjectToQiLang(const std::string& name, const qi::MetaObject& obj) {
     if(itPM->second.uid() >= 100)
        declarations.push_back(qlsc.metaPropertyToQiLang(itPM->second));
   }
-  //pr.package pour pkg
 
   return boost::make_shared<qilang::InterfaceDeclNode>(name, declarations, Location());
 }

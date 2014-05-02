@@ -195,9 +195,9 @@ protected:
 
 };
 
-std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResult& nodes) {
-  StringVector sv = extractCppIncludeDir(pm, nodes, true);
-  return CppRemoteQiLangGen(pm, sv).format(nodes.ast);
+std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
+  StringVector sv = extractCppIncludeDir(pm, pr, true);
+  return CppRemoteQiLangGen(pm, sv).format(pr->ast);
 }
 
 

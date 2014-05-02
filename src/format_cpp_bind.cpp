@@ -25,7 +25,7 @@ class CppBindQiLangGen  : public FileFormatter,
                           virtual public ExprCppFormatter
 {
 public:
-  CppBindQiLangGen(const PackageManagerPtr& pm, const ParseResult& pr, const StringVector& includes)
+  CppBindQiLangGen(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
     : toclose(0)
     , _includes(includes)
     , _pr(pr)
@@ -34,7 +34,7 @@ public:
 
   int toclose;
   StringVector _includes;
-  const ParseResult& _pr;
+  const ParseResultPtr& _pr;
 
   virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
 
@@ -87,7 +87,7 @@ protected:
   void visitDecl(InterfaceDeclNode* node) {
     int current = id;
     id++;
-    currentParent = formatNs(_pr.package) + "::" + node->name + "Interface";
+    currentParent = formatNs(_pr->package) + "::" + node->name + "Interface";
     indent() << "static int initType" << current << "() {" << std::endl;
     {
       ScopedIndent _(_indent);
@@ -179,9 +179,9 @@ protected:
 
 };
 
-std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResult& pr) {
+std::string genCppObjectRegistration(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
   StringVector sv = extractCppIncludeDir(pm, pr, true);
-  return CppBindQiLangGen(pm, pr, sv).format(pr.ast);
+  return CppBindQiLangGen(pm, pr, sv).format(pr->ast);
 }
 
 }

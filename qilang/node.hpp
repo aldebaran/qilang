@@ -22,13 +22,13 @@ namespace qilang {
 class Location {
 public:
   explicit Location(const std::string& filename)
-    : beg_line(-1)
+    : beg_line(0)
     , beg_column(0)
-    , end_line(-1)
+    , end_line(0)
     , end_column(0)
     , filename(filename)
   {}
-  Location(int bline = -1, int bcols = 0, int eline = -1, int ecols = 0, const std::string& filename = std::string())
+  Location(int bline = 0, int bcols = 0, int eline = 0, int ecols = 0, const std::string& filename = std::string())
     : beg_line(bline)
     , beg_column(bcols)
     , end_line(eline)
@@ -51,11 +51,9 @@ inline std::ostream& operator<<(std::ostream& os, const Location& loc) {
   }
   if (!loc.filename.empty()) {
     os << loc.filename;
-    if (loc.beg_line != -1)
-      os << ":";
+    os << ":";
   }
-  if (loc.beg_line != -1)
-    os << loc.beg_line << ":" << loc.beg_column;
+  os << loc.beg_line << ":" << loc.beg_column;
   return os;
 }
 
@@ -364,33 +362,32 @@ public:
 
 class QILANG_API BinaryOpExprNode : public ExprNode {
 public:
-  BinaryOpExprNode(ExprNodePtr n1, ExprNodePtr n2, BinaryOpCode boc, const Location& loc)
+  BinaryOpExprNode(ExprNodePtr left, ExprNodePtr right, BinaryOpCode boc, const Location& loc)
     : ExprNode(NodeType_BinOpExpr, loc)
     , op(boc)
-    , n1(n1)
-    , n2(n2)
+    , left(left)
+    , right(right)
   {}
 
   void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
   BinaryOpCode op;
-  ExprNodePtr  n1;
-  ExprNodePtr  n2;
+  ExprNodePtr  left;
+  ExprNodePtr  right;
 };
 
-class QILANG_API  UnaryOpExprNode : public ExprNode {
+class QILANG_API UnaryOpExprNode : public ExprNode {
 public:
   UnaryOpExprNode(ExprNodePtr node, UnaryOpCode op, const Location& loc)
     : ExprNode(NodeType_UOpExpr, loc)
     , op(op)
-    , n1(node)
+    , expr(node)
   {}
 
   void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
 
   UnaryOpCode op;
-  ExprNodePtr n1;
-
+  ExprNodePtr expr;
 };
 
 class QILANG_API VarExprNode : public ExprNode {
@@ -526,9 +523,11 @@ public:
   virtual void accept(TypeExprNodeVisitor* visitor) = 0;
 };
 
-//warning keep in sync with makeType in grammar.y
+// ### WARNING ###
+// keep in sync with makeType in grammar.y
 enum BuiltinType {
-  BuiltinType_Bool = 0,
+  BuiltinType_Nothing = 0,  //this is void. (useless in qilang itself, but helps with bindings)
+  BuiltinType_Bool,
   BuiltinType_Char,
   BuiltinType_Int,
   BuiltinType_UInt,
@@ -554,7 +553,9 @@ public:
     : TypeExprNode(NodeType_BuiltinTypeExpr, loc)
     , builtinType(builtinType)
     , value(sym)
-  {}
+  {
+    //TODO: check sym is know and match builtinType
+  }
 
   void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 

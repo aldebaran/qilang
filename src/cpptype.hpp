@@ -67,7 +67,7 @@ namespace qilang {
 
 
   // if self == true then and include on self is returned
-  StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult& nodes, bool self);
+  StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResultPtr& nodes, bool self);
 
   //std::string typeToCpp(TypeExprNode* type, bool constref=true);
   //pkgName to include dir

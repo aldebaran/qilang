@@ -270,18 +270,18 @@ static StringVector cppFilenameFromImport(const PackagePtr& pkg, ImportNode* tno
   return ret;
 }
 
-StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult& pr, bool self) {
+StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResultPtr& pr, bool self) {
   StringVector  includes;
   NodePtrVector imports;
   NodePtrVector typeExprs;
   NodePtrVector decls;
 
-  pushIfNot(includes, qiLangToCppInclude(pm->package(pr.package), "api"));
+  pushIfNot(includes, qiLangToCppInclude(pm->package(pr->package), "api"));
   if (self) {
-    pushIfNot(includes, qiLangToCppInclude(pm->package(pr.package), pr.filename) + " //self");
+    pushIfNot(includes, qiLangToCppInclude(pm->package(pr->package), pr->filename) + " //self");
   }
   //for each import generate the include.
-  imports = findNode(pr.ast, NodeType_Import);
+  imports = findNode(pr->ast, NodeType_Import);
   for (unsigned i = 0; i < imports.size(); ++i) {
     ImportNode* tnode = static_cast<ImportNode*>(imports.at(i).get());
     PackagePtr pkg = pm->package(tnode->name);
@@ -292,7 +292,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   }
 
   //for each TypeExpr generate include as appropriated  (for builtin types)
-  typeExprs = findNode(pr.ast, NodeKind_TypeExpr);
+  typeExprs = findNode(pr->ast, NodeKind_TypeExpr);
   for (unsigned i = 0; i < typeExprs.size(); ++i) {
     NodePtr& node = typeExprs.at(i);
     switch (node->type()) {
@@ -339,7 +339,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   }
 
   //for each TypeExpr generate include as appropriated  (for builtin types)
-  decls = findNode(pr.ast, NodeKind_Decl);
+  decls = findNode(pr->ast, NodeKind_Decl);
   for (unsigned i = 0; i < decls.size(); ++i) {
     NodePtr& node = decls.at(i);
     switch (node->type()) {

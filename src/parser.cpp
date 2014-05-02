@@ -27,8 +27,9 @@ namespace qilang {
     : file(file)
     , _parsed(false)
     , parser(this)
+    , _result(newParseResult())
   {
-    _result.filename = file->filename();
+    _result->filename = file->filename();
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
   }
@@ -60,12 +61,12 @@ namespace qilang {
     try {
       parser.parse();
     } catch (const ParseException& pe) {
-      _result.ast.clear();
-      _result.messages.push_back(Message(MessageType_Error, pe.what(), pe.loc()));
+      _result->ast.clear();
+      _result->messages.push_back(Diagnostic(DiagnosticType_Error, pe.what(), pe.loc()));
     }
   }
 
-  void Message::print(std::ostream &out) const {
+  void Diagnostic::print(std::ostream &out) const {
     out << loc() << ":";
 
     switch (type()) {
@@ -91,7 +92,7 @@ namespace qilang {
       messages.at(i).print(out);
   }
 
-  ParseResult Parser::result() {
+  ParseResultPtr Parser::result() {
     parse();
     return _result;
   }
@@ -140,11 +141,11 @@ namespace qilang {
   }
 
   //public interface
-  ParseResult parse(const FileReaderPtr& file) {
-    ParseResult ret;
-    ret.filename = file->filename();
+  ParseResultPtr parse(const FileReaderPtr& file) {
+    ParseResultPtr ret = newParseResult();
+    ret->filename = file->filename();
     if (!file->isOpen()) {
-      ret.messages.push_back(Message(MessageType_Error, "Can't open file '" + file->filename() + "'"));
+      ret->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't open file '" + file->filename() + "'"));
       return ret;
     }
     Parser p(file);

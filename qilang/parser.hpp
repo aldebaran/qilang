@@ -20,41 +20,41 @@ class MetaObject;
 
 namespace qilang {
 
-  enum MessageType {
-    MessageType_None = 0,
-    MessageType_Error = 1,
-    MessageType_Warning = 2,
-    MessageType_Info = 3
+  enum DiagnosticType {
+    DiagnosticType_None = 0,
+    DiagnosticType_Error = 1,
+    DiagnosticType_Warning = 2,
+    DiagnosticType_Info = 3
   };
 
-  class QILANG_API Message {
+  class QILANG_API Diagnostic {
   public:
-    Message()
+    Diagnostic()
     {}
 
-    explicit Message(MessageType type, const std::string& what)
+    explicit Diagnostic(DiagnosticType type, const std::string& what)
       : _type(type)
       , _what(what)
     {}
-    explicit Message(MessageType type, const std::string& what, Location loc)
+    explicit Diagnostic(DiagnosticType type, const std::string& what, Location loc)
       : _type(type)
       , _what(what)
       , _loc(loc)
     {}
 
-    MessageType  type() const           { return _type; }
+    DiagnosticType  type() const           { return _type; }
     const char*  what() const           { return _what.c_str(); }
     const std::string& filename() const { return _loc.filename; }
     const Location&    loc() const      { return _loc; }
 
     void print(std::ostream &out) const;
   protected:
-    MessageType _type;
+    DiagnosticType _type;
     std::string _what;
     Location    _loc;
   };
 
-  typedef std::vector<Message> MessageVector;
+  typedef std::vector<Diagnostic> DiagnosticVector;
 
   class QILANG_API FileReader {
   public:
@@ -90,7 +90,7 @@ namespace qilang {
     std::string   filename;
     std::string   package;
     NodePtrVector ast;
-    MessageVector messages;
+    DiagnosticVector messages;
 
     bool hasError() const {
       return messages.size() > 0;
@@ -99,7 +99,11 @@ namespace qilang {
     void printMessage(std::ostream& out) const;
   };
 
-  QILANG_API ParseResult parse(const FileReaderPtr& filename);
+  typedef boost::shared_ptr<ParseResult> ParseResultPtr;
+
+  inline ParseResultPtr newParseResult() { return boost::make_shared<ParseResult>(); }
+
+  QILANG_API ParseResultPtr parse(const FileReaderPtr& filename);
   QILANG_API TypeExprNodePtr signatureToQiLang(const qi::Signature& sig);
   QILANG_API NodePtr metaObjectToQiLang(const std::string& name, const qi::MetaObject& obj);
 

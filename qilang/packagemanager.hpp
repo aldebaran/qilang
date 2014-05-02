@@ -19,8 +19,8 @@
 namespace qilang {
 
   typedef std::map<std::string, std::string>   FilenameToPackageMap;
-  typedef std::map<std::string, ParseResult>   ParseResultMap;
-  typedef std::vector<ParseResult>             ParseResultVector;
+  typedef std::map<std::string, ParseResultPtr>   ParseResultMap;
+  typedef std::vector<ParseResultPtr>             ParseResultVector;
   typedef std::map<std::string, NodePtrVector> ASTMap;
   typedef std::map<std::string, NodePtr>       NodeMap;
 
@@ -67,7 +67,7 @@ namespace qilang {
        return it->second;
     }
 
-    void setContent(const std::string& filename, const ParseResult& result) {
+    void setContent(const std::string& filename, const ParseResultPtr& result) {
       if (_contents.find(filename) != _contents.end())
         throw std::runtime_error("content already set for file: " + filename);
       _contents[filename] = result;
@@ -126,7 +126,7 @@ namespace qilang {
   public:
     PackageManager() {}
 
-    ParseResult parseFile(const FileReaderPtr& file);
+    ParseResultPtr parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
     void parse(const std::string& fileOrPkg);
@@ -149,7 +149,7 @@ namespace qilang {
 
     void parseDir(const std::string &dirname);
 
-    StringPair resolveImport(const PackagePtr &pkg, const std::string &type);
+    StringPair resolveImport(const ParseResultPtr& pr, const PackagePtr &pkg, const CustomTypeExprNode* node);
 
   protected:
     PackagePtr addPackage(const std::string& name) {
@@ -158,9 +158,9 @@ namespace qilang {
       _packages[name] = boost::make_shared<Package>(name);
       return _packages[name];
     }
-    bool addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResult& ret);
+    bool addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResultPtr& ret);
     void resolvePackage(const std::string &packageName);
-    ParseResult _parseFile(const FileReaderPtr &file);
+    ParseResultPtr _parseFile(const FileReaderPtr &file);
 
   protected:
     PackagePtrMap        _packages; // packagename , packageptr

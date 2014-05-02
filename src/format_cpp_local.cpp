@@ -177,9 +177,9 @@ protected:
 
 };
 
-std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResult& nodes) {
-  StringVector sv = extractCppIncludeDir(pm, nodes, true);
-  return QiLangGenObjectLocal(pm, sv).format(nodes.ast);
+std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
+  StringVector sv = extractCppIncludeDir(pm, pr, true);
+  return QiLangGenObjectLocal(pm, sv).format(pr->ast);
 }
 
 

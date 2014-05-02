@@ -41,11 +41,11 @@ namespace qilang {
 
     void parse();
 
-    ParseResult   result();
+    ParseResultPtr   result();
 
     //parser context
     FileReaderPtr        file;
-    ParseResult          _result;
+    ParseResultPtr          _result;
     bool                 _parsed;
 
     std::string          package;

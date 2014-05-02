@@ -132,13 +132,13 @@ class QiLangGenObjectDef : public FileFormatter
                          , public StmtNodeFormatter
 {
 public:
-  QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResult& pr, const StringVector& includes)
+  QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
     : toclose(0)
     , _pm(pm)
     , _pr(pr)
     , _includes(includes)
   {
-    apiExport = pkgNameToAPI(pr.package);
+    apiExport = pkgNameToAPI(pr->package);
   }
 
   virtual void accept(const NodePtr& node) {
@@ -163,7 +163,7 @@ public:
 
   int toclose;     //number of } to close (namespace)
   PackageManagerPtr  _pm;
-  const ParseResult& _pr;
+  const ParseResultPtr& _pr;
   StringVector       _includes;
 
   virtual void acceptStmt(const StmtNodePtr &node) { node->accept(this); }
@@ -173,7 +173,7 @@ public:
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
     indent() << "#pragma once" << std::endl;
-    std::string headGuard = filenameToCppHeaderGuard(_pr.package, _pr.filename);
+    std::string headGuard = filenameToCppHeaderGuard(_pr->package, _pr->filename);
     indent() << "#ifndef " << headGuard << std::endl;
     indent() << "#define " << headGuard << std::endl;
     indent() << std::endl;
@@ -232,9 +232,9 @@ protected:
 
 };
 
-std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResult& nodes) {
-  StringVector sv = extractCppIncludeDir(pm, nodes, false);
-  return QiLangGenObjectDef(pm, nodes, sv).format(nodes.ast);
+std::string genCppObjectInterface(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
+  StringVector sv = extractCppIncludeDir(pm, pr, false);
+  return QiLangGenObjectDef(pm, pr, sv).format(pr->ast);
 }
 
 }

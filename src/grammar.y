@@ -61,8 +61,10 @@
   }
 
   qilang::TypeExprNodePtr makeType(const yy::location& loc, const std::string& id) {
-    //warning keep in sync with node.hpp enum BuiltinType
-    const char *builtin[] = { "bool" , "char",
+    // ### WARNING ###
+    // keep in sync with node.hpp enum BuiltinType
+    const char *builtin[] = { "nothing",
+                              "bool" , "char",
                               "int"  , "uint",
                               "int8" , "uint8",
                               "int16", "uint16",
@@ -172,7 +174,7 @@
 %type<qilang::NodePtrVector> toplevel;
 toplevel:
   %empty         {}
-| toplevel.1 { context->_result.ast.insert(context->_result.ast.end(), $1.begin(), $1.end()); }
+| toplevel.1 { context->_result->ast.insert(context->_result->ast.end(), $1.begin(), $1.end()); }
 
 %type<qilang::NodePtrVector> toplevel.1;
 toplevel.1:

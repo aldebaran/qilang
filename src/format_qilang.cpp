@@ -113,13 +113,13 @@ namespace qilang {
     virtual void acceptExpr(const ExprNodePtr& node) { node->accept((ExprNodeVisitor*)this); }
 
     void visitExpr(BinaryOpExprNode *node) {
-      acceptExpr(node->n1);
+      acceptExpr(node->left);
       out() << " " << BinaryOpCodeToString(node->op) << " ";
-      acceptExpr(node->n2);
+      acceptExpr(node->right);
     }
     void visitExpr(UnaryOpExprNode *node) {
       out() << UnaryOpCodeToString(node->op);
-      acceptExpr(node->n1);
+      acceptExpr(node->expr);
     }
     void visitExpr(VarExprNode *node) {
       out() << node->value;

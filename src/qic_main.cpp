@@ -32,8 +32,8 @@ int codegen_service(const std::string& codegen,
   qilang::NodePtrVector objs;
   objs.push_back(qilang::metaObjectToQiLang(service, mo));
 
-  qilang::ParseResult pr;
-  pr.ast = objs;
+  qilang::ParseResultPtr pr;
+  pr->ast = objs;
 
   bool succ = qilang::codegen(out, codegen, pm, pr);
   if (!succ)
@@ -48,7 +48,7 @@ int codegen_file(const std::string& codegen,
                  qilang::PackageManagerPtr pm,
                  const std::string& file) {
   qiLogVerbose() << "Generating " << codegen << " for file " << file;
-  qilang::ParseResult pr;
+  qilang::ParseResultPtr pr;
   try {
     pr = pm->parseFile(qilang::newFileReader(file));
   } catch(const std::exception& e) {

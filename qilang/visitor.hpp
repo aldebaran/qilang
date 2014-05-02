@@ -113,11 +113,11 @@ namespace qilang {
     }
 
     void visitExpr(BinaryOpExprNode *node) {
-      acceptExpr(node->n1);
-      acceptExpr(node->n2);
+      acceptExpr(node->left);
+      acceptExpr(node->right);
     }
     void visitExpr(UnaryOpExprNode *node) {
-      acceptExpr(node->n1);
+      acceptExpr(node->expr);
     }
     void visitExpr(VarExprNode *node) {
     }
