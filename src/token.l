@@ -150,7 +150,6 @@ FLOAT    {UFLOAT}
 "object"        RETURN_OP(OBJECT);
 "interface"     RETURN_OP(INTERFACE);
 "struct"        RETURN_OP(STRUCT);
-"type"          RETURN_OP(TYPE);
 "end"           RETURN_OP(END);
 "const"         RETURN_OP(CONST);
 
@@ -161,6 +160,9 @@ FLOAT    {UFLOAT}
 "at"            RETURN_OP(AT);
 "for"           RETURN_OP(FOR);
 "if"            RETURN_OP(IF);
+
+"typedef"       RETURN_OP(TYPEDEF);
+"enum"          RETURN_OP(ENUM);
 
 {FLOAT}           {
   STEP();

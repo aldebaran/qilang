@@ -101,9 +101,12 @@ class FnDeclNode;
 class EmitDeclNode;
 class PropDeclNode;
 class StructDeclNode; //Struct Decl
-class FieldDeclNode;
+class StructFieldDeclNode;
 class ConstDeclNode;
 
+class TypeDefDeclNode;
+class EnumDeclNode;
+class EnumFieldDeclNode;
 
 typedef std::vector<std::string>            StringVector;
 typedef std::pair<std::string, std::string> StringPair;
@@ -127,8 +130,9 @@ typedef boost::shared_ptr<LiteralNode>  LiteralNodePtr;
 typedef std::vector<LiteralNodePtr>     LiteralNodePtrVector;
 
 typedef std::pair<LiteralNodePtr, LiteralNodePtr> LiteralNodePtrPair;
-typedef std::vector<LiteralNodePtrPair>             LiteralNodePtrPairVector;
+typedef std::vector<LiteralNodePtrPair>           LiteralNodePtrPairVector;
 
+typedef boost::shared_ptr<ConstDeclNode> ConstDeclNodePtr;
 
 /* All Statements
  */
@@ -145,7 +149,14 @@ public:
   // Struct Declaration
   virtual void visitDecl(StructDeclNode* node) = 0;
   virtual void visitDecl(ConstDeclNode* node) = 0;
-  virtual void visitDecl(FieldDeclNode* node) = 0;
+  virtual void visitDecl(StructFieldDeclNode* node) = 0;
+
+  // Typedef
+  virtual void visitDecl(TypeDefDeclNode* node) = 0;
+
+  // Enum
+  virtual void visitDecl(EnumDeclNode* node) = 0;
+  virtual void visitDecl(EnumFieldDeclNode* node) = 0;
 };
 
 class StmtNodeVisitor {
@@ -249,6 +260,9 @@ enum NodeType {
   NodeType_FnDecl,
   NodeType_EmitDecl,
   NodeType_PropDecl,
+  NodeType_TypeDefDecl,
+  NodeType_EnumDecl,
+  NodeType_EnumFieldDecl,
 
   NodeType_StructDecl,
   NodeType_FieldDecl,
@@ -774,9 +788,64 @@ public:
   virtual void accept(DeclNodeVisitor* visitor) = 0;
 };
 
-class QILANG_API FieldDeclNode : public DeclNode {
+class QILANG_API TypeDefDeclNode : public DeclNode
+{
 public:
-  FieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
+  TypeDefDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
+    : DeclNode(NodeType_TypeDefDecl, loc)
+    , name(name)
+    , type(type)
+  {}
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  std::string     name;
+  TypeExprNodePtr type;
+};
+
+enum EnumFieldType {
+  EnumFieldType_Type = 0,
+  EnumFieldType_Const = 1
+};
+
+class QILANG_API EnumFieldDeclNode : public DeclNode {
+public:
+  //Node must be TypeExprNode or ConstDeclNode
+  EnumFieldDeclNode(EnumFieldType fieldType, const NodePtr& node, const Location& loc)
+    : DeclNode(NodeType_EnumFieldDecl, loc)
+    , fieldType(fieldType)
+    , node(node)
+  {}
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  EnumFieldType   fieldType;
+  NodePtr         node;
+};
+
+typedef boost::shared_ptr<EnumFieldDeclNode> EnumFieldDeclNodePtr;
+typedef std::vector<EnumFieldDeclNodePtr>    EnumFieldDeclNodePtrVector;
+
+// a variant... (a list of accepted types)
+class QILANG_API EnumDeclNode : public DeclNode
+{
+public:
+  EnumDeclNode(const std::string &name, const EnumFieldDeclNodePtrVector& fields, const Location& loc)
+    : DeclNode(NodeType_EnumDecl, loc)
+    , name(name)
+    , fields(fields)
+  {}
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  std::string                name;
+  EnumFieldDeclNodePtrVector fields;
+};
+
+
+class QILANG_API StructFieldDeclNode : public DeclNode {
+public:
+  StructFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
     : DeclNode(NodeType_FieldDecl, loc)
     , name(name)
     , type(type)
@@ -787,12 +856,12 @@ public:
   std::string     name;
   TypeExprNodePtr type;
 };
-typedef boost::shared_ptr<FieldDeclNode> FieldDeclNodePtr;
-typedef std::vector<FieldDeclNodePtr>    FieldDeclNodePtrVector;
+typedef boost::shared_ptr<StructFieldDeclNode> StructFieldDeclNodePtr;
+typedef std::vector<StructFieldDeclNodePtr>    StructFieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& name, const FieldDeclNodePtrVector& vardefs, const Location& loc)
+  StructDeclNode(const std::string& name, const StructFieldDeclNodePtrVector& vardefs, const Location& loc)
     : DeclNode(NodeType_StructDecl, loc)
     , name(name)
     , fields(vardefs)
@@ -802,7 +871,7 @@ public:
 
   std::string            package;
   std::string            name;
-  FieldDeclNodePtrVector fields;
+  StructFieldDeclNodePtrVector fields;
 };
 
 // Object Motion.MoveTo "titi"

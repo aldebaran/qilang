@@ -145,9 +145,19 @@ protected:
   void visitDecl(ConstDeclNode* node) {
     throw std::runtime_error("unimplemented");
   }
-  void visitDecl(FieldDeclNode* node) {
+  void visitDecl(StructFieldDeclNode* node) {
     out() << node->name;
   }
+  void visitDecl(EnumDeclNode* node) {
+    qiLogError() << "EnumDeclNode not implemented";
+  }
+  void visitDecl(EnumFieldDeclNode* node) {
+    qiLogError() << "EnumFieldDeclNode not implemented";
+  }
+  void visitDecl(TypeDefDeclNode* node) {
+    qiLogError() << "TypeDefDeclNode not implemented";
+  }
+
 
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);

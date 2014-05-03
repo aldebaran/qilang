@@ -1,67 +1,67 @@
 package qilang
 
 enum NodeType
-  NodeType_Package         = 1
-  NodeType_Import          = 2
+  const NodeType_Package         = 1
+  const NodeType_Import          = 2
 
-  NodeType_BinOpExpr       = 3
-  NodeType_UOpExpr         = 4
-  NodeType_VarExpr         = 5
+  const NodeType_BinOpExpr       = 3
+  const NodeType_UOpExpr         = 4
+  const NodeType_VarExpr         = 5
 
-  NodeType_SimpleTypeExpr  = 6
-  NodeType_MapTypeExpr     = 7
-  NodeType_ListTypeExpr    = 8
-  NodeType_TupleTypeExpr   = 9
+  const NodeType_SimpleTypeExpr  = 6
+  const NodeType_MapTypeExpr     = 7
+  const NodeType_ListTypeExpr    = 8
+  const NodeType_TupleTypeExpr   = 9
 
-  NodeType_BoolData        = 10
-  NodeType_IntData         = 11
-  NodeType_FloatData       = 12
-  NodeType_StringData      = 13
-  NodeType_MapData         = 14
-  NodeType_ListData        = 15
-  NodeType_TupleData       = 16
+  const NodeType_BoolData        = 10
+  const NodeType_IntData         = 11
+  const NodeType_FloatData       = 12
+  const NodeType_StringData      = 13
+  const NodeType_MapData         = 14
+  const NodeType_ListData        = 15
+  const NodeType_TupleData       = 16
 
-  NodeType_ObjectDef       = 17
-  NodeType_PropDef         = 18
-  NodeType_VarDef          = 19
-  NodeType_At              = 20
+  const NodeType_ObjectDef       = 17
+  const NodeType_PropDef         = 18
+  const NodeType_VarDef          = 19
+  const NodeType_At              = 20
 
-  NodeType_InterfaceDecl   = 21
-  NodeType_FnDecl          = 22
-  NodeType_EmitDecl        = 23
-  NodeType_PropDecl        = 24
+  const NodeType_InterfaceDecl   = 21
+  const NodeType_FnDecl          = 22
+  const NodeType_EmitDecl        = 23
+  const NodeType_PropDecl        = 24
 
-  NodeType_StructDecl      = 25
-  NodeType_ConstDecl       = 26
+  const NodeType_StructDecl      = 25
+  const NodeType_ConstDecl       = 26
 end
 
 enum UnaryOpCode
-  UnaryOpCode_Negate = 0
-  UnaryOpCode_Minus  = 1
+  const UnaryOpCode_Negate = 0
+  const UnaryOpCode_Minus  = 1
 end
 
 enum BinaryOpCode
-  BinaryOpCode_BoolOr   = 0
-  BinaryOpCode_BoolAnd  = 1
+  const BinaryOpCode_BoolOr   = 0
+  const BinaryOpCode_BoolAnd  = 1
 
-  BinaryOpCode_And      = 2
-  BinaryOpCode_Or       = 3
-  BinaryOpCode_Xor      = 4
+  const BinaryOpCode_And      = 2
+  const BinaryOpCode_Or       = 3
+  const BinaryOpCode_Xor      = 4
 
-  BinaryOpCode_EqEq     = 5
-  BinaryOpCode_Ne       = 6
-  BinaryOpCode_Gt       = 7
-  BinaryOpCode_Lt       = 8
-  BinaryOpCode_Ge       = 9
-  BinaryOpCode_Le       = 10
+  const BinaryOpCode_EqEq     = 5
+  const BinaryOpCode_Ne       = 6
+  const BinaryOpCode_Gt       = 7
+  const BinaryOpCode_Lt       = 8
+  const BinaryOpCode_Ge       = 9
+  const BinaryOpCode_Le       = 10
 
-  BinaryOpCode_Plus     = 11
-  BinaryOpCode_Minus    = 12
-  BinaryOpCode_Divide   = 13
-  BinaryOpCode_Multiply = 14
-  BinaryOpCode_Modulus  = 15
+  const BinaryOpCode_Plus     = 11
+  const BinaryOpCode_Minus    = 12
+  const BinaryOpCode_Divide   = 13
+  const BinaryOpCode_Multiply = 14
+  const BinaryOpCode_Modulus  = 15
 
-  BinaryOpCode_FetchArray // a[b]
+  const BinaryOpCode_FetchArray = 16 # a[b]
 end
 
 struct NodeData
@@ -86,7 +86,7 @@ fn newNode(NodeType type) Node
 ########################
 interface DataNode(Node)
 end
-fn newDataNode(NodeType type) DataNode;
+fn newDataNode(NodeType type) DataNode
 
 interface IntDataNode(DataNode)
   fn value() int64

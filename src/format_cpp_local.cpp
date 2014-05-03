@@ -84,12 +84,22 @@ namespace qilang {
     void visitDecl(StructDeclNode* node) {
       qiLogError() << "StructDeclNode not implemented";
     }
+    void visitDecl(StructFieldDeclNode* node) {
+      qiLogError() << "FieldDeclNode not implemented";
+    }
     void visitDecl(ConstDeclNode* node) {
       qiLogError() << "FieldDeclNode not implemented";
     }
-    void visitDecl(FieldDeclNode* node) {
-      qiLogError() << "FieldDeclNode not implemented";
+    void visitDecl(EnumDeclNode* node) {
+      qiLogError() << "EnumDeclNode not implemented";
     }
+    void visitDecl(EnumFieldDeclNode* node) {
+      qiLogError() << "EnumFieldDeclNode not implemented";
+    }
+    void visitDecl(TypeDefDeclNode* node) {
+      qiLogError() << "TypeDefDeclNode not implemented";
+    }
+
   };
 
 //Generate Type Registration Information

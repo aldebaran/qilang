@@ -180,11 +180,11 @@ namespace qilang {
 
     void visitDecl(StructDeclNode* node) {
       indent() << "(struct " << node->name << std::endl;
-      scopedField(node->fields);
+      scopedStructField(node->fields);
       indent() << ")" << std::endl;
     }
 
-    void visitDecl(FieldDeclNode* node) {
+    void visitDecl(StructFieldDeclNode* node) {
       indent() << "(field " << node->name;
       if (node->type) {
         out() << " ";
@@ -205,6 +205,26 @@ namespace qilang {
       }
       out() << ")" << std::endl;
     }
+    void visitDecl(EnumDeclNode* node) {
+      indent() << "(enum " << node->name << std::endl;
+      scopedEnumField(node->fields);
+      indent() << ")" << std::endl;
+    }
+    void visitDecl(TypeDefDeclNode* node) {
+      indent() << "(typedef ";
+      acceptTypeExpr(node->type);
+      out() << " " << node->name << ")" << std::endl;
+    }
+    void visitDecl(EnumFieldDeclNode* node) {
+      indent() << "(enum " << std::endl;
+      if (node->fieldType == EnumFieldType_Const) {
+        visitDecl(static_cast<ConstDeclNode*>(node->node.get()));
+      } else {
+        acceptTypeExpr(boost::static_pointer_cast<TypeExprNode>(node->node));
+      }
+      indent() << ")" << std::endl;
+    }
+
 
   };
 

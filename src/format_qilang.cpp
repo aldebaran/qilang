@@ -180,7 +180,7 @@ namespace qilang {
     }
     void visitDecl(StructDeclNode* node) {
       indent() << "struct " << node->name << std::endl;
-      scopedField(node->fields);
+      scopedStructField(node->fields);
       indent() << "end" << std::endl << std::endl;
     }
     void visitDecl(ConstDeclNode* node) {
@@ -193,13 +193,27 @@ namespace qilang {
       }
       out() << std::endl;
     }
-    void visitDecl(FieldDeclNode* node) {
+    void visitDecl(StructFieldDeclNode* node) {
       indent() << node->name;
       if (node->type) {
         out() << " ";
         acceptTypeExpr(node->type);
       }
       out() << std::endl;
+    }
+
+    void visitDecl(EnumDeclNode* node) {
+      indent() << "enum " << node->name << std::endl;
+      scopedEnumField(node->fields);
+      indent() << "end" << std::endl;
+    }
+    void visitDecl(TypeDefDeclNode* node) {
+      indent() << "typedef ";
+      acceptTypeExpr(node->type);
+      out() << " " << node->name << std::endl;
+    }
+    void visitDecl(EnumFieldDeclNode* node) {
+      indent() << "TODO" << std::endl;
     }
   };
 

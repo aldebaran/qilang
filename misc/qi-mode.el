@@ -17,10 +17,11 @@
   '("if" "package" "end" "for"                    ;; keywords
     "interface" "fn" "emit" "prop"
     "object" "at" "package" "from" "import"
-    "const" "struct" "enum" "type"
-    "char" "int" "uint" "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
+    "const" "struct" "enum" "typedef"
+    "char" "int" "uint"
+    "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
     "float" "float32" "float64"
-    "str" "list" "map" "any" "obj" "value" "object"
+    "str" "list" "map" "any" "obj" "object"
     )
   '(;; int constant
     ("\\b[0-9]+\\b" . font-lock-constant-face)

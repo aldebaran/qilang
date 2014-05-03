@@ -110,6 +110,16 @@ namespace qilang {
   typedef boost::shared_ptr<Package>        PackagePtr;
   typedef std::map<std::string, PackagePtr> PackagePtrMap;
 
+  //typedef std::map<std::string, DiagnosticVector> DiagnosticMap;
+
+  class DiagnosticManager {
+  public:
+    void add(const Diagnostic& msg);
+
+    DiagnosticVector _diags;
+  };
+
+  typedef boost::shared_ptr<DiagnosticManager> DiagnosticManagerPtr;
 
   /**
    *  PackageManager...
@@ -124,7 +134,9 @@ namespace qilang {
    */
   class QILANG_API PackageManager {
   public:
-    PackageManager() {}
+    PackageManager()
+      //: _diag(new DiagnosticManager)
+    {}
 
     ParseResultPtr parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);

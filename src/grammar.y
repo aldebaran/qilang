@@ -133,8 +133,10 @@
   OBJECT              "object"
   INTERFACE           "interface"
   STRUCT              "struct"
-  TYPE                "type"
   END                 "end"
+
+  TYPEDEF             "typedef"
+  ENUM                "enum"
 
   // IFace Keywords
   FN                  "fn"
@@ -183,14 +185,16 @@ toplevel.1:
 
 %type<qilang::NodePtr> toplevel_def;
 toplevel_def:
-  object  { $$ = $1; }
-| iface   { $$ = $1; }
+  object        { $$ = $1; }
+| iface         { $$ = $1; }
 | function_decl { $$ = $1; }
-| package { $$ = $1; }
-| import  { $$ = $1; }
-| const   { $$ = $1; }
-| struct  { $$ = $1; }
-| exp     { $$ = $1; }
+| package       { $$ = $1; }
+| import        { $$ = $1; }
+| const         { $$ = $1; }
+| struct        { $$ = $1; }
+| typedef       { $$ = $1; }
+| enums         { $$ = $1; }
+| exp           { $$ = $1; }
 
 // #######################################################################################
 // # PACKAGE MANAGEMENT
@@ -263,6 +267,41 @@ type:
 tuple_type_defs:
   type                      { $$.push_back($1); }
 | tuple_type_defs "," type  { std::swap($$, $1); $$.push_back($3); }
+
+
+// #######################################################################################
+// # TYPEDEF
+// #######################################################################################
+
+%type<qilang::DeclNodePtr> typedef;
+typedef:
+  TYPEDEF type ID           { $$ = NODE2(TypeDefDeclNode, @$, $3, $2); }
+
+
+
+// #######################################################################################
+// # ENUM
+// #######################################################################################
+
+%type<qilang::DeclNodePtr> enums;
+enums:
+  ENUM ID enums_defs END    { $$ = NODE2(EnumDeclNode, @$, $2, $3); }
+
+%type<qilang::EnumFieldDeclNodePtrVector> enums_defs;
+enums_defs:
+  %empty       {}
+| enums_defs.1 { std::swap($$, $1); }
+
+%type<qilang::EnumFieldDeclNodePtrVector> enums_defs.1;
+enums_defs.1:
+  enums_def               { $$.push_back($1); }
+| enums_defs.1 enums_def  { std::swap($$, $1); $$.push_back($2); }
+
+%type<qilang::EnumFieldDeclNodePtr> enums_def;
+enums_def:
+  const  { $$ = NODE2(EnumFieldDeclNode, @$, qilang::EnumFieldType_Const, $1); }
+| type   { $$ = NODE2(EnumFieldDeclNode, @$, qilang::EnumFieldType_Type, $1); }
+
 
 
 // #######################################################################################
@@ -350,19 +389,19 @@ const:
 struct:
   STRUCT ID struct_field_defs END { $$ = NODE2(StructDeclNode, @$, $2, $3); }
 
-%type<qilang::FieldDeclNodePtrVector> struct_field_defs;
+%type<qilang::StructFieldDeclNodePtrVector> struct_field_defs;
 struct_field_defs:
   %empty  {}
 | struct_field_defs.1 { std::swap($$, $1); }
 
-%type<qilang::FieldDeclNodePtrVector> struct_field_defs.1;
+%type<qilang::StructFieldDeclNodePtrVector> struct_field_defs.1;
 struct_field_defs.1:
   struct_field_def                     { $$.push_back($1); }
 | struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.push_back($2); }
 
-%type<qilang::FieldDeclNodePtr> struct_field_def;
+%type<qilang::StructFieldDeclNodePtr> struct_field_def;
 struct_field_def:
-  ID type   { $$ = NODE2(FieldDeclNode, @$, $1, $2); }
+  ID type   { $$ = NODE2(StructFieldDeclNode, @$, $1, $2); }
 
 
 // #######################################################################################

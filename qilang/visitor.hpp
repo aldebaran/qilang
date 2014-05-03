@@ -142,10 +142,18 @@ namespace qilang {
     void visitDecl(StructDeclNode* node) {
       each(node->fields);
     }
-    void visitDecl(FieldDeclNode* node) {
+    void visitDecl(StructFieldDeclNode* node) {
       acceptTypeExpr(node->type);
     }
     void visitDecl(ConstDeclNode* node) {
+    }
+    void visitDecl(EnumDeclNode* node) {
+      each(node->fields);
+    }
+    void visitDecl(EnumFieldDeclNode* node) {
+    }
+    void visitDecl(TypeDefDeclNode* node) {
+      acceptTypeExpr(node->type);
     }
 
     void visitStmt(PackageNode* node) {

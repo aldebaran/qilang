@@ -96,7 +96,7 @@ public:
   void visitDecl(StructDeclNode* node) {
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
-    scopedField(node->fields);
+    scopedStructField(node->fields);
     indent() << "};" << std::endl << std::endl;
   }
 
@@ -114,7 +114,7 @@ public:
     out() << ";" << std::endl;
   }
 
-  void visitDecl(FieldDeclNode* node) {
+  void visitDecl(StructFieldDeclNode* node) {
     if (node->type) {
       indent();
       acceptTypeExpr(node->type);
@@ -123,6 +123,26 @@ public:
     else
       indent() << "qi::AnyValue " << node->name;
     out() << ";" << std::endl;
+  }
+  void visitDecl(EnumDeclNode* node) {
+    indent() << "enum " << node->name << " {" << std::endl;
+    scopedEnumField(node->fields);
+    indent() << "}" << std::endl << std::endl;
+  }
+  void visitDecl(EnumFieldDeclNode* node) {
+    if (node->fieldType == EnumFieldType_Const) {
+      ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node->node.get());
+      indent() << tnode->name << " = ";
+      acceptData(tnode->data);
+      out() << "," << std::endl;
+      return;
+    }
+    throw std::runtime_error("type in enum not supported in cppi atm");
+  }
+  void visitDecl(TypeDefDeclNode* node) {
+    indent() << "typedef ";
+    acceptTypeExpr(node->type);
+    out() << " " << node->name << ";" << std::endl;
   }
 
 };

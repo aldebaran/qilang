@@ -292,6 +292,7 @@ namespace qilang {
     parsePackage(fileOrPkg);
   }
 
+  //throw on error
   static StringPair checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
   {
     PackagePtr pkg = pm.package(pkgName);
@@ -302,6 +303,7 @@ namespace qilang {
     throw std::runtime_error("Can't find import");
   }
 
+  //throw on error
   StringPair PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
   {
     std::string type = tnode->value;
@@ -341,7 +343,7 @@ namespace qilang {
       }
     }
     pr->messages.push_back(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
-    throw std::runtime_error("cant find id");
+    throw std::runtime_error("cant resolve id");
   }
 
   /** parse all dependents packages
@@ -362,8 +364,8 @@ namespace qilang {
     }
 
     //for each imports verify each symbol are correct
-    for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
-    }
+    //for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
+    //}
 
     //for each customtype expr resolve name
     //for each files in the package
