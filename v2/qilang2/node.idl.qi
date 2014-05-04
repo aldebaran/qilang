@@ -1,0 +1,193 @@
+package qilang2
+
+enum NodeKind
+  const NodeKind_Expr     = 0
+  const NodeKind_TypeExpr = 1
+  const NodeKind_Literal  = 2
+  const NodeKind_Decl     = 3
+  const NodeKind_Stmt     = 4
+end
+
+enum NodeType
+  const NodeType_Package         = 1
+  const NodeType_Import          = 2
+
+  const NodeType_BinOpExpr       = 3
+  const NodeType_UOpExpr         = 4
+  const NodeType_VarExpr         = 5
+  const NodeType_LiteralExpr     = 6
+
+  const NodeType_BuiltinTypeExpr = 7
+  const NodeType_CustomTypeExpr  = 8
+  const NodeType_MapTypeExpr     = 9
+  const NodeType_ListTypeExpr    = 10
+  const NodeType_TupleTypeExpr   = 11
+
+  const NodeType_BoolData        = 12
+  const NodeType_IntData         = 13
+  const NodeType_FloatData       = 14
+  const NodeType_StringData      = 15
+  const NodeType_MapData         = 16
+  const NodeType_ListData        = 17
+  const NodeType_TupleData       = 18
+
+  const NodeType_ObjectDef       = 19
+  const NodeType_PropDef         = 20
+  const NodeType_VarDef          = 21
+  const NodeType_At              = 22
+
+  const NodeType_InterfaceDecl   = 23
+  const NodeType_FnDecl          = 24
+  const NodeType_EmitDecl        = 25
+  const NodeType_PropDecl        = 26
+  const NodeType_TypeDefDecl     = 27
+  const NodeType_EnumDecl        = 28
+  const NodeType_EnumFieldDecl   = 29
+
+  const NodeType_StructDecl      = 30
+  const NodeType_StructFieldDecl = 31
+  const NodeType_ConstDecl       = 32
+
+  const NodeType_Comment         = 33
+end
+
+enum UnaryOpCode
+  const UnaryOpCode_Negate = 0
+  const UnaryOpCode_Minus  = 1
+end
+
+enum BinaryOpCode
+  const BinaryOpCode_BoolOr   = 0
+  const BinaryOpCode_BoolAnd  = 1
+
+  const BinaryOpCode_And      = 2
+  const BinaryOpCode_Or       = 3
+  const BinaryOpCode_Xor      = 4
+
+  const BinaryOpCode_EqEq     = 5
+  const BinaryOpCode_Ne       = 6
+  const BinaryOpCode_Gt       = 7
+  const BinaryOpCode_Lt       = 8
+  const BinaryOpCode_Ge       = 9
+  const BinaryOpCode_Le       = 10
+
+  const BinaryOpCode_Plus     = 11
+  const BinaryOpCode_Minus    = 12
+  const BinaryOpCode_Divide   = 13
+  const BinaryOpCode_Multiply = 14
+  const BinaryOpCode_Modulus  = 15
+
+  const BinaryOpCode_FetchArray = 16 # a[b]
+end
+
+
+struct Location
+  beg_line   int
+  beg_column int
+  end_line   int
+  end_column int
+  filename   str
+end
+
+# struct NodeData
+#   ntype    NodeType
+#   attrs    [str]any
+#   children []NodeData
+# end
+
+interface Node
+  fn type() NodeType
+  fn kind() NodeKind
+  fn loc()  Location
+end
+fn newNode(kind NodeKind, type NodeType, loc Location) Node
+
+typedef []Node NodeVector
+
+#######################################
+# Abstract Nodes
+#######################################
+
+interface ExprNode(Node)
+end
+fn newExprNode(type NodeType, loc Location) ExprNode
+
+interface BinaryOpExprNode(ExprNode)
+  fn op()    BinaryOpCode
+  fn left()  ExprNode
+  fn right() ExprNode
+end
+fn newBinaryOpExprNode(left ExprNode, right ExprNode, op BinaryOpCode, loc Location) BinaryOpExprNode
+
+interface UnaryOpExprNode(ExprNode)
+  fn op()    UnaryOpCode
+  fn expr()  ExprNode
+end
+fn newUnaryOpExprNode(expr ExprNode, op UnaryOpCode, loc Location) UnaryOpExprNode
+
+interface VarExprNode(ExprNode)
+  fn name()  str
+end
+fn newVarExprNode(name str, loc Location) VarExprNode
+
+## Node -> LiteralNode
+interface LiteralExprNode(ExprNode)
+  fn data()  Node
+end
+fn newLiteralExprNode(data Node, loc Location) LiteralExprNode
+
+
+########################
+# DATA
+########################
+#interface DataNode(Node)
+#end
+#fn newDataNode(type NodeType) DataNode
+#
+#interface IntDataNode(DataNode)
+#  fn value() int64
+#end
+#fn newIntDataNode(data int64) DataNode
+#
+#interface UIntDataNode(DataNode)
+#  fn value() uint64
+#end
+#fn newUIntDataNode(data uint64) DataNode
+#
+#interface FloatDataNode(Node)
+#  fn value() float64
+#end
+#fn newFloatDataNode(data float64) DataNode
+#
+#interface StringDataNode(DataNode)
+#  fn value() str
+#end
+#fn newStringDataNode(data uint64) DataNode
+#
+#interface ListDataNode(DataNode)
+#  fn value() []DataNode
+#end
+#fn newListDataNode(data []DataNode) DataNode
+#
+#interface MapDataNode(DataNode)
+#  fn value() [](DataNode, DataNode)
+#end
+#fn newMapDataNode(data [](DataNode,DataNode)) DataNode
+#
+#interface TupleDataNode(DataNode)
+#  fn value() []DataNode
+#end
+#fn newTupleDataNode(data []DataNode) DataNode
+#
+#interface TypeExprNode(Node)
+#  fn name() str
+#end
+#
+#interface DefNode(Node)
+#end
+#
+#interface ObjectDefNode
+#  fn name() str
+#  fn type() TypeExprNode
+#  fn defs() []DefNode
+#end
