@@ -33,6 +33,7 @@ namespace qilang {
       return;
 
     switch (node->type()) {
+      // EXPORT
       case NodeType_InterfaceDecl: {
         InterfaceDeclNode* tnode = static_cast<InterfaceDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
@@ -53,7 +54,16 @@ namespace qilang {
         ObjectDefNode* tnode = static_cast<ObjectDefNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
-      } case NodeType_Import: {
+      } case NodeType_TypeDefDecl: {
+        TypeDefDeclNode* tnode = static_cast<TypeDefDeclNode*>(node.get());
+        pkg->addMember(tnode->name, node);
+      } case NodeType_EnumDecl: {
+        EnumDeclNode* tnode = static_cast<EnumDeclNode*>(node.get());
+        pkg->addMember(tnode->name, node);
+      }
+
+      // IMPORT
+      case NodeType_Import: {
         ImportNode* tnode = static_cast<ImportNode*>(node.get());
         pkg->addImport(tnode->name, node);
         return;

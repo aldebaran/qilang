@@ -79,14 +79,14 @@ interface Node(NodeData)
   fn attr(str) any
   fn children() []Node
 end
-fn newNode(NodeType type) Node
+fn newNode(type NodeType) Node
 
 ########################
 # DATA
 ########################
 interface DataNode(Node)
 end
-fn newDataNode(NodeType type) DataNode
+fn newDataNode(type NodeType) DataNode
 
 interface IntDataNode(DataNode)
   fn value() int64
@@ -123,7 +123,7 @@ interface TupleDataNode(DataNode)
 end
 fn newTupleDataNode(data []DataNode) DataNode
 
-interface TypeNode(Node)
+interface TypeExprNode(Node)
   fn name() str
 end
 
