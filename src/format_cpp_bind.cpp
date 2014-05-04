@@ -93,6 +93,9 @@ protected:
       ScopedIndent _(_indent);
       ScopedFormatAttrActivate _2(methodAttr);
       indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
+      for (unsigned int i = 0; i < node->inherits.size(); ++i) {
+        indent() << "builder.inherits< " << node->inherits.at(i) << "Interface >();" << std::endl;
+      }
       for (unsigned int i = 0; i < node->values.size(); ++i) {
         acceptDecl(node->values.at(i));
       }
@@ -134,6 +137,7 @@ protected:
     out() << ");" << std::endl;
   }
   void visitDecl(StructDeclNode* node) {
+    return;
     indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
     for (unsigned int i = 0; i < node->fields.size(); ++i) {
       acceptDecl(node->fields.at(i));
