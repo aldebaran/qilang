@@ -45,7 +45,7 @@ namespace qilang {
 
     //parser context
     FileReaderPtr        file;
-    ParseResultPtr          _result;
+    ParseResultPtr       _result;
     bool                 _parsed;
 
     std::string          package;

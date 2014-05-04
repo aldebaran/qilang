@@ -25,9 +25,9 @@ namespace qilang {
 
   Parser::Parser(const FileReaderPtr &file)
     : file(file)
+    , _result(newParseResult())
     , _parsed(false)
     , parser(this)
-    , _result(newParseResult())
   {
     _result->filename = file->filename();
     qilang_lex_init(&scanner);

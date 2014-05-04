@@ -25,6 +25,8 @@ static std::string constRefYourSelf(const std::string& type, bool constref) {
 
 static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
   switch (type) {
+    case BuiltinType_Nothing:
+      return "void";
     case BuiltinType_Bool:
       return "bool";
     case BuiltinType_Char:

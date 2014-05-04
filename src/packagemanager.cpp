@@ -57,9 +57,11 @@ namespace qilang {
       } case NodeType_TypeDefDecl: {
         TypeDefDeclNode* tnode = static_cast<TypeDefDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
+        return;
       } case NodeType_EnumDecl: {
         EnumDeclNode* tnode = static_cast<EnumDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
+        return;
       }
 
       // IMPORT

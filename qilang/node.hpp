@@ -10,6 +10,7 @@
 
 #include <qilang/api.hpp>
 
+//#include <qilang/node2.hpp>  //import the future
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -41,7 +42,6 @@ public:
   int end_line;
   int end_column;
   std::string filename;
-
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Location& loc) {
@@ -287,44 +287,6 @@ private:
   NodeType _type;
   Location _loc;
 };
-
-
-
-#if 0
-class Node2;
-typedef std::map<std::string, qi::AnyValue> AttributeMap;
-typedef boost::shared_ptr<Node2> Node2Ptr;
-typedef std::vector<Node2Ptr> NodeVector;
-
-class QILANG_API Node2 {
-public:
-  explicit Node2(NodeType type, const AttributeMap& map, const NodeVector& children);
-  explicit Node2(NodeType type, const AttributeMap& map);
-  explicit Node2(NodeType type);
-
-  Node2& setAttr(const std::string& name, qi::AutoAnyReference value);
-  qi::AnyValue attr(const std::string& name);
-
-  Node2& addChild(const Node2& node);
-
-  NodeVector children() { return _children; }
-
-  NodeKind     _kind;
-  NodeType     _type;
-  AttributeMap _attributes;
-  NodeVector   _children;
-};
-
-class DictLiteralNode2: public Node2 {
-  DictLiteralNode2(LiteralNodePtrPairVector datas):
-    Node2(NodeKind_Literal)
-  {
-    setAttr("data", datas);
-  }
-};
-#endif
-
-
 
 enum UnaryOpCode {
   UnaryOpCode_Negate,
