@@ -24,7 +24,6 @@ namespace qilang {
   public:
     explicit FileWriter(const std::string& filename)
       : _filename(filename)
-      , _fileout(filename.c_str())
       , _out(&_fileout)
     {}
 
@@ -35,7 +34,11 @@ namespace qilang {
 
     bool isOpen()                       { return _out->good(); }
     const std::string& filename() const { return _filename; }
-    std::ostream& out()                 { return *_out; }
+    std::ostream& out() {
+      if (_out == &_fileout && !_fileout.is_open())
+        _fileout.open(_filename.c_str());
+      return *_out;
+    }
 
   protected:
     std::string   _filename;
