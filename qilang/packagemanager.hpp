@@ -166,6 +166,7 @@ namespace qilang {
     PackagePtrMap        _packages; // packagename , packageptr
     FilenameToPackageMap _sources;  // abs filename , packagename
     StringVector         _includes;
+    MessageVector        _messages;
   };
   typedef boost::shared_ptr<PackageManager> PackageManagerPtr;
   inline PackageManagerPtr newPackageManager() { return boost::make_shared<PackageManager>(); }

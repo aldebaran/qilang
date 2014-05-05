@@ -46,6 +46,8 @@ namespace qilang {
     const char*  what() const           { return _what.c_str(); }
     const std::string& filename() const { return _loc.filename; }
     const Location&    loc() const      { return _loc; }
+
+    void print(std::ostream &out) const;
   protected:
     MessageType _type;
     std::string _what;

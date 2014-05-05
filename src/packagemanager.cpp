@@ -212,6 +212,8 @@ namespace qilang {
 
   bool PackageManager::hasError() const
   {
+    if (!_messages.empty())
+      return true;
     PackagePtrMap::const_iterator it;
     for (it = _packages.begin(); it != _packages.end(); ++it) {
       if (it->second->hasError())
@@ -222,10 +224,10 @@ namespace qilang {
 
   void PackageManager::printMessage(std::ostream &os) const
   {
-    PackagePtrMap::const_iterator it;
-    for (it = _packages.begin(); it != _packages.end(); ++it) {
+    for (MessageVector::const_iterator it = _messages.begin(); it != _messages.end(); ++it)
+      it->print(os);
+    for (PackagePtrMap::const_iterator it = _packages.begin(); it != _packages.end(); ++it)
       it->second->printMessage(os);
-    }
   }
 
 
@@ -343,7 +345,6 @@ namespace qilang {
   void PackageManager::resolvePackage(const std::string& packageName) {
     PackagePtr pkg = package(packageName);
 
-    MessageVector mv;
     ASTMap::iterator it;
     for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
 
@@ -351,7 +352,7 @@ namespace qilang {
         //throw on error? should..
         parsePackage(it->first);
       } catch (const std::exception& e) {
-        mv.push_back(Message(MessageType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
+        _messages.push_back(Message(MessageType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
       }
     }
 
@@ -371,8 +372,8 @@ namespace qilang {
         try {
           sp = resolveImport(pkg, tnode->value);
         } catch(const std::exception& e) {
-          qiLogError() << "error: " << e.what();
-          throw;
+          _messages.push_back(Message(MessageType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
+          continue;
         }
         qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
         tnode->resolved_package = sp.first;

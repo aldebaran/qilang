@@ -65,30 +65,30 @@ namespace qilang {
     }
   }
 
-  void ParseResult::printMessage(std::ostream &out) const {
+  void Message::print(std::ostream &out) const {
+    out << loc() << ":";
 
-    for (unsigned i = 0; i < messages.size(); ++i) {
-      const Message& msg = messages.at(i);
-
-      out << msg.loc() << ":";
-
-      switch (msg.type()) {
-        case MessageType_Error:
-          out << "error: ";
-          break;
-        case MessageType_Warning:
-          out << "warning: ";
-          break;
-        case MessageType_Info:
-          out << "info: ";
-          break;
-        default:
-          break;
-      }
-
-      out << msg.what() << std::endl;
-      out << qilang::getErrorLine(msg.filename(), msg.loc());
+    switch (type()) {
+      case MessageType_Error:
+        out << "error: ";
+        break;
+      case MessageType_Warning:
+        out << "warning: ";
+        break;
+      case MessageType_Info:
+        out << "info: ";
+        break;
+      default:
+        break;
     }
+
+    out << what() << std::endl;
+    out << qilang::getErrorLine(filename(), loc());
+  }
+
+  void ParseResult::printMessage(std::ostream &out) const {
+    for (unsigned i = 0; i < messages.size(); ++i)
+      messages.at(i).print(out);
   }
 
   ParseResult Parser::result() {
