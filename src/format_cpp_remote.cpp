@@ -71,12 +71,11 @@ namespace qilang {
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
-        indent() << "qiLogInfo(\"caca\") << \"remote call\";";
         if (node->ret)
         {
           indent() << "return _object.call< ";
           acceptTypeExpr(node->ret);
-          indent() << " >(";
+          out() << " >(";
         }
         else
           indent() << "_object.call<void>(";
