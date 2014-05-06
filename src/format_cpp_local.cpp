@@ -149,7 +149,7 @@ public:
 protected:
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
-    for (int i = 0; i < ns.size(); ++i) {
+    for (unsigned int i = 0; i < ns.size(); ++i) {
       toclose++;
       indent() << "namespace " << ns.at(i) << " {" << std::endl;
     }

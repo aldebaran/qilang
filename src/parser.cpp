@@ -115,7 +115,7 @@ namespace qilang {
 
     std::string ln;
     unsigned int lico = loc.beg_line;
-    for (int i = 0; i < lico; ++i) {
+    for (unsigned int i = 0; i < lico; ++i) {
       if (!is.good())
         return std::string();
       getline(is, ln);

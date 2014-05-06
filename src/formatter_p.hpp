@@ -196,7 +196,7 @@ namespace qilang {
 
     virtual std::string format(const NodePtrVector& node) {
       formatHeader();
-      for (int i = 0; i < node.size(); ++i) {
+      for (unsigned int i = 0; i < node.size(); ++i) {
         if (!node.at(i))
           throw std::runtime_error("Invalid Node");
         accept(node.at(i));

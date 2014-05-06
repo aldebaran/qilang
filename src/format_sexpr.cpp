@@ -23,7 +23,7 @@ namespace qilang {
 
     const std::string &list(ConstDataNodePtrVector pv) {
       static const std::string ret;
-      for (int i = 0; i < pv.size(); ++i) {
+      for (unsigned int i = 0; i < pv.size(); ++i) {
         acceptData(pv.at(i));
         if (i + 1 < pv.size())
           out() << " ";
@@ -33,7 +33,7 @@ namespace qilang {
 
     const std::string &dict(ConstDataNodePtrPairVector pv) {
       static const std::string ret;
-      for (int i = 0; i < pv.size(); ++i) {
+      for (unsigned int i = 0; i < pv.size(); ++i) {
         out() << "(";
         acceptData(pv.at(i).first);
         out() << " ";
@@ -93,7 +93,7 @@ namespace qilang {
     }
     void visitTypeExpr(TupleTypeExprNode *node) {
       out() << "(tupletype ";
-      for (int i = 0; i < node->elements.size(); ++i) {
+      for (unsigned int i = 0; i < node->elements.size(); ++i) {
         acceptTypeExpr(node->elements.at(i));
         if (i + 1 == node->elements.size())
           out() << " ";
@@ -140,7 +140,7 @@ namespace qilang {
       indent() << "(interface " << node->name;
       if (node->inherits.size() > 0) {
         out() << "(inherit ";
-        for (int i = 0; i < node->inherits.size(); ++i) {
+        for (unsigned int i = 0; i < node->inherits.size(); ++i) {
           out() << node->inherits.at(i);
           if (i + 1 != node->inherits.size())
             out() << " ";
@@ -223,7 +223,7 @@ namespace qilang {
         indent() << "(from " << node->name << " (import all))" << std::endl;
       } else {
         indent() << "(from " << node->name << " (import ";
-        for (int i = 0; i < node->imports.size(); ++i) {
+        for (unsigned int i = 0; i < node->imports.size(); ++i) {
           out() << node->imports.at(i);
           if (i+1 < node->imports.size()) {
             out() << " ";

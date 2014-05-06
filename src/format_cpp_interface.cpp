@@ -40,7 +40,7 @@ public:
     indent() << "class " << apiExport << " " << node->name << "Interface";
     if (node->inherits.size() > 0) {
       out() << ": ";
-      for (int i = 0; i < node->inherits.size(); ++i) {
+      for (unsigned int i = 0; i < node->inherits.size(); ++i) {
         out() << "public " << node->inherits.at(i);
         if (i + 1 != node->inherits.size())
           out() << ", ";
@@ -194,7 +194,7 @@ public:
 protected:
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
-    for (int i = 0; i < ns.size(); ++i) {
+    for (unsigned int i = 0; i < ns.size(); ++i) {
       toclose++;
       indent() << "namespace " << ns.at(i) << " {" << std::endl;
     }

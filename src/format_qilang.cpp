@@ -22,7 +22,7 @@ namespace qilang {
     virtual void acceptData(const ConstDataNodePtr& node) { node->accept(this); }
 
     void list(ConstDataNodePtrVector pv) {
-      for (int i = 0; i < pv.size(); ++i) {
+      for (unsigned int i = 0; i < pv.size(); ++i) {
         acceptData(pv.at(i));
         if (i + 1 < pv.size())
           out() << ", ";
@@ -30,7 +30,7 @@ namespace qilang {
     }
 
     void dict(ConstDataNodePtrPairVector pv) {
-      for (int i = 0; i < pv.size(); ++i) {
+      for (unsigned int i = 0; i < pv.size(); ++i) {
         acceptData(pv.at(i).first);
         out() << " : ";
         acceptData(pv.at(i).second);
@@ -96,7 +96,7 @@ namespace qilang {
     }
     void visitTypeExpr(TupleTypeExprNode *node) {
       out() << "(";
-      for (int i = 0; i < node->elements.size(); ++i) {
+      for (unsigned int i = 0; i < node->elements.size(); ++i) {
         acceptTypeExpr(node->elements.at(i));
         if (i + 1 == node->elements.size())
           out() << ", ";
@@ -157,7 +157,7 @@ namespace qilang {
       indent() << "interface " << node->name;
       if (node->inherits.size() > 0) {
         out() << "(";
-        for (int i = 0; i < node->inherits.size(); ++i) {
+        for (unsigned int i = 0; i < node->inherits.size(); ++i) {
           out() << node->inherits.at(i);
           if (i + 1 != node->inherits.size())
             out() << ", ";

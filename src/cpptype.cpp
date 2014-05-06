@@ -181,9 +181,9 @@ void formatBlock(std::ostream& os, const std::string& name, const std::string& s
   StringVector lines;
 
   lines = boost::split(lines, name, boost::is_any_of("\r\n"));
-  for (unsigned i = 0; i < lines.size(); ++i) {
+  for (unsigned int i = 0; i < lines.size(); ++i) {
     std::string& line = lines.at(i);
-    for (unsigned j = 0; j < indent; ++j)
+    for (int j = 0; j < indent; ++j)
       os << " ";
     os << sep << line << std::endl;
   }
