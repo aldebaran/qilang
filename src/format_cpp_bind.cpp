@@ -107,8 +107,20 @@ protected:
   }
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
-      indent() << "builder.advertiseMethod(\"" << node->name << "\", &" << currentParent << "::" << node->name;
-      out() << ");" << std::endl;
+      indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
+      if (node->ret)
+        acceptTypeExpr(node->ret);
+      else
+        out() << "void";
+      out() << "(" << currentParent << "::*)(";
+      for (unsigned int i = 0; i < node->args.size(); ++i) {
+        consttype(node->args[i]);
+        if (i+1 < node->args.size()) {
+          out() << ", ";
+        }
+      }
+      out() << ") >(&" << currentParent << "::" << node->name;
+      out() << "));" << std::endl;
     } else {
       indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
     }
