@@ -110,6 +110,9 @@ namespace qilang {
     std::ifstream is;
     std::string   ret;
 
+    //no location provided just drop
+    if (loc.beg_column == 0 || loc.beg_line == 0)
+      return std::string();
     is.open(filename.c_str());
     if (!is.is_open())
       return std::string();
@@ -125,8 +128,8 @@ namespace qilang {
     ret = ln + "\n";
     unsigned int cbeg = loc.beg_column;
     unsigned int cend = loc.end_column;
-    int count = cend - cbeg - 1;
-    int space = cbeg;
+    int count = cend - cbeg;
+    int space = cbeg - 1;
     //multiline error just display the beginning
     if (loc.end_line != loc.beg_line)
       count = 1;

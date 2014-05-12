@@ -42,13 +42,11 @@
 
 #define RETURN_OP(Symbol)         \
   do { \
-    STEP();\
     return yy::parser::make_ ## Symbol(LOC); \
   } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
    do { \
-     STEP();\
      return yy::parser::make_ ## Symbol(Value, LOC); \
    } while(false)
 
@@ -165,30 +163,26 @@ FLOAT    {UFLOAT}
 "enum"          RETURN_OP(ENUM);
 
 {FLOAT}           {
-  STEP();
   qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
-  STEP();
   qilang::LiteralNodePtr node = boost::make_shared<qilang::IntLiteralNode>(boost::lexical_cast<int>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
-  STEP();
   RETURN_VAL(ID, std::string(yytext));
 }
 
 {STRING}          {   // "   for indentation
-  STEP();
   qilang::LiteralNodePtr node = boost::make_shared<qilang::StringLiteralNode>(std::string(yytext + 1, strlen(yytext) - 2), qilang::makeLocation(LOC));
   RETURN_VAL(STRING, node);
 }
 
 {BLANKS}          {
-STEP();
+  STEP();
 }
 
 "#".*             {} // One-line comment.
@@ -199,6 +193,7 @@ STEP();
                     ss << "invalid token '" << std::string(yytext) << "'";
                     qilang_get_extra(yyscanner)->parser.error(LOC, ss.str());
                   }
-\n                { LINES(1); }
+
+{EOL}             { LINES(1); STEP(); }
 
 %%
