@@ -94,15 +94,15 @@ namespace qilang {
     NodePtrVector result;
     result = findNode(pr->ast, NodeType_Package);
     if (result.size() == 0) {
-      pr->messages.push_back(Diagnostic(DiagnosticType_Error, "missing package declaration", Location(file->filename())));
+      pr->addDiag(Diagnostic(DiagnosticType_Error, "missing package declaration", Location(file->filename())));
       return false;
     }
     if (result.size() > 1) {
       for (unsigned i = 1; i < result.size(); ++i) {
-        pr->messages.push_back(Diagnostic(DiagnosticType_Error, "extra package declaration", result.at(i)->loc()));
+        pr->addDiag(Diagnostic(DiagnosticType_Error, "extra package declaration", result.at(i)->loc()));
 
       }
-      pr->messages.push_back(Diagnostic(DiagnosticType_Info, "previous declared here", result.at(0)->loc()));
+      pr->addDiag(Diagnostic(DiagnosticType_Info, "previous declared here", result.at(0)->loc()));
       return false;
     }
     std::string pkgname = extractPackageName(result.at(0));
@@ -125,7 +125,7 @@ namespace qilang {
     for (int i = leafs.size() - 1; i >= 0; --i) {
       std::string par = p.filename();
       if (par != leafs.at(i)) {
-        pr->messages.push_back(Diagnostic(DiagnosticType_Error,
+        pr->addDiag(Diagnostic(DiagnosticType_Error,
                                           "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
                                           result.at(0)->loc()));
         return false;
@@ -307,7 +307,7 @@ namespace qilang {
     NodePtr node = pkg->getExport(type);
     if (node)
       return StringPair(pkgName, type);
-    pr->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
     throw std::runtime_error("Can't find import");
   }
 
@@ -350,7 +350,7 @@ namespace qilang {
         }
       }
     }
-    pr->messages.push_back(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
     throw std::runtime_error("cant resolve id");
   }
 
@@ -387,7 +387,7 @@ namespace qilang {
         try {
           sp = resolveImport(it2->second, pkg, tnode);
         } catch(const std::exception& e) {
-          it2->second->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
+          it2->second->addDiag(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
           continue;
         }
         qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";

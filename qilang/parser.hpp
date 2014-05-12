@@ -87,13 +87,20 @@ namespace qilang {
 
   class QILANG_API ParseResult {
   public:
-    std::string   filename;
-    std::string   package;
-    NodePtrVector ast;
-    DiagnosticVector messages;
+    std::string      filename;
+    std::string      package;
+    NodePtrVector    ast;
+    DiagnosticVector _messages;
+
+    DiagnosticVector& messages() { return _messages; }
+
+    void addDiag(const Diagnostic& diag) {
+      _messages.push_back(diag);
+      diag.print(std::cout);
+    }
 
     bool hasError() const {
-      return messages.size() > 0;
+      return _messages.size() > 0;
     }
 
     void printMessage(std::ostream& out) const;

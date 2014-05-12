@@ -35,15 +35,11 @@ namespace qilang {
       throw std::runtime_error("bad value for codegen");
 
     if (pr->hasError()) {
-      qiLogError() << "PR";
-      pr->printMessage(std::cout);
       return false;
     }
 
     pm->anal();
     if (pm->hasError()) {
-      qiLogError() << "PM";
-      pm->printMessage(std::cout);
       return false;
     }
     if      (codegen == "cpp_interface" || codegen == "cppi")

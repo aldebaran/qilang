@@ -62,7 +62,7 @@ namespace qilang {
       parser.parse();
     } catch (const ParseException& pe) {
       _result->ast.clear();
-      _result->messages.push_back(Diagnostic(DiagnosticType_Error, pe.what(), pe.loc()));
+      _result->addDiag(Diagnostic(DiagnosticType_Error, pe.what(), pe.loc()));
     }
   }
 
@@ -88,8 +88,8 @@ namespace qilang {
   }
 
   void ParseResult::printMessage(std::ostream &out) const {
-    for (unsigned i = 0; i < messages.size(); ++i)
-      messages.at(i).print(out);
+    for (unsigned i = 0; i < _messages.size(); ++i)
+      _messages.at(i).print(out);
   }
 
   ParseResultPtr Parser::result() {
@@ -148,7 +148,7 @@ namespace qilang {
     ParseResultPtr ret = newParseResult();
     ret->filename = file->filename();
     if (!file->isOpen()) {
-      ret->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't open file '" + file->filename() + "'"));
+      ret->addDiag(Diagnostic(DiagnosticType_Error, "Can't open file '" + file->filename() + "'"));
       return ret;
     }
     Parser p(file);
