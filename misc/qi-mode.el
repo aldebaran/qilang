@@ -18,6 +18,7 @@
     "interface" "fn" "emit" "prop"
     "object" "at" "package" "from" "import"
     "const" "struct" "enum" "typedef"
+    "extern"
     "char" "int" "uint"
     "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
     "float" "float32" "float64"
