@@ -42,13 +42,18 @@
 
 #define RETURN_OP(Symbol)         \
   do { \
-    return yy::parser::make_ ## Symbol(LOC); \
+    yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(LOC); \
+    STEP(); \
+    return tok; \
   } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
    do { \
-     return yy::parser::make_ ## Symbol(Value, LOC); \
+     yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(Value, LOC); \
+     STEP(); \
+     return tok; \
    } while(false)
+
 
 #define YY_DECL yy::parser::symbol_type qilang_lex(yyscan_t yyscanner)
 
@@ -185,7 +190,7 @@ FLOAT    {UFLOAT}
   STEP();
 }
 
-"#".*             {} // One-line comment.
+"#".*             { STEP(); } // One-line comment.
 
 .                 {
                     STEP();

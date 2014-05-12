@@ -140,7 +140,7 @@
 
   // IFace Keywords
   FN                  "fn"
-  EMIT                "out"
+  EMIT                "emit"
   PROP                "prop"
 
   CONST               "const"
