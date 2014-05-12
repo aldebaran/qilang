@@ -225,8 +225,6 @@ namespace qilang {
 
   bool PackageManager::hasError() const
   {
-    if (!_messages.empty())
-      return true;
     PackagePtrMap::const_iterator it;
     for (it = _packages.begin(); it != _packages.end(); ++it) {
       if (it->second->hasError())
@@ -237,8 +235,6 @@ namespace qilang {
 
   void PackageManager::printMessage(std::ostream &os) const
   {
-    for (MessageVector::const_iterator it = _messages.begin(); it != _messages.end(); ++it)
-      it->print(os);
     for (PackagePtrMap::const_iterator it = _packages.begin(); it != _packages.end(); ++it)
       it->second->printMessage(os);
   }
@@ -391,7 +387,7 @@ namespace qilang {
         try {
           sp = resolveImport(it2->second, pkg, tnode);
         } catch(const std::exception& e) {
-          _messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
+          it2->second->messages.push_back(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
           continue;
         }
         qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";

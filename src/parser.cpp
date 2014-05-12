@@ -70,13 +70,13 @@ namespace qilang {
     out << loc() << ":";
 
     switch (type()) {
-      case MessageType_Error:
+      case DiagnosticType_Error:
         out << "error: ";
         break;
-      case MessageType_Warning:
+      case DiagnosticType_Warning:
         out << "warning: ";
         break;
-      case MessageType_Info:
+      case DiagnosticType_Info:
         out << "info: ";
         break;
       default:
