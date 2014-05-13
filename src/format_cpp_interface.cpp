@@ -41,7 +41,7 @@ public:
     if (node->inherits.size() > 0) {
       out() << ": ";
       for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        out() << "public " << node->inherits.at(i) << "Interface";
+        out() << "virtual public " << node->inherits.at(i) << "Interface";
         if (i + 1 != node->inherits.size())
           out() << ", ";
       }

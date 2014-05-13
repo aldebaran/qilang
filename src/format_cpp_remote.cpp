@@ -27,7 +27,17 @@ namespace qilang {
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
     void visitDecl(InterfaceDeclNode* node) {
-      indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface, public qi::Proxy" << " {" << std::endl;
+      indent() << "class " << node->name + "Remote" << ": virtual public " << node->name + "Interface";
+      //there is some inherits, so proxy is already inherited by the parent.
+      if (node->inherits.size() == 0) {
+        out() << ", virtual public qi::Proxy {" << std::endl;
+      } else {
+        for (unsigned i = 0; i < node->inherits.size(); ++i) {
+          out() << ", public " << node->inherits.at(i) << "Remote";
+        }
+        out() << " {" << std::endl;
+      }
+
       indent() << "public:" << std::endl;
 
       {
@@ -35,8 +45,19 @@ namespace qilang {
         ScopedFormatAttrActivate _2(methodAttr);
 
         indent() << node->name + "Remote(const qi::AnyObject& ao)" << std::endl;
-        indent() << "  : _object(ao)" << std::endl;
+        if (node->inherits.size() > 0)
+        {
+          indent() << "  : " << node->inherits[0] << "Remote(ao)" << std::endl;
+          for (unsigned i = 1; i < node->inherits.size(); ++i) {
+            indent() << ", " << node->inherits[i] << "Remote(ao)" << std::endl;
+          }
+
+        } else {
+          indent() << "  : _object(ao)" << std::endl;
+        }
         indent() << "{}" << std::endl;
+
+
 
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           acceptDecl(node->values.at(i));
