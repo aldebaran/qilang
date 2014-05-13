@@ -96,7 +96,7 @@ public:
   void visitDecl(StructDeclNode* node) {
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
-    scopedStructField(node->fields);
+    scopedDecl(node->decls);
     indent() << "};" << std::endl << std::endl;
   }
 

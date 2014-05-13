@@ -823,17 +823,28 @@ typedef std::vector<StructFieldDeclNodePtr>    StructFieldDeclNodePtrVector;
 
 class QILANG_API StructDeclNode : public DeclNode {
 public:
-  StructDeclNode(const std::string& name, const StructFieldDeclNodePtrVector& vardefs, const Location& loc)
+  StructDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
     : DeclNode(NodeType_StructDecl, loc)
     , name(name)
-    , fields(vardefs)
+    , decls(decls)
+  {}
+
+  StructDeclNode(const std::string& name,
+                 const StringVector& inherits,
+                 const DeclNodePtrVector& decls,
+                 const Location& loc)
+    : DeclNode(NodeType_StructDecl, loc)
+    , name(name)
+    , inherits(inherits)
+    , decls(decls)
   {}
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  std::string            package;
-  std::string            name;
-  StructFieldDeclNodePtrVector fields;
+  std::string       package;
+  std::string       name;
+  StringVector      inherits;
+  DeclNodePtrVector decls;
 };
 
 // Object Motion.MoveTo "titi"

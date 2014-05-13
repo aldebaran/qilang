@@ -140,7 +140,7 @@ namespace qilang {
       each(node->args);
     }
     void visitDecl(StructDeclNode* node) {
-      each(node->fields);
+      each(node->decls);
     }
     void visitDecl(StructFieldDeclNode* node) {
       acceptTypeExpr(node->type);

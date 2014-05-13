@@ -139,9 +139,9 @@ protected:
   void visitDecl(StructDeclNode* node) {
     return;
     indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
-    for (unsigned int i = 0; i < node->fields.size(); ++i) {
-      acceptDecl(node->fields.at(i));
-      if (i + 1 < node->fields.size())
+    for (unsigned int i = 0; i < node->decls.size(); ++i) {
+      acceptDecl(node->decls.at(i));
+      if (i + 1 < node->decls.size())
         out() << ", ";
     }
     out() << ");" << std::endl;

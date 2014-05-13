@@ -196,6 +196,12 @@ toplevel_def:
 | enums         { $$ = $1; }
 | exp           { $$ = $1; }
 
+
+%type<qilang::StringVector> id_list;
+id_list:
+  ID             { $$.push_back($1); }
+| id_list "," ID { std::swap($$, $1); $$.push_back($3); }
+
 // #######################################################################################
 // # PACKAGE MANAGEMENT
 // #######################################################################################
@@ -387,21 +393,29 @@ const:
 // #######################################################################################
 %type<qilang::NodePtr> struct;
 struct:
-  STRUCT ID struct_field_defs END { $$ = NODE2(StructDeclNode, @$, $2, $3); }
+  STRUCT ID struct_field_defs END                      { $$ = NODE2(StructDeclNode, @$, $2, $3); }
+| STRUCT ID "(" inherit_defs ")" struct_field_defs END { $$ = NODE3(StructDeclNode, @$, $2, $4, $6); }
 
-%type<qilang::StructFieldDeclNodePtrVector> struct_field_defs;
+%type<qilang::DeclNodePtrVector> struct_field_defs;
 struct_field_defs:
   %empty  {}
 | struct_field_defs.1 { std::swap($$, $1); }
 
-%type<qilang::StructFieldDeclNodePtrVector> struct_field_defs.1;
+%type<qilang::DeclNodePtrVector> struct_field_defs.1;
 struct_field_defs.1:
-  struct_field_def                     { $$.push_back($1); }
-| struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.push_back($2); }
+  struct_field_def                     { std::swap($$, $1); }
+| struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.insert($$.end(), $2.begin(), $2.end()); }
 
-%type<qilang::StructFieldDeclNodePtr> struct_field_def;
+%type<qilang::DeclNodePtrVector> struct_field_def;
 struct_field_def:
-  ID type   { $$ = NODE2(StructFieldDeclNode, @$, $1, $2); }
+  ID type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $2)); }
+// force the ID "," here to avoid reduce conflict between this rules and 'ID type'
+| ID "," id_list type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $4));
+                         for (unsigned i = 0; i < $3.size(); ++i) {
+                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $4));
+                         }
+                       }
+| interface_def        { $$.push_back($1); }
 
 
 // #######################################################################################

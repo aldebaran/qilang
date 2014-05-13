@@ -38,8 +38,6 @@ namespace qilang {
         }
       }
       out() << std::endl;
-      indent() << "protected:" << std::endl;
-      indent() << "  qi::AnyObject _object;" << std::endl;
       indent() << "};" << std::endl;
       indent() << std::endl;
     }

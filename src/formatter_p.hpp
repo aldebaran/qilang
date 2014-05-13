@@ -178,12 +178,6 @@ namespace qilang {
         acceptDecl(vec[i]);
       }
     }
-    void scopedStructField(const qilang::StructFieldDeclNodePtrVector& vec) {
-      ScopedIndent _(_indent);
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptDecl(vec[i]);
-      }
-    }
     void scopedEnumField(const qilang::EnumFieldDeclNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {

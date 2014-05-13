@@ -136,17 +136,21 @@ namespace qilang {
   public:
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept((DeclNodeVisitor*)this); }
 
-    void visitDecl(InterfaceDeclNode* node) {
-      indent() << "(interface " << node->name;
-      if (node->inherits.size() > 0) {
+    void printInherit(const StringVector& inherits) {
+      if (inherits.size() > 0) {
         out() << "(inherit ";
-        for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-          out() << node->inherits.at(i);
-          if (i + 1 != node->inherits.size())
+        for (unsigned int i = 0; i < inherits.size(); ++i) {
+          out() << inherits.at(i);
+          if (i + 1 != inherits.size())
             out() << " ";
         }
         out() << ")";
       }
+    }
+
+    void visitDecl(InterfaceDeclNode* node) {
+      indent() << "(interface " << node->name;
+      printInherit(node->inherits);
       out() << std::endl;
       scopedDecl(node->values);
       indent() << ")" << std::endl;
@@ -179,8 +183,10 @@ namespace qilang {
     }
 
     void visitDecl(StructDeclNode* node) {
-      indent() << "(struct " << node->name << std::endl;
-      scopedStructField(node->fields);
+      indent() << "(struct " << node->name;
+      printInherit(node->inherits);
+      out() << std::endl;
+      scopedDecl(node->decls);
       indent() << ")" << std::endl;
     }
 
