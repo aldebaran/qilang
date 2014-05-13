@@ -42,9 +42,6 @@ namespace qilang2 {
       : ExprNodeImpl(NodeType_VarExpr, loc)
       , _name(name)
     {}
-    virtual NodeKind kind() { return _kind; }
-    virtual NodeType type() { return _type; }
-    virtual Location loc()  { return _loc; }
 
     std::string _name;
 
