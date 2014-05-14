@@ -143,6 +143,7 @@ FLOAT    {UFLOAT}
 "^"             RETURN_OP(XOR);
 "@"             RETURN_OP(ARO);
 ":"             RETURN_OP(COLON);
+"->"            RETURN_OP(ARROW);
 
 "true"          RETURN_OP(TRUE);
 "false"         RETURN_OP(FALSE);

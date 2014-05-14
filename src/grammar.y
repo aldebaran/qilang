@@ -120,6 +120,7 @@
   XOR                 "^"
   ARO                 "@"
   COLON               ":"
+  ARROW               "->"
 
   TRUE                "true"
   FALSE               "false"
@@ -349,8 +350,8 @@ interface_def:
 // fn foooo (t1, t2, t3) tret
 %type<qilang::DeclNodePtr> function_decl;
 function_decl:
-  FN  ID "(" function_args ")" function_arg { $$ = NODE3(FnDeclNode, @$, $2, $4, $6); }
-| FN  ID "(" function_args ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
+  FN  ID "(" function_args ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
+| FN  ID "(" function_args ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
 
 %type<qilang::DeclNodePtr> emit_decl;
 emit_decl:
@@ -516,11 +517,17 @@ dict_def:
 
 %type<qilang::LiteralNodePtr> list;
 list:
-  "(" list_defs ")" { $$ = NODE1(ListLiteralNode, @$, $2); }
+  "[" list_defs "]" { $$ = NODE1(ListLiteralNode, @$, $2); }
 
 %type<qilang::LiteralNodePtr> tuple;
 tuple:
-  "[" list_defs "]" { $$ = NODE1(TupleLiteralNode, @$, $2); }
+  "(" ")"           { qilang::LiteralNodePtrVector empty;
+                      $$ = NODE1(TupleLiteralNode, @$, empty);
+                    }
+//1 elt tuple conflict with (exp), force the ","
+| "(" const_exp "," list_defs ")" { $4.insert($4.begin(), $2);
+                                    $$ = NODE1(TupleLiteralNode, @$, $4);
+                                  }
 
 %type<qilang::LiteralNodePtrVector> list_defs;
 list_defs:
