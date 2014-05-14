@@ -127,6 +127,16 @@ namespace qilang {
     void visitExpr(LiteralExprNode* node) {
       acceptData(node->data);
     }
+    void visitExpr(CallExprNode* node) {
+      out() << node->name << "(";
+      for (unsigned i = 0; i < node->args.size(); ++i) {
+        acceptExpr(node->args.at(i));
+        if (i + 1 != node->args.size())
+          out() << " ";
+      }
+      out() << ")";
+    }
+
   };
 
   // #############

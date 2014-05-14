@@ -466,6 +466,15 @@ exp:
 exp:
   exp "[" exp "]" { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_FetchArray);}
 
+exp:
+  ID "(" ")"          { $$ = NODE1(CallExprNode, @$, $1); }
+| ID "(" exp_list ")" { $$ = NODE2(CallExprNode, @$, $1, $3); }
+
+%type<qilang::ExprNodePtrVector> exp_list;
+exp_list:
+  exp               { $$.push_back($1); }
+| exp_list "," exp  { std::swap($$, $1); $$.push_back($3); }
+
 
 // #######################################################################################
 // # CONST DATA

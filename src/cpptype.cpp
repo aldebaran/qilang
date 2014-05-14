@@ -163,6 +163,17 @@ void ExprCppFormatter::visitExpr(VarExprNode *node) {
 void ExprCppFormatter::visitExpr(LiteralExprNode* node) {
   throw std::runtime_error("unimplemented");
 }
+
+void ExprCppFormatter::visitExpr(CallExprNode* node) {
+  out() << node->name << "(";
+  for (unsigned i = 0; i < node->args.size(); ++i) {
+    acceptExpr(node->args.at(i));
+    if (i + 1 != node->args.size())
+      out() << ", ";
+  }
+  out() << ")";
+}
+
 static std::string stripQiLangExtension(const std::string& name)
 {
   if (boost::ends_with(name, ".idl.qi"))

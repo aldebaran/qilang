@@ -63,6 +63,7 @@ namespace qilang {
     void visitExpr(UnaryOpExprNode *node);
     void visitExpr(VarExprNode *node);
     void visitExpr(LiteralExprNode* node);
+    void visitExpr(CallExprNode* node);
   };
 
 

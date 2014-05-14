@@ -124,6 +124,9 @@ namespace qilang {
     void visitExpr(LiteralExprNode* node) {
       acceptData(node->data);
     }
+    void visitExpr(CallExprNode* node) {
+      each(node->args);
+    }
 
     void visitDecl(InterfaceDeclNode* node) {
       each(node->values);

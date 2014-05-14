@@ -93,6 +93,7 @@ class BinaryOpExprNode;
 class UnaryOpExprNode;
 class VarExprNode;
 class LiteralExprNode;
+class CallExprNode;
 
 // Interface Declaration
 class DeclNode;          //VIRTUAL
@@ -188,6 +189,7 @@ public:
   virtual void visitExpr(UnaryOpExprNode* node) = 0;
   virtual void visitExpr(VarExprNode* node) = 0;
   virtual void visitExpr(LiteralExprNode* node) = 0;
+  virtual void visitExpr(CallExprNode* node) = 0;
 };
 
 /** Const Data Expression Visitor
@@ -364,6 +366,24 @@ public:
 
   UnaryOpCode op;
   ExprNodePtr expr;
+};
+
+class QILANG_API CallExprNode : public ExprNode {
+public:
+  CallExprNode(const std::string& id, const Location& loc)
+    : ExprNode(NodeType_UOpExpr, loc)
+    , name(id)
+  {}
+  CallExprNode(const std::string& id, const ExprNodePtrVector& args, const Location& loc)
+    : ExprNode(NodeType_UOpExpr, loc)
+    , name(id)
+    , args(args)
+  {}
+
+  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+
+  std::string       name;
+  ExprNodePtrVector args;
 };
 
 class QILANG_API VarExprNode : public ExprNode {
@@ -947,6 +967,7 @@ public:
   TypeExprNodePtr  type;
   LiteralNodePtr data;
 };
+
 
 
 }
