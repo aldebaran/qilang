@@ -92,14 +92,15 @@ namespace qilang {
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
-        if (node->ret)
+        if (!node->ret || node->ret->type() == NodeType_BuiltinTypeExpr &&
+            boost::static_pointer_cast<BuiltinTypeExprNode>(node->ret)->builtinType == BuiltinType_Nothing)
+          indent() << "_object.call<void>(";
+        else
         {
           indent() << "return _object.call< ";
           acceptTypeExpr(node->ret);
           out() << " >(";
         }
-        else
-          indent() << "_object.call<void>(";
         out() << "\"" << node->name << "\"";
         if (node->args.size() != 0)
           out() << ", ";
