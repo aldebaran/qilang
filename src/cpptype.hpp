@@ -31,10 +31,10 @@ namespace qilang {
 
     virtual void acceptTypeExpr(const TypeExprNodePtr& node);
 
-    void noconst(TypeExprNodePtr node);
+    void unconstify(TypeExprNodePtr node);
 
     //ask for a const ref expression.
-    void consttype(const TypeExprNodePtr& node);
+    void constify(const TypeExprNodePtr& node);
 
     void visitTypeExpr(BuiltinTypeExprNode* node);
     void visitTypeExpr(CustomTypeExprNode* node);

@@ -73,29 +73,38 @@ void CppTypeFormatter::acceptTypeExpr(const TypeExprNodePtr& node) {
 }
 
 
-static void cppFormatParam(CppTypeFormatter* typeformat, ParamFieldDeclNodePtr node, CppParamsFormat cfpt) {
+static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, CppParamsFormat cfpt) {
   for (unsigned i = 0; i < node->names.size(); ++i) {
     switch(node->paramType) {
       case ParamFieldType_Normal: {
-        typeformat->consttype(node->effectiveType());
+        if (cfpt != CppParamsFormat_NameOnly) {
+          fmt->constify(node->effectiveType());
+          fmt->out() << " ";
+        }
         if (cfpt != CppParamsFormat_TypeOnly)
-          typeformat->out() << " " << node->names.at(i);
+          fmt->out() << node->names.at(i);
         break;
       }
       case ParamFieldType_VarArgs: {
-        typeformat->out() << typeformat->constattr("const ") << "qi::VarArguments< ";
-        typeformat->consttype(node->effectiveType());
-        typeformat->out() << " >" << typeformat->constattr("&");
+        if (cfpt != CppParamsFormat_NameOnly) {
+          ScopedFormatAttrActivate _(fmt->constattr);
+          fmt->out() << fmt->constattr("const ") << "qi::VarArguments< ";
+          fmt->unconstify(node->effectiveType());
+          fmt->out() << " >" << fmt->constattr("&") << " ";
+        }
         if (cfpt != CppParamsFormat_TypeOnly)
-          typeformat->out() << " " << node->names.at(i);
+          fmt->out() << node->names.at(i);
         break;
       }
       case ParamFieldType_KeywordArgs: {
-        typeformat->out() << typeformat->constattr("const ") << "qi::KeywordArguments< ";
-        typeformat->consttype(node->effectiveType());
-        typeformat->out() << " >" << typeformat->constattr("&");
+        if (cfpt != CppParamsFormat_NameOnly) {
+          ScopedFormatAttrActivate _(fmt->constattr);
+          fmt->out() << fmt->constattr("const ") << "qi::KeywordArguments< ";
+          fmt->unconstify(node->effectiveType());
+          fmt->out() << " >" << fmt->constattr("&") << " ";
+        }
         if (cfpt != CppParamsFormat_TypeOnly)
-          typeformat->out() << " " << node->names.at(i);
+          fmt->out() << node->names.at(i);
         break;
       }
     }
@@ -116,12 +125,12 @@ CppTypeFormatter::CppTypeFormatter()
 {
 }
 
-void CppTypeFormatter::noconst(TypeExprNodePtr node) {
+void CppTypeFormatter::unconstify(TypeExprNodePtr node) {
   ScopedFormatAttrBlock _(constattr);
   acceptTypeExpr(node);
 }
 
-void CppTypeFormatter::consttype(const TypeExprNodePtr& node) {
+void CppTypeFormatter::constify(const TypeExprNodePtr& node) {
   ScopedFormatAttrActivate _(constattr);
   acceptTypeExpr(node);
 }
@@ -139,22 +148,22 @@ void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << constattr("const ") << "std::vector< ";
-  noconst(node->element);
+  unconstify(node->element);
   out() << " >" << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(MapTypeExprNode* node) {
   out() << constattr("const ") << "std::map< ";
-  noconst(node->key);
+  unconstify(node->key);
   out() << ", ";
-  noconst(node->value);
+  unconstify(node->value);
   out() << " >" << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
   if (node->elements.size() == 2) {
     out() << constattr("const ") << "std::pair< ";
-    noconst(node->elements.at(0));
+    unconstify(node->elements.at(0));
     out() << ", ";
-    noconst(node->elements.at(1));
+    unconstify(node->elements.at(1));
     out() << " >" << constattr("&");
   }
   else

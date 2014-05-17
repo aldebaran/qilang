@@ -54,17 +54,12 @@ namespace qilang {
         indent() << "void";
       }
       out() << " " << node->name << "(";
-      joinDecl(node->args, ", ");
+      cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
         indent() << "return qi::wrapFuture(), T::" << node->name << "(";
-        for (unsigned int i = 0; i < node->args.size(); ++i) {
-          out() << "arg" << i;
-          if (i+1 < node->args.size()) {
-            out() << ", ";
-          }
-        }
+        cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
         out() << ");" << std::endl;
       }
       indent() << "}" << std::endl;

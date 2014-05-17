@@ -80,7 +80,7 @@ namespace qilang {
     }
 
     void visitDecl(ParamFieldDeclNode* node) {
-      consttype(node->type);
+      constify(node->type);
       out() << " " << node->names.at(0);
       qiLogWarning() << "param visitor not fully impl";
     }
