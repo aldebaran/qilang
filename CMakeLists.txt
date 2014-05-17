@@ -30,7 +30,8 @@ set(C src/codegen.cpp
       src/cpptype.hpp
       src/cpptype.cpp
       src/packagemanager.cpp
-      src/qilang_signature.cpp)
+      src/qilang_signature.cpp
+      src/qilang_metaobject.cpp)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
