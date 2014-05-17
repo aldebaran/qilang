@@ -693,6 +693,12 @@ public:
     , type(type)
   {}
 
+  TypeExprNodePtr effectiveType() {
+    if (type)
+      return type;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
+
   void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
@@ -843,6 +849,12 @@ public:
     , type(type)
   {}
 
+  TypeExprNodePtr effectiveType() {
+    if (type)
+      return type;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
+
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
   StringVector    names;  //at least one
@@ -978,7 +990,23 @@ public:
   bool hasVarArgs();
   bool hasKeywordArgs();
 
+  bool hasNoReturn() {
+    if (!ret)
+      return true;
+    if (ret->type() != NodeType_BuiltinTypeExpr)
+      return false;
+    BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(ret.get());
+    if (tnode->builtinType == BuiltinType_Nothing)
+      return true;
+    return false;
+  }
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  TypeExprNodePtr             effectiveRet() {
+    if (ret)
+      return ret;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Nothing, "nothing", loc());
+  }
 
 public:
   std::string                 name;
@@ -1032,6 +1060,11 @@ public:
     , data(data)
   {}
 
+  TypeExprNodePtr effectiveType() {
+    if (type)
+      return type;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 

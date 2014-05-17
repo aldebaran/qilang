@@ -167,6 +167,11 @@ namespace qilang {
       else
         out() << "(arg ";
       join(node->names, " ");
+      if (node->type) {
+        out() << " (";
+        acceptTypeExpr(node->type);
+        out() << ")";
+      }
       out() << ")";
     }
 

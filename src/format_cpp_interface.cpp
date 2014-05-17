@@ -61,11 +61,8 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
-    if (node->ret) {
-      acceptTypeExpr(node->ret);
-      out() << " " << node->name << "(";
-    } else
-      out() << "void " << node->name << "(";
+    acceptTypeExpr(node->effectiveRet());
+    out() << " " << node->name << "(";
     cppParamsFormat(this, node->args);
     out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
@@ -90,11 +87,8 @@ public:
 
   void visitDecl(ConstDeclNode* node) {
     indent() << "const ";
-    if (node->type) {
-      acceptTypeExpr(node->type);
-      out() << " " << node->name;
-    } else
-      out() << "qi::AnyValue " << node->name;
+    acceptTypeExpr(node->effectiveType());
+    out() << " " << node->name;
     if (node->data) {
       out() << " = ";
       acceptData(node->data);
@@ -104,13 +98,9 @@ public:
 
   void visitDecl(StructFieldDeclNode* node) {
     for (unsigned i = 0; i < node->names.size(); ++i) {
-      if (node->type) {
-        indent();
-        acceptTypeExpr(node->type);
-        out() << " " << node->names.at(i);
-      }
-      else
-        indent() << "qi::AnyValue " << node->names.at(i);
+      indent();
+      acceptTypeExpr(node->effectiveType());
+      out() << " " << node->names.at(i);
       out() << ";" << std::endl;
     }
   }
@@ -223,13 +213,9 @@ protected:
     throw std::runtime_error("unimplemented");
   }
   void visitStmt(VarDefNode* node) {
-    if (node->type) {
-      indent() << "";
-      acceptTypeExpr(node->type);
-      out() << " " << node->name;
-    }
-    else
-      indent() << "qi::AnyValue " << node->name;
+    indent();
+    acceptTypeExpr(node->effectiveType());
+    out() << " " << node->name;
     if (node->data) {
       out() << " = ";
       acceptData(node->data);

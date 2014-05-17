@@ -114,10 +114,7 @@ protected:
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
       indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
-      if (node->ret)
-        acceptTypeExpr(node->ret);
-      else
-        out() << "void";
+      acceptTypeExpr(node->effectiveRet());
       out() << "(" << currentParent << "::*)(";
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << ") >(&" << currentParent << "::" << node->name;

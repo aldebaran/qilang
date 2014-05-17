@@ -47,12 +47,8 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      if (node->ret) {
-        indent() << "";
-        acceptTypeExpr(node->ret);
-      } else {
-        indent() << "void";
-      }
+      indent() << "";
+      acceptTypeExpr(node->effectiveRet());
       out() << " " << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;

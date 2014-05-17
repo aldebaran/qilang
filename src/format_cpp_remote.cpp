@@ -88,21 +88,14 @@ namespace qilang {
     void visitDecl(FnDeclNode* node) {
       if (!methodAttr.isActive())
         return;
-      if (node->ret) {
-        indent() << "";
-        acceptTypeExpr(node->ret);
-      }
-      else
-        indent() << "void";
+      indent();
+      acceptTypeExpr(node->effectiveRet());
       out() << " " << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
-        if (!node->ret || node->ret->type() == NodeType_BuiltinTypeExpr &&
-            boost::static_pointer_cast<BuiltinTypeExprNode>(node->ret)->builtinType == BuiltinType_Nothing)
-          indent() << "_object.call<void>(";
-        else
+        if (!node->hasNoReturn())
         {
           indent() << "return _object.call< ";
           acceptTypeExpr(node->ret);
