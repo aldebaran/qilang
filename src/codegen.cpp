@@ -37,7 +37,14 @@ namespace qilang {
     if (pr->hasError()) {
       return false;
     }
-
+    if (codegen == "qilang") {
+      out->out() << qilang::format(pr->ast);
+      return true;
+    }
+    else if (codegen == "sexpr") {
+      out->out() << qilang::formatAST(pr->ast);
+      return true;
+    }
     pm->anal();
     if (pm->hasError()) {
       return false;
@@ -50,10 +57,6 @@ namespace qilang {
       out->out() << qilang::genCppObjectLocal(pm, pr);
     else if (codegen == "cpp_remote"    || codegen == "cppr")
       out->out() << qilang::genCppObjectRemote(pm, pr);
-    else if (codegen == "qilang")
-      out->out() << qilang::format(pr->ast);
-    else if (codegen == "sexpr")
-      out->out() << qilang::formatAST(pr->ast);
     return true;
   }
 

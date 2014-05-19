@@ -144,16 +144,6 @@ namespace qilang {
 
   ParseResultPtr PackageManager::parseFile(const FileReaderPtr& file)
   {
-    ParseResultPtr ret = _parseFile(file);
-    if (ret->hasError())
-      return ret;
-    //TODO: remove anal should do it.
-    parsePackage(ret->package);
-    return ret;
-  }
-
-  ParseResultPtr PackageManager::_parseFile(const FileReaderPtr& file)
-  {
     qi::Path fsfname = qi::Path(file->filename());
     std::string filename = fsfname.absolute();
     if (!fsfname.isRegularFile())
@@ -257,7 +247,7 @@ namespace qilang {
     StringVector sv = locatePackage(packageName);
 
     for (unsigned i = 0; i < sv.size(); ++i) {
-      _parseFile(newFileReader(sv.at(i)));
+      parseFile(newFileReader(sv.at(i)));
     }
 
     // for each decl in the package. reference it into the package.
@@ -281,7 +271,7 @@ namespace qilang {
     StringVector resfile;
     locateFileInDir(dirname, &resfile, &resdir);
     for (unsigned i = 0; i < resfile.size(); ++i)
-      _parseFile(newFileReader(resfile.at(i)));
+      parseFile(newFileReader(resfile.at(i)));
     for (unsigned i = 0; i < resdir.size(); ++i)
       parseDir(dirname + "/" + resdir.at(i));
   }

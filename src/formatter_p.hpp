@@ -196,12 +196,6 @@ namespace qilang {
   public:
     virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
-//    void stmt(StmtNodePtr node) {
-//      static const std::string ret;
-//      acceptStmt(node);
-//      return ret;
-//    }
-
     void scopedStmt(const qilang::StmtNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {

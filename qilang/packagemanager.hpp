@@ -172,7 +172,6 @@ namespace qilang {
     }
     bool addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResultPtr& ret);
     void resolvePackage(const std::string &packageName);
-    ParseResultPtr _parseFile(const FileReaderPtr &file);
 
   protected:
     PackagePtrMap        _packages; // packagename , packageptr
