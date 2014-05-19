@@ -7,51 +7,53 @@
 #include <qi/log.hpp>
 #include <qilang/parser.hpp>
 #include <qitype/signature.hpp>
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 #include <qitype/metaobject.hpp>
 
 namespace qilang {
+
+  static ParamFieldDeclNodePtrVector sigToParams(const qi::Signature& sig) {
+    ParamFieldDeclNodePtrVector params;
+
+    qi::Signature              signature = sig;
+    const qi::SignatureVector& vsig = signature.children();
+
+    qi::SignatureVector::const_iterator it;
+    unsigned i = 0;
+    for (it = vsig.begin(); it != vsig.end(); ++it, ++i) {
+      //TODO: handled named field
+      params.push_back(boost::make_shared<ParamFieldDeclNode>("_", signatureToQiLang(*it), Location()));
+    }
+
+    return params;
+  }
 
   static DeclNodePtr metaMethodToQiLang(const qi::MetaMethod& meth) {
     ParamFieldDeclNodePtrVector params;
     TypeExprNodePtr             ret;
 
-    params = pushBackParams (meth.parametersSignature());
+    params = sigToParams(meth.parametersSignature());
     ret = signatureToQiLang(meth.returnSignature());
 
     return boost::make_shared<qilang::FnDeclNode>(meth.name(), params, ret, Location());
   }
 
   static DeclNodePtr metaSignalToQiLang(const qi::MetaSignal& sig){
-    TypeExprNodePtrVector params;
+    ParamFieldDeclNodePtrVector params;
 
-    params = pushBackParams (sig.parametersSignature());
+    params = sigToParams(sig.parametersSignature());
     return boost::make_shared<qilang::EmitDeclNode>(sig.name(), params, Location());
   }
 
   static DeclNodePtr metaPropertyToQiLang(const qi::MetaProperty& prop){
-    TypeExprNodePtrVector params;
+    ParamFieldDeclNodePtrVector params;
 
-    params = pushBackParams (prop.signature());
+    params = sigToParams(prop.signature());
     return boost::make_shared<qilang::PropDeclNode>(prop.name(), params, Location());
   }
 
-  static TypeExprNodePtrVector pushBackParams (const qi::Signature& sig){
-    TypeExprNodePtrVector params;
-
-    qi::Signature              signature = sig;
-    const qi::SignatureVector& vsig = signature.children();
-
-    qi::SignatureVector::const_iterator it;
-    for (it = vsig.begin(); it != vsig.end(); ++it) {
-      params.push_back(signatureToQiLang(*it));
-    }
-
-    return params;
-  }
 
   NodePtr metaObjectToQiLang(const std::string& name, const qi::MetaObject& obj) {
-    QiLangSignatureConvertor qlsc;
     DeclNodePtrVector declarations;
 
     //foreach method do convert
@@ -60,7 +62,7 @@ namespace qilang {
 
     for (itMM = methods.begin(); itMM != methods.end(); ++itMM) {
       if(itMM->second.uid() >= 100)
-        declarations.push_back(qlsc.metaMethodToQiLang(itMM->second));
+        declarations.push_back(metaMethodToQiLang(itMM->second));
     }
 
     //foreach signal do convert
@@ -69,7 +71,7 @@ namespace qilang {
 
     for (itSM = signas.begin(); itSM != signas.end(); ++itSM) {
       if(itSM->second.uid() >= 100)
-        declarations.push_back(qlsc.metaSignalToQiLang(itSM->second));
+        declarations.push_back(metaSignalToQiLang(itSM->second));
     }
 
     //foreach property do convert
@@ -78,7 +80,7 @@ namespace qilang {
 
     for (itPM = propertys.begin(); itPM != propertys.end(); ++itPM) {
       if(itPM->second.uid() >= 100)
-        declarations.push_back(qlsc.metaPropertyToQiLang(itPM->second));
+        declarations.push_back(metaPropertyToQiLang(itPM->second));
     }
 
     return boost::make_shared<qilang::InterfaceDeclNode>(name, declarations, Location());
