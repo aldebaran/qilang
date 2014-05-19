@@ -94,4 +94,21 @@ namespace qilang {
     throw std::runtime_error("invalid binary op code");
   }
 
+  bool FnDeclNode::hasVarArgs() {
+    if (args.size() < 1)
+      return false;
+    if (!hasKeywordArgs())
+      return args.at(args.size() - 1)->isVarArgs();
+
+    if (args.size() < 2)
+      return false;
+    return args.at(args.size() - 2)->isVarArgs();
+  }
+
+  bool FnDeclNode::hasKeywordArgs() {
+    if (!args.size())
+      return false;
+    return args.at(args.size() - 1)->isKeywordArgs();
+  }
+
 }

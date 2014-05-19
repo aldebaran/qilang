@@ -55,6 +55,10 @@ public:
     indent() << "typedef qi::Object<" << node->name << "Interface> " << node->name << ";" << std::endl;
   }
 
+  void visitDecl(ParamFieldDeclNode* node) {
+    //useless
+  }
+
   void visitDecl(FnDeclNode* node) {
     indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
     if (node->ret) {
@@ -62,34 +66,18 @@ public:
       out() << " " << node->name << "(";
     } else
       out() << "void " << node->name << "(";
-
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      consttype(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
+    cppParamsFormat(this, node->args);
     out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
 
   void visitDecl(EmitDeclNode* node) {
     indent() << "qi::Signal< ";
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      acceptTypeExpr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
+    cppParamsFormat(this, node->args);
     out() << " > " << node->name << ";" << std::endl;
   }
   void visitDecl(PropDeclNode* node) {
     indent() << "qi::Property< ";
-    for (unsigned int i = 0; i < node->args.size(); ++i) {
-      acceptTypeExpr(node->args[i]);
-      if (i+1 < node->args.size()) {
-        out() << ", ";
-      }
-    }
+    cppParamsFormat(this, node->args);
     out() << " > " << node->name << ";" << std::endl;
   }
 
@@ -115,14 +103,16 @@ public:
   }
 
   void visitDecl(StructFieldDeclNode* node) {
-    if (node->type) {
-      indent();
-      acceptTypeExpr(node->type);
-      out() << " " << node->name;
+    for (unsigned i = 0; i < node->names.size(); ++i) {
+      if (node->type) {
+        indent();
+        acceptTypeExpr(node->type);
+        out() << " " << node->names.at(i);
+      }
+      else
+        indent() << "qi::AnyValue " << node->names.at(i);
+      out() << ";" << std::endl;
     }
-    else
-      indent() << "qi::AnyValue " << node->name;
-    out() << ";" << std::endl;
   }
   void visitDecl(EnumDeclNode* node) {
     indent() << "enum " << node->name << " {" << std::endl;

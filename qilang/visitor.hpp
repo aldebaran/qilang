@@ -136,6 +136,11 @@ namespace qilang {
       if (node->ret)
         acceptTypeExpr(node->ret);
     }
+    void visitDecl(ParamFieldDeclNode* node) {
+      if (node->type)
+        acceptTypeExpr(node->type);
+    }
+
     void visitDecl(EmitDeclNode* node) {
       each(node->args);
     }

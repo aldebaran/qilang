@@ -84,4 +84,11 @@ namespace qilang {
 
   void formatBlock(std::ostream& os, const std::string& name, const std::string& sep, int indent);
 
+  enum CppParamsFormat {
+    CppParamsFormat_Normal,
+    CppParamsFormat_TypeOnly,
+    CppParamsFormat_NameOnly,
+  };
+  void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector node, CppParamsFormat cfpt = CppParamsFormat_Normal);
+
 }

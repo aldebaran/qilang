@@ -78,6 +78,7 @@ namespace qilang {
     {
       _attr.desactivate();
     }
+
   protected:
     FormatAttr& _attr;
   };
@@ -89,17 +90,56 @@ namespace qilang {
     std::stringstream &out() {
       return _ss;
     }
+
+    template <typename T>
+    void join(const std::vector<T>& vals, const std::string& sep) {
+      for (unsigned i = 0; i < vals.size(); ++i) {
+        out() << vals.at(i);
+        if (i + 1 < vals.size())
+          out() << sep;
+      }
+    }
+
   private:
     std::stringstream _ss;
   };
 
   class LiteralNodeFormatter : virtual public BasicNodeFormatter, public LiteralNodeVisitor {
+  public:
+    template <typename T>
+    void joinLiteral(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptData(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
+    }
   };
 
   class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
+  public:
+    template <typename T>
+    void joinExpr(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptExpr(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
+    }
   };
 
   class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
+  public:
+
+    template <typename T>
+    void joinTypeExpr(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptTypeExpr(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
+    }
+
   };
 
   /**
@@ -178,6 +218,17 @@ namespace qilang {
         acceptDecl(vec[i]);
       }
     }
+
+    //decl includes params that are not really decl...
+    template <typename T>
+    void joinDecl(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptDecl(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
+    }
+
     void scopedEnumField(const qilang::EnumFieldDeclNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {

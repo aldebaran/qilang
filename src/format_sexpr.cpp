@@ -21,16 +21,6 @@ namespace qilang {
   public:
     virtual void acceptData(const LiteralNodePtr& node) { node->accept(this); }
 
-    const std::string &list(LiteralNodePtrVector pv) {
-      static const std::string ret;
-      for (unsigned int i = 0; i < pv.size(); ++i) {
-        acceptData(pv.at(i));
-        if (i + 1 < pv.size())
-          out() << " ";
-      }
-      return ret;
-    }
-
     const std::string &dict(LiteralNodePtrPairVector pv) {
       static const std::string ret;
       for (unsigned int i = 0; i < pv.size(); ++i) {
@@ -57,10 +47,14 @@ namespace qilang {
       out() << "(string " << node->value << ")";
     }
     void visitData(ListLiteralNode* node) {
-      out() << "(list " << list(node->values) << ")";
+      out() << "(list ";
+      joinLiteral(node->values, " ");
+      out() << ")";
     }
     void visitData(TupleLiteralNode* node) {
-      out() << "(tuple " << list(node->values) << ")";
+      out() << "(tuple ";
+      joinLiteral(node->values, " ");
+      out() << ")";
     }
     void visitData(DictLiteralNode* node) {
       out() << "(dict " << dict(node->values) << ")";
@@ -93,11 +87,7 @@ namespace qilang {
     }
     void visitTypeExpr(TupleTypeExprNode *node) {
       out() << "(tupletype ";
-      for (unsigned int i = 0; i < node->elements.size(); ++i) {
-        acceptTypeExpr(node->elements.at(i));
-        if (i + 1 == node->elements.size())
-          out() << " ";
-      }
+      joinTypeExpr(node->elements, " ");
       out() << ")";
     }
   };
@@ -129,11 +119,7 @@ namespace qilang {
     }
     void visitExpr(CallExprNode* node) {
       out() << node->name << "(";
-      for (unsigned i = 0; i < node->args.size(); ++i) {
-        acceptExpr(node->args.at(i));
-        if (i + 1 != node->args.size())
-          out() << " ";
-      }
+      joinExpr(node->args, " ");
       out() << ")";
     }
 
@@ -149,11 +135,7 @@ namespace qilang {
     void printInherit(const StringVector& inherits) {
       if (inherits.size() > 0) {
         out() << "(inherit ";
-        for (unsigned int i = 0; i < inherits.size(); ++i) {
-          out() << inherits.at(i);
-          if (i + 1 != inherits.size())
-            out() << " ";
-        }
+        join(inherits, " ");
         out() << ")";
       }
     }
@@ -166,20 +148,26 @@ namespace qilang {
       indent() << ")" << std::endl;
     }
 
-    void declParamList(const std::string &declname, const std::string& name, const TypeExprNodePtrVector& vec, const TypeExprNodePtr &ret = TypeExprNodePtr()) {
+    void declParamList(const std::string &declname, const std::string& name, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr &ret = TypeExprNodePtr()) {
       out() << "(" << declname << " " << name << "(";
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptTypeExpr(vec[i]);
-        if (i+1 < vec.size()) {
-          out() << " ";
-        }
-      }
+      joinDecl(vec, " ");
       out() << ")";
       if (ret) {
         out() << " ";
         acceptTypeExpr(ret);
       }
       out() << ")" << std::endl;
+    }
+
+    void visitDecl(ParamFieldDeclNode* node) {
+      if (node->isVarArgs())
+        out() << "(varg ";
+      else if (node->isKeywordArgs())
+        out() << "(kwarg ";
+      else
+        out() << "(arg ";
+      join(node->names, " ");
+      out() << ")";
     }
 
     void visitDecl(FnDeclNode* node) {
@@ -201,7 +189,8 @@ namespace qilang {
     }
 
     void visitDecl(StructFieldDeclNode* node) {
-      indent() << "(field " << node->name;
+      indent() << "(field (";
+      join(node->names, " ");
       if (node->type) {
         out() << " ";
         acceptTypeExpr(node->type);
@@ -259,12 +248,7 @@ namespace qilang {
         indent() << "(from " << node->name << " (import all))" << std::endl;
       } else {
         indent() << "(from " << node->name << " (import ";
-        for (unsigned int i = 0; i < node->imports.size(); ++i) {
-          out() << node->imports.at(i);
-          if (i+1 < node->imports.size()) {
-            out() << " ";
-          }
-        }
+        join(node->imports, " ");
         out() << "))" << std::endl;
       }
     }

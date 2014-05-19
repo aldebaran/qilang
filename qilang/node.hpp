@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <qi/types.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <qitype/anyvalue.hpp>
 
 namespace qilang {
@@ -99,6 +100,7 @@ class CallExprNode;
 class DeclNode;          //VIRTUAL
 class InterfaceDeclNode;
 class FnDeclNode;
+class ParamFieldDeclNode;
 class EmitDeclNode;
 class PropDeclNode;
 class StructDeclNode; //Struct Decl
@@ -146,6 +148,7 @@ public:
   virtual void visitDecl(FnDeclNode* node) = 0;
   virtual void visitDecl(EmitDeclNode* node) = 0;
   virtual void visitDecl(PropDeclNode* node) = 0;
+  virtual void visitDecl(ParamFieldDeclNode* node) = 0;
 
   // Struct Declaration
   virtual void visitDecl(StructDeclNode* node) = 0;
@@ -260,6 +263,7 @@ enum NodeType {
 
   NodeType_InterfaceDecl,
   NodeType_FnDecl,
+  NodeType_ParamFieldDecl,
   NodeType_EmitDecl,
   NodeType_PropDecl,
   NodeType_TypeDefDecl,
@@ -267,7 +271,7 @@ enum NodeType {
   NodeType_EnumFieldDecl,
 
   NodeType_StructDecl,
-  NodeType_FieldDecl,
+  NodeType_StructFieldDecl,
   NodeType_ConstDecl,
 
   NodeType_Comment,
@@ -828,14 +832,20 @@ public:
 class QILANG_API StructFieldDeclNode : public DeclNode {
 public:
   StructFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
-    : DeclNode(NodeType_FieldDecl, loc)
-    , name(name)
+    : DeclNode(NodeType_StructFieldDecl, loc)
+    , type(type)
+  {
+    names.push_back(name);
+  }
+  StructFieldDeclNode(const StringVector &names, const TypeExprNodePtr& type, const Location& loc)
+    : DeclNode(NodeType_StructFieldDecl, loc)
+    , names(names)
     , type(type)
   {}
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  std::string     name;
+  StringVector    names;  //at least one
   TypeExprNodePtr type;
 };
 typedef boost::shared_ptr<StructFieldDeclNode> StructFieldDeclNodePtr;
@@ -891,33 +901,95 @@ public:
   StringVector      inherits;
 };
 
+enum ParamFieldType {
+  ParamFieldType_Normal,
+  ParamFieldType_VarArgs,
+  ParamFieldType_KeywordArgs,
+};
+
+class ParamFieldDeclNode : public DeclNode {
+public:
+  ParamFieldDeclNode(const std::string &name, const Location& loc)
+    : DeclNode(NodeType_ParamFieldDecl, loc)
+    , paramType(ParamFieldType_Normal)
+  {
+    names.push_back(name);
+  }
+  ParamFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
+    : DeclNode(NodeType_ParamFieldDecl, loc)
+    , type(type)
+    , paramType(ParamFieldType_Normal)
+  {
+    names.push_back(name);
+  }
+  ParamFieldDeclNode(const std::string &name, ParamFieldType paramType, const Location& loc)
+    : DeclNode(NodeType_ParamFieldDecl, loc)
+    , paramType(paramType)
+  {
+    names.push_back(name);
+  }
+  ParamFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, ParamFieldType paramType, const Location& loc)
+    : DeclNode(NodeType_ParamFieldDecl, loc)
+    , type(type)
+    , paramType(paramType)
+  {
+    names.push_back(name);
+  }
+
+  ParamFieldDeclNode(const StringVector &names, const TypeExprNodePtr& type, const Location& loc)
+    : DeclNode(NodeType_ParamFieldDecl, loc)
+    , names(names)
+    , type(type)
+    , paramType(ParamFieldType_Normal)
+  {}
+
+  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+
+  bool isVarArgs()     { return paramType == ParamFieldType_VarArgs; }
+  bool isKeywordArgs() { return paramType == ParamFieldType_KeywordArgs; }
+
+  TypeExprNodePtr effectiveType() {
+    if (type)
+      return type;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
+  StringVector    names;
+  TypeExprNodePtr type;
+  ParamFieldType  paramType;
+};
+typedef boost::shared_ptr<ParamFieldDeclNode> ParamFieldDeclNodePtr;
+typedef std::vector<ParamFieldDeclNodePtr>    ParamFieldDeclNodePtrVector;
+
 class QILANG_API FnDeclNode : public DeclNode {
 public:
-  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
     : DeclNode(NodeType_FnDecl, loc)
     , name(name)
     , args(args)
     , ret(ret)
   {}
 
-  FnDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
     : DeclNode(NodeType_FnDecl, loc)
     , name(name)
     , args(args)
   {}
 
+  bool hasVarArgs();
+  bool hasKeywordArgs();
+
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
-  std::string             name;
-  TypeExprNodePtrVector   args;
-  TypeExprNodePtr         ret;
+  std::string                 name;
+  ParamFieldDeclNodePtrVector args;
+  TypeExprNodePtr             ret;
 };
 
 
 class QILANG_API EmitDeclNode : public DeclNode {
 public:
-  EmitDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+  EmitDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
     : DeclNode(NodeType_EmitDecl, loc)
     , name(name)
     , args(args)
@@ -926,13 +998,13 @@ public:
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
-  std::string           name;
-  TypeExprNodePtrVector args;
+  std::string                 name;
+  ParamFieldDeclNodePtrVector args;
 };
 
 class QILANG_API PropDeclNode : public DeclNode {
 public:
-  PropDeclNode(const std::string& name, const TypeExprNodePtrVector& args, const Location& loc)
+  PropDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
     : DeclNode(NodeType_PropDecl, loc)
     , name(name)
     , args(args)
@@ -941,8 +1013,8 @@ public:
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
-  std::string           name;
-  TypeExprNodePtrVector args;
+  std::string                 name;
+  ParamFieldDeclNodePtrVector args;
 };
 
 class QILANG_API ConstDeclNode : public DeclNode {

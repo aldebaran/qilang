@@ -42,6 +42,10 @@ namespace qilang {
       indent() << std::endl;
     }
 
+    void visitDecl(ParamFieldDeclNode* node) {
+
+    }
+
     void visitDecl(FnDeclNode* node) {
       if (node->ret) {
         indent() << "";
@@ -50,14 +54,7 @@ namespace qilang {
         indent() << "void";
       }
       out() << " " << node->name << "(";
-
-      for (unsigned int i = 0; i < node->args.size(); ++i) {
-        consttype(node->args[i]);
-        out() << " arg" << i;
-        if (i+1 < node->args.size()) {
-          out() << ", ";
-        }
-      }
+      joinDecl(node->args, ", ");
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);

@@ -71,6 +71,20 @@ namespace qilang {
       indent() << std::endl;
     }
 
+    void walkParams(const ParamFieldDeclNodePtrVector& params) {
+      for (unsigned i = 0; i < params.size(); ++i) {
+        acceptDecl(params.at(i));
+        if (i + 1 < params.size())
+          out() << ", ";
+      }
+    }
+
+    void visitDecl(ParamFieldDeclNode* node) {
+      consttype(node->type);
+      out() << " " << node->names.at(0);
+      qiLogWarning() << "param visitor not fully impl";
+    }
+
     void visitDecl(FnDeclNode* node) {
       if (!methodAttr.isActive())
         return;
@@ -81,14 +95,7 @@ namespace qilang {
       else
         indent() << "void";
       out() << " " << node->name << "(";
-
-      for (unsigned int i = 0; i < node->args.size(); ++i) {
-        consttype(node->args[i]);
-        out() << " arg" << i;
-        if (i+1 < node->args.size()) {
-          out() << ", ";
-        }
-      }
+      cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
@@ -104,12 +111,7 @@ namespace qilang {
         out() << "\"" << node->name << "\"";
         if (node->args.size() != 0)
           out() << ", ";
-        for (unsigned int i = 0; i < node->args.size(); ++i) {
-          out() << "arg" << i;
-          if (i+1 < node->args.size()) {
-            out() << ", ";
-          }
-        }
+        cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
         out() << ");" << std::endl;
       }
       indent() << "}" << std::endl;

@@ -108,6 +108,9 @@ protected:
     indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
     indent() << std::endl;
   }
+  void visitDecl(ParamFieldDeclNode* node) {
+    //useless
+  }
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
       indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
@@ -116,12 +119,7 @@ protected:
       else
         out() << "void";
       out() << "(" << currentParent << "::*)(";
-      for (unsigned int i = 0; i < node->args.size(); ++i) {
-        consttype(node->args[i]);
-        if (i+1 < node->args.size()) {
-          out() << ", ";
-        }
-      }
+      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << ") >(&" << currentParent << "::" << node->name;
       out() << "));" << std::endl;
     } else {
@@ -150,7 +148,7 @@ protected:
     throw std::runtime_error("unimplemented");
   }
   void visitDecl(StructFieldDeclNode* node) {
-    out() << node->name;
+    qiLogError() << "EnumDeclNode not implemented";
   }
   void visitDecl(EnumDeclNode* node) {
     qiLogError() << "EnumDeclNode not implemented";

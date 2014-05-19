@@ -73,6 +73,45 @@ void CppTypeFormatter::acceptTypeExpr(const TypeExprNodePtr& node) {
 }
 
 
+static void cppFormatParam(CppTypeFormatter* typeformat, ParamFieldDeclNodePtr node, CppParamsFormat cfpt) {
+  for (unsigned i = 0; i < node->names.size(); ++i) {
+    switch(node->paramType) {
+      case ParamFieldType_Normal: {
+        typeformat->consttype(node->effectiveType());
+        if (cfpt != CppParamsFormat_TypeOnly)
+          typeformat->out() << " " << node->names.at(i);
+        break;
+      }
+      case ParamFieldType_VarArgs: {
+        typeformat->out() << typeformat->constattr("const ") << "qi::VarArguments< ";
+        typeformat->consttype(node->effectiveType());
+        typeformat->out() << " >" << typeformat->constattr("&");
+        if (cfpt != CppParamsFormat_TypeOnly)
+          typeformat->out() << " " << node->names.at(i);
+        break;
+      }
+      case ParamFieldType_KeywordArgs: {
+        typeformat->out() << typeformat->constattr("const ") << "qi::KeywordArguments< ";
+        typeformat->consttype(node->effectiveType());
+        typeformat->out() << " >" << typeformat->constattr("&");
+        if (cfpt != CppParamsFormat_TypeOnly)
+          typeformat->out() << " " << node->names.at(i);
+        break;
+      }
+    }
+  }
+}
+
+void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector params, CppParamsFormat cfpt) {
+  for (unsigned i = 0; i < params.size(); ++i) {
+    cppFormatParam(typeformat, params.at(i), cfpt);
+    if (i + 1 < params.size())
+      typeformat->out() << ", ";
+  }
+}
+
+
+
 CppTypeFormatter::CppTypeFormatter()
 {
 }

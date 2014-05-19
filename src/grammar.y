@@ -350,33 +350,56 @@ interface_def:
 // fn foooo (t1, t2, t3) tret
 %type<qilang::DeclNodePtr> function_decl;
 function_decl:
-  FN  ID "(" function_args ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
-| FN  ID "(" function_args ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
+  FN  ID "(" param_list ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
+| FN  ID "(" param_list ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
 
 %type<qilang::DeclNodePtr> emit_decl;
 emit_decl:
-  EMIT ID "(" function_args ")"              { $$ = NODE2(EmitDeclNode, @$, $2, $4); }
+  EMIT ID "(" param_list ")"              { $$ = NODE2(EmitDeclNode, @$, $2, $4); }
 
 %type<qilang::DeclNodePtr> prop_decl;
 prop_decl:
-  PROP ID "(" function_args ")"             { $$ = NODE2(PropDeclNode, @$, $2, $4); }
+  PROP ID "(" param_list ")"             { $$ = NODE2(PropDeclNode, @$, $2, $4); }
 
 
-%type<qilang::TypeExprNodePtrVector> function_args;
-function_args:
+%type<qilang::ParamFieldDeclNodePtrVector> param_list;
+param_list:
   %empty                          {}
-| function_args.1                 { std::swap($$, $1); }
+| param_list.1                 { std::swap($$, $1); }
 
-%type<qilang::TypeExprNodePtrVector> function_args.1;
-function_args.1:
-  function_arg                      { $$.push_back($1); }
-| function_args.1 "," function_arg  { std::swap($$, $1);
-                                      $$.push_back($3); }
+%type<qilang::ParamFieldDeclNodePtrVector> param_list.1;
+param_list.1:
+  param                       { $$.push_back($1); }
+| param_list.1 "," param      { std::swap($$, $1);
+                                $$.push_back($3); }
+| param_list.1 "," param_end  { std::swap($$, $1);
+                                $$.insert($$.end(), $3.begin(), $3.end()); }
 
-%type<qilang::TypeExprNodePtr> function_arg;
-function_arg:
-  type    { $$ = $1; }
-| ID type { $$ = $2; } //TODO
+%type<qilang::ParamFieldDeclNodePtr> param;
+param:
+  ID                          { $$ = NODE1(ParamFieldDeclNode, @$, $1); }
+| ID type                     { $$ = NODE2(ParamFieldDeclNode, @$, $1, $2); }
+| "(" ID "," id_list ")" type { qilang::StringVector sv;
+                                sv.push_back($2);
+                                sv.insert(sv.end(), $4.begin(), $4.end());
+                                $$ = NODE2(ParamFieldDeclNode, @$, sv, $6);
+                              }
+
+%type<qilang::ParamFieldDeclNodePtrVector> param_end;
+param_end:
+  param_vargs                   { $$.push_back($1); }
+| param_kwargs                  { $$.push_back($1); }
+| param_vargs "," param_kwargs  { $$.push_back($1); $$.push_back($3); }
+
+%type<qilang::ParamFieldDeclNodePtr> param_vargs;
+param_vargs:
+  "*" ID             { $$ = NODE2(ParamFieldDeclNode, @$, $2, qilang::ParamFieldType_VarArgs); }
+| "*" ID type        { $$ = NODE3(ParamFieldDeclNode, @$, $2, $3, qilang::ParamFieldType_VarArgs); }
+
+%type<qilang::ParamFieldDeclNodePtr> param_kwargs;
+param_kwargs:
+  "*" "*" ID         { $$ = NODE2(ParamFieldDeclNode, @$, $3, qilang::ParamFieldType_KeywordArgs); }
+| "*" "*" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $3, $4, qilang::ParamFieldType_KeywordArgs); }
 
 
 // #######################################################################################
