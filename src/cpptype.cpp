@@ -73,7 +73,16 @@ void CppTypeFormatter::acceptTypeExpr(const TypeExprNodePtr& node) {
 }
 
 
-static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, CppParamsFormat cfpt) {
+static std::string toName(const std::string& name, int counter) {
+  if (name != "_")
+   return name;
+  std::stringstream ss;
+  ss << "arg";
+  ss << counter;
+  return ss.str();
+}
+
+static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, CppParamsFormat cfpt, int counter) {
   for (unsigned i = 0; i < node->names.size(); ++i) {
     switch(node->paramType) {
       case ParamFieldType_Normal: {
@@ -82,7 +91,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
           fmt->out() << " ";
         }
         if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << node->names.at(i);
+          fmt->out() << toName(node->names.at(i), counter);
         break;
       }
       case ParamFieldType_VarArgs: {
@@ -93,7 +102,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
           fmt->out() << " >" << fmt->constattr("&") << " ";
         }
         if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << node->names.at(i);
+          fmt->out() << toName(node->names.at(i), counter);
         break;
       }
       case ParamFieldType_KeywordArgs: {
@@ -104,7 +113,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
           fmt->out() << " >" << fmt->constattr("&") << " ";
         }
         if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << node->names.at(i);
+          fmt->out() << toName(node->names.at(i), counter);
         break;
       }
     }
@@ -113,7 +122,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
 
 void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector params, CppParamsFormat cfpt) {
   for (unsigned i = 0; i < params.size(); ++i) {
-    cppFormatParam(typeformat, params.at(i), cfpt);
+    cppFormatParam(typeformat, params.at(i), cfpt, i);
     if (i + 1 < params.size())
       typeformat->out() << ", ";
   }
@@ -206,7 +215,7 @@ void ExprCppFormatter::visitExpr(UnaryOpExprNode *node) {
   throw std::runtime_error("unimplemented");
 }
 void ExprCppFormatter::visitExpr(VarExprNode *node) {
-  throw std::runtime_error("unimplemented");
+  //throw std::runtime_error("unimplemented");
 }
 void ExprCppFormatter::visitExpr(LiteralExprNode* node) {
   throw std::runtime_error("unimplemented");

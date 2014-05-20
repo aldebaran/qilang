@@ -101,6 +101,8 @@ namespace qilang {
           acceptTypeExpr(node->ret);
           out() << " >(";
         }
+        else
+          indent() << "_object.call<void>(";
         out() << "\"" << node->name << "\"";
         if (node->args.size() != 0)
           out() << ", ";

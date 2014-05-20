@@ -69,12 +69,14 @@ public:
 
   void visitDecl(EmitDeclNode* node) {
     indent() << "qi::Signal< ";
-    cppParamsFormat(this, node->args);
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " > " << node->name << ";" << std::endl;
   }
   void visitDecl(PropDeclNode* node) {
     indent() << "qi::Property< ";
-    cppParamsFormat(this, node->args);
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " > " << node->name << ";" << std::endl;
   }
 

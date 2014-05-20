@@ -32,7 +32,7 @@ int codegen_service(const std::string& codegen,
   qilang::NodePtrVector objs;
   objs.push_back(qilang::metaObjectToQiLang(service, mo));
 
-  qilang::ParseResultPtr pr;
+  qilang::ParseResultPtr pr = qilang::newParseResult();
   pr->ast = objs;
 
   bool succ = qilang::codegen(out, codegen, pm, pr);

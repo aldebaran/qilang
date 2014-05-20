@@ -136,7 +136,7 @@ namespace qilang {
       joinDecl(vec, ", ");
       out() << ")";
       if (ret) {
-        out() << " ";
+        out() << " -> ";
         acceptTypeExpr(ret);
       }
       out() << std::endl;
