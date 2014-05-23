@@ -53,7 +53,7 @@ namespace qilang {
           }
 
         } else {
-          indent() << "  : _object(ao)" << std::endl;
+          indent() << "  : qi::Proxy(ao)" << std::endl;
         }
         indent() << "{}" << std::endl;
 
@@ -64,8 +64,6 @@ namespace qilang {
         }
       }
       out() << std::endl;
-      indent() << "protected:" << std::endl;
-      indent() << "  qi::AnyObject _object;" << std::endl;
       indent() << "};" << std::endl;
       indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << "Interface);" << std::endl;
       indent() << std::endl;
@@ -97,12 +95,12 @@ namespace qilang {
         ScopedIndent _(_indent);
         if (!node->hasNoReturn())
         {
-          indent() << "return _object.call< ";
+          indent() << "return _obj.call< ";
           acceptTypeExpr(node->ret);
           out() << " >(";
         }
         else
-          indent() << "_object.call<void>(";
+          indent() << "_obj.call<void>(";
         out() << "\"" << node->name << "\"";
         if (node->args.size() != 0)
           out() << ", ";
