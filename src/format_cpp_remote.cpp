@@ -27,10 +27,10 @@ namespace qilang {
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
 
     void visitDecl(InterfaceDeclNode* node) {
-      indent() << "class " << node->name + "Remote" << ": virtual public " << node->name + "Interface";
+      indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface";
       //there is some inherits, so proxy is already inherited by the parent.
       if (node->inherits.size() == 0) {
-        out() << ", virtual public qi::Proxy {" << std::endl;
+        out() << ", public qi::Proxy {" << std::endl;
       } else {
         for (unsigned i = 0; i < node->inherits.size(); ++i) {
           out() << ", public " << node->inherits.at(i) << "Remote";
