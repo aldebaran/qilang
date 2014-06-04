@@ -256,8 +256,8 @@ object_property:
 
 %type<qilang::StmtNodePtr> at_expr;
 at_expr:
-  AT ID ":" ID               { $$ = NODE2(AtNode, @$, $2, $4); }
-| AT ID ID END               { $$ = NODE2(AtNode, @$, $2, $3); }
+  AT exp ":" ID               { $$ = NODE2(AtNode, @$, $2, $4); }
+| AT exp ID END               { $$ = NODE2(AtNode, @$, $2, $3); }
 
 
 // #######################################################################################

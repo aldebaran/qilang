@@ -740,16 +740,19 @@ public:
 
 class QILANG_API AtNode : public StmtNode {
 public:
-  AtNode(const std::string& sender, const std::string& receiver, const Location& loc)
+  AtNode(const ExprNodePtr& sender, const std::string& receiver, const Location& loc)
     : StmtNode(NodeType_At, loc)
-    , sender(sender)
+    , _sender(sender)
     , receiver(receiver)
   {}
 
   void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
 
+  //TODO: remove me. (this is only for compat reason atm)
+  std::string sender();
+
 public:
-  std::string sender;
+  ExprNodePtr _sender;
   std::string receiver;
 };
 

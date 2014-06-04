@@ -111,4 +111,13 @@ namespace qilang {
     return args.at(args.size() - 1)->isKeywordArgs();
   }
 
+  std::string AtNode::sender() {
+    VarExprNode* tnode;
+    if (_sender->type() == NodeType_VarExpr) {
+      tnode = static_cast<VarExprNode*>(_sender.get());
+      return tnode->value;
+    }
+    return "COMPLEX expression";
+  }
+
 }

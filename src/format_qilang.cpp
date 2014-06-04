@@ -226,7 +226,7 @@ namespace qilang {
     }
   };
 
-  class QiLangStmtFormatter: virtual public QiLangTypeExprFormatter, virtual public QiLangLiteralFormatter, public StmtNodeFormatter {
+  class QiLangStmtFormatter: virtual public QiLangExprFormatter, virtual public QiLangTypeExprFormatter, virtual public QiLangLiteralFormatter, public StmtNodeFormatter {
   public:
     virtual void acceptStmt(const StmtNodePtr& node) { node->accept((StmtNodeVisitor*)this); }
 
@@ -260,7 +260,9 @@ namespace qilang {
       out() << std::endl;
     }
     void visitStmt(AtNode* node) {
-      indent() << "at " << node->sender << ": " << node->receiver << std::endl;
+      indent() << "at ";
+      acceptExpr(node->_sender);
+      out() << ": " << node->receiver << std::endl;
     }
     void visitStmt(VarDefNode* node) {
       indent() << node->name;
@@ -282,7 +284,6 @@ namespace qilang {
 
   class QiLangFormatter : public FileFormatter
                         , public QiLangStmtFormatter
-                        , public QiLangExprFormatter
                         , public QiLangDeclFormatter
   {
   protected:
