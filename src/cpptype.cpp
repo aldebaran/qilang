@@ -97,9 +97,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
       case ParamFieldType_VarArgs: {
         if (cfpt != CppParamsFormat_NameOnly) {
           ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->out() << fmt->constattr("const ") << "qi::VarArguments< ";
-          fmt->unconstify(node->effectiveType());
-          fmt->out() << " >" << fmt->constattr("&") << " ";
+          fmt->acceptTypeExpr(node->effectiveType());
         }
         if (cfpt != CppParamsFormat_TypeOnly)
           fmt->out() << toName(node->names.at(i), counter);
@@ -108,9 +106,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
       case ParamFieldType_KeywordArgs: {
         if (cfpt != CppParamsFormat_NameOnly) {
           ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->out() << fmt->constattr("const ") << "qi::KeywordArguments< ";
-          fmt->unconstify(node->effectiveType());
-          fmt->out() << " >" << fmt->constattr("&") << " ";
+          fmt->acceptTypeExpr(node->effectiveType());
         }
         if (cfpt != CppParamsFormat_TypeOnly)
           fmt->out() << toName(node->names.at(i), counter);
@@ -177,6 +173,18 @@ void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
   }
   else
     out() << "TUPLENOTIMPL";
+}
+
+void CppTypeFormatter::visitTypeExpr(VarArgTypeExprNode* node) {
+  out() << constattr("const ") << "qi::VarArguments< ";
+  unconstify(node->element);
+  out() << " >" << constattr("&");
+}
+
+void CppTypeFormatter::visitTypeExpr(KeywordArgTypeExprNode* node) {
+  out() << constattr("const ") << "qi::KeywordArguments< ";
+  unconstify(node->value);
+  out() << " >" << constattr("&");
 }
 
 void DataCppFormatter::acceptData(const LiteralNodePtr& node) {
@@ -393,6 +401,11 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         } else {
           pushIfNot(includes, "<qi/types.hpp>");
         }
+        break;
+      }
+      case NodeType_KeywordArgTypeExpr:
+      case NodeType_VarArgTypeExpr: {
+        pushIfNot(includes, "<qitype/anyfunction.hpp>");
         break;
       }
       case NodeType_CustomTypeExpr: {

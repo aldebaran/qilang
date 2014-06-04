@@ -22,6 +22,9 @@ public:
       case '[':
         return visitList(sig);
         break;
+      case '#':
+        return visitVarArgs(sig);
+        break;
       case '{':
         return visitMap(sig);
         break;
@@ -106,6 +109,10 @@ protected:
 
   TypeExprNodePtr visitList(const qi::Signature& sig) {
     return boost::make_shared<qilang::ListTypeExprNode>(visit(sig.children().at(0)), Location());
+  }
+
+  TypeExprNodePtr visitVarArgs(const qi::Signature& sig) {
+    return boost::make_shared<qilang::VarArgTypeExprNode>(visit(sig.children().at(0)), Location());
   }
 
   TypeExprNodePtr visitMap(const qi::Signature& sig) {

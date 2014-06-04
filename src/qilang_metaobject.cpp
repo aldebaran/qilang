@@ -15,6 +15,11 @@ namespace qilang {
   static ParamFieldDeclNodePtrVector sigToParams(const qi::Signature& sig) {
     ParamFieldDeclNodePtrVector params;
 
+    if (sig == qi::Signature("m")) {
+      params.push_back(boost::make_shared<qilang::ParamFieldDeclNode>("args", ParamFieldType_VarArgs, Location()));
+      return params;
+    }
+
     qi::Signature              signature = sig;
     const qi::SignatureVector& vsig = signature.children();
 

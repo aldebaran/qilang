@@ -111,6 +111,12 @@ namespace qilang {
     void visitTypeExpr(TupleTypeExprNode *node) {
       each(node->elements);
     }
+    void visitTypeExpr(VarArgTypeExprNode *node) {
+      acceptTypeExpr(node->element);
+    }
+    void visitTypeExpr(KeywordArgTypeExprNode *node) {
+      acceptTypeExpr(node->value);
+    }
 
     void visitExpr(BinaryOpExprNode *node) {
       acceptExpr(node->left);

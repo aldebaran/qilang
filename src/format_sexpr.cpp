@@ -90,6 +90,16 @@ namespace qilang {
       joinTypeExpr(node->elements, " ");
       out() << ")";
     }
+    void visitTypeExpr(VarArgTypeExprNode* node) {
+      out() << "(varg ";
+      acceptTypeExpr(node->element);
+      out() << ")";
+    }
+    void visitTypeExpr(KeywordArgTypeExprNode* node) {
+      out() << "(kwarg ";
+      acceptTypeExpr(node->value);
+      out() << ")";
+    }
   };
 
   // #############

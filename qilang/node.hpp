@@ -84,6 +84,8 @@ class TupleLiteralNode;
 class TypeExprNode;        //VIRTUAL
 class BuiltinTypeExprNode;
 class CustomTypeExprNode;
+class VarArgTypeExprNode;
+class KeywordArgTypeExprNode;
 class ListTypeExprNode;
 class MapTypeExprNode;
 class TupleTypeExprNode;
@@ -222,6 +224,8 @@ public:
   virtual void visitTypeExpr(ListTypeExprNode* node) = 0;
   virtual void visitTypeExpr(MapTypeExprNode* node) = 0;
   virtual void visitTypeExpr(TupleTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(VarArgTypeExprNode *node) = 0;
+  virtual void visitTypeExpr(KeywordArgTypeExprNode *node) = 0;
 };
 
 
@@ -244,6 +248,8 @@ enum NodeType {
 
   NodeType_BuiltinTypeExpr,
   NodeType_CustomTypeExpr,
+  NodeType_VarArgTypeExpr,
+  NodeType_KeywordArgTypeExpr,
   NodeType_MapTypeExpr,
   NodeType_ListTypeExpr,
   NodeType_TupleTypeExpr,
@@ -589,6 +595,28 @@ public:
   TypeExprNodePtr element;
 };
 
+class QILANG_API VarArgTypeExprNode : public TypeExprNode {
+public:
+  explicit VarArgTypeExprNode(const Location& loc)
+    : TypeExprNode(NodeType_VarArgTypeExpr, loc)
+  {}
+
+  explicit VarArgTypeExprNode(const TypeExprNodePtr& element, const Location& loc)
+    : TypeExprNode(NodeType_VarArgTypeExpr, loc)
+    , element(element)
+  {}
+
+  TypeExprNodePtr effectiveElement() {
+    if (element)
+      return element;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
+
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+
+  TypeExprNodePtr element;
+};
+
 class QILANG_API MapTypeExprNode : public TypeExprNode {
 public:
   explicit MapTypeExprNode(const TypeExprNodePtr& key, const TypeExprNodePtr& value, const Location& loc)
@@ -600,6 +628,27 @@ public:
   void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr key;
+  TypeExprNodePtr value;
+};
+
+class QILANG_API KeywordArgTypeExprNode : public TypeExprNode {
+public:
+  explicit KeywordArgTypeExprNode(const Location& loc)
+    : TypeExprNode(NodeType_KeywordArgTypeExpr, loc)
+  {}
+  explicit KeywordArgTypeExprNode(const TypeExprNodePtr& value, const Location& loc)
+    : TypeExprNode(NodeType_KeywordArgTypeExpr, loc)
+    , value(value)
+  {}
+
+  TypeExprNodePtr effectiveValue() {
+    if (value)
+      return value;
+    return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
+  }
+
+  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+
   TypeExprNodePtr value;
 };
 
@@ -982,7 +1031,37 @@ public:
     , name(name)
     , args(args)
     , ret(ret)
-  {}
+  {
+    //if ret is nothing, just drop it. (to simplify codegen)
+    if (ret && ret->type() == NodeType_BuiltinTypeExpr) {
+      BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(ret.get());
+      if (tnode->builtinType == BuiltinType_Nothing)
+        this->ret = TypeExprNodePtr();
+    }
+
+    unsigned cvar = 0;
+    unsigned ckwvar = 0;
+    for (unsigned i = 0; i < args.size(); ++i) {
+      if (args.at(i)->isVarArgs()) {
+        cvar++;
+        if (cvar > 1)
+          throw std::runtime_error("More than one variable argument specified");
+      }
+      if (args.at(i)->isKeywordArgs()) {
+        ckwvar++;
+        if (ckwvar > 1)
+          throw std::runtime_error("More than one keyword argument specified");
+      }
+    }
+  }
+
+  bool isVariadic() {
+    for (unsigned i = 0; i < args.size(); ++i) {
+      if (args.at(i)->isVarArgs())
+        return true;
+    }
+    return false;
+  }
 
   FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
     : DeclNode(NodeType_FnDecl, loc)
