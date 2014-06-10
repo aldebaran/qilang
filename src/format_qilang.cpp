@@ -138,6 +138,18 @@ namespace qilang {
     virtual void acceptDecl(const DeclNodePtr& node) { node->accept((DeclNodeVisitor*)this); }
 
     // a, ..., z
+    void declParamList(const std::string& declname, const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
+      indent() << comment->comments << std::endl;
+      indent() << declname << " " << name << "(";
+      joinDecl(vec, ", ");
+      out() << ")";
+      if (ret) {
+        out() << " -> ";
+        acceptTypeExpr(ret);
+      }
+      out() << std::endl << std::endl;
+      }
+
     void declParamList(const std::string& declname, const std::string& name, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
       indent() << declname << " " << name << "(";
       joinDecl(vec, ", ");
@@ -146,7 +158,7 @@ namespace qilang {
         out() << " -> ";
         acceptTypeExpr(ret);
       }
-      out() << std::endl;
+      out() << std::endl << std::endl;
     }
 
     void printInherits(const StringVector& inherits) {
@@ -166,7 +178,7 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      declParamList("fn", node->name, node->args, node->ret);
+      declParamList("fn", node->name, node->comment, node->args, node->ret);
     }
     void visitDecl(EmitDeclNode* node) {
       declParamList("emit", node->name, node->args);

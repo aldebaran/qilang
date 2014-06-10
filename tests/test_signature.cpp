@@ -7,10 +7,10 @@
 #include <qilang/parser.hpp>
 
 TEST(TestSignature, signatureToQiLangSimple) {
-    const qi::Signature signature("(bcCwWiIlLfdsm)"); // v,o and X are not tested
+    const qi::Signature signature("(bcCwWiIlLfdsmv)"); // v,o and X are not tested
     qilang::TypeExprNodePtr node = qilang::signatureToQiLang(signature);
 
-    EXPECT_STREQ("(bool, int8, uint8, int16, uint16, int32, uint32, int64, uint64, float32, float64, str, any)", qilang::format(node).c_str());
+    EXPECT_STREQ("(bool, int8, uint8, int16, uint16, int32, uint32, int64, uint64, float32, float64, str, any, nothing)", qilang::format(node).c_str());
 }
 
 TEST(TestSignature, signatureToQiLangList) {
@@ -94,7 +94,7 @@ TEST(TestSignature, metaObjectToQiLang) {
   const qi::MetaObject object(methodMap, signalMap, propertyMap, "Objet test of metaObjectToQiLang");
   qilang::NodePtr node = qilang::metaObjectToQiLang(name, object);
 
-  EXPECT_STREQ("interface ObjectTest\n  fn methodeTest(bool, int8, uint8, int32, uint32, int64, uint64, float32, float64, str, any) int32\n  out signalTest(int8)\n  prop propertyTest(int8)\nend\n\n", qilang::format(node).c_str());
+  EXPECT_STREQ("interface ObjectTest\n  # \\brief Methode test of metaMethodToQiLang\n  # \\param Parameter1: Parameter1 is a bool\n  # \\param Parameter2: Parameter2 is a int8\n  # \\param parameter3: parameter3 is a uint8\n  # \\param parameter4: parameter4 is a int32\n  # \\param parameter5: parameter5 is a uint32\n  # \\param parameter6: parameter6 is a int64\n  # \\param parameter7: parameter7 is a uint64\n  # \\param parameter8: parameter8 is a float32\n  # \\param parameter9: parameter9 is a float64\n  # \\param parameter10: parameter10 is a str\n  # \\param parameter11: parameter11 is a any\n  # \\return Return int32\n  fn methodeTest(Parameter1 bool, Parameter2 int8, parameter3 uint8, parameter4 int32, parameter5 uint32, parameter6 int64, parameter7 uint64, parameter8 float32, parameter9 float64, parameter10 str, parameter11 any) -> int32\n\n  emit signalTest(_ int8)\n\n  prop propertyTest(_ int8)\n\nend\n\n", qilang::format(node).c_str());
 }
 
 int main(int argc, char **argv) {

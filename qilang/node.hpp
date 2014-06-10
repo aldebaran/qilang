@@ -139,6 +139,9 @@ typedef std::vector<LiteralNodePtrPair>           LiteralNodePtrPairVector;
 
 typedef boost::shared_ptr<ConstDeclNode> ConstDeclNodePtr;
 
+typedef boost::shared_ptr<CommentNode>        CommentNodePtr;
+typedef std::vector<CommentNodePtr>           CommentNodePtrVector;
+
 /* All Statements
  */
 class DeclNodeVisitor {
@@ -755,7 +758,6 @@ public:
   LiteralNodePtr data;
 };
 
-// Object Motion.MoveTo "titi"
 class QILANG_API ObjectDefNode : public StmtNode {
 public:
   ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs, const Location& loc)
@@ -772,7 +774,6 @@ public:
   StmtNodePtrVector values;
 };
 
-// myprop: tititoto
 class QILANG_API PropertyDefNode : public StmtNode {
 public:
   PropertyDefNode(const std::string& name, LiteralNodePtr data, const Location& loc)
@@ -941,7 +942,6 @@ public:
   DeclNodePtrVector decls;
 };
 
-// Object Motion.MoveTo "titi"
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
   InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
@@ -959,7 +959,6 @@ public:
 
   void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
 
-  //std::string       package;
   std::string       name;
   DeclNodePtrVector values;
   StringVector      inherits;
@@ -1026,6 +1025,36 @@ typedef std::vector<ParamFieldDeclNodePtr>    ParamFieldDeclNodePtrVector;
 
 class QILANG_API FnDeclNode : public DeclNode {
 public:
+  FnDeclNode(const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
+    : DeclNode(NodeType_FnDecl, loc)
+    , name(name)
+    , comment(comment)
+    , args(args)
+    , ret(ret)
+  {
+    //if ret is nothing, just drop it. (to simplify codegen)
+    if (ret && ret->type() == NodeType_BuiltinTypeExpr) {
+      BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(ret.get());
+      if (tnode->builtinType == BuiltinType_Nothing)
+        this->ret = TypeExprNodePtr();
+    }
+
+    unsigned cvar = 0;
+    unsigned ckwvar = 0;
+    for (unsigned i = 0; i < args.size(); ++i) {
+      if (args.at(i)->isVarArgs()) {
+        cvar++;
+        if (cvar > 1)
+          throw std::runtime_error("More than one variable argument specified");
+      }
+      if (args.at(i)->isKeywordArgs()) {
+        ckwvar++;
+        if (ckwvar > 1)
+          throw std::runtime_error("More than one keyword argument specified");
+      }
+    }
+  }
+
   FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
     : DeclNode(NodeType_FnDecl, loc)
     , name(name)
@@ -1092,6 +1121,7 @@ public:
 
 public:
   std::string                 name;
+  CommentNodePtr              comment;
   ParamFieldDeclNodePtrVector args;
   TypeExprNodePtr             ret;
 };
