@@ -9,27 +9,21 @@
 #include <qilang/packagemanager.hpp>
 #include <qilang/parser.hpp>
 #include <qilang/visitor.hpp>
+#include "cpptype.hpp"
 #include <boost/make_shared.hpp>
-#include <boost/filesystem.hpp>
 #include <qi/qi.hpp>
-
-namespace fs = boost::filesystem;
+#include <qi/path.hpp>
+qiLogCategory("qilang.pm");
 
 namespace qilang {
 
-  void packageVisitor(const NodePtr& parent, const NodePtr& node, std::string& result) {
+  std::string extractPackageName(const NodePtr& node) {
     switch(node->type()) {
       case NodeType_Package: {
-        PackageNode* tnode = dynamic_cast<PackageNode*>(node.get());
-        if (!result.empty()) {
-          qiLogInfo() << "pkg:" << tnode->loc().beg_line;
-          throw std::runtime_error("double declaration of package");
-        }
-
-        result = tnode->name;
-        break;
+        PackageNode* tnode = static_cast<PackageNode*>(node.get());
+        return tnode->name;
       } default:
-        break;
+        throw std::runtime_error("node is not a package");
     };
   }
 
@@ -39,28 +33,40 @@ namespace qilang {
       return;
 
     switch (node->type()) {
+      // EXPORT
       case NodeType_InterfaceDecl: {
-        InterfaceDeclNode* tnode = dynamic_cast<InterfaceDeclNode*>(node.get());
+        InterfaceDeclNode* tnode = static_cast<InterfaceDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_StructDecl: {
-        StructDeclNode* tnode = dynamic_cast<StructDeclNode*>(node.get());
+        StructDeclNode* tnode = static_cast<StructDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_FnDecl: {
-        FnDeclNode* tnode = dynamic_cast<FnDeclNode*>(node.get());
+        FnDeclNode* tnode = static_cast<FnDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_ConstDecl: {
-        ConstDeclNode* tnode = dynamic_cast<ConstDeclNode*>(node.get());
+        ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
       } case NodeType_ObjectDef: {
-        ObjectDefNode* tnode = dynamic_cast<ObjectDefNode*>(node.get());
+        ObjectDefNode* tnode = static_cast<ObjectDefNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
-      } case NodeType_Import: {
-        ImportNode* tnode = dynamic_cast<ImportNode*>(node.get());
+      } case NodeType_TypeDefDecl: {
+        TypeDefDeclNode* tnode = static_cast<TypeDefDeclNode*>(node.get());
+        pkg->addMember(tnode->name, node);
+        return;
+      } case NodeType_EnumDecl: {
+        EnumDeclNode* tnode = static_cast<EnumDeclNode*>(node.get());
+        pkg->addMember(tnode->name, node);
+        return;
+      }
+
+      // IMPORT
+      case NodeType_Import: {
+        ImportNode* tnode = static_cast<ImportNode*>(node.get());
         pkg->addImport(tnode->name, node);
         return;
       }
@@ -70,72 +76,105 @@ namespace qilang {
     }
   }
 
-  PackagePtr    PackageManager::package(const std::string& packagename) {
-    PackagePtrMap::iterator it;
+  PackagePtr    PackageManager::package(const std::string& packagename) const {
+    PackagePtrMap::const_iterator it;
     it = _packages.find(packagename);
     if (it == _packages.end())
-      throw std::runtime_error("package not found: " + packagename);
+      throw std::runtime_error("package not found '" + packagename + "'");
     return it->second;
   }
 
-  //check the path of a file is correct. (package match)
-  //return the fullpath of the package
-  static std::string checkPackagePath(const std::string& filename, const std::string& package)
-  {
-    fs::path p(filename, qi::unicodeFacet());
+  /** 1 / Check for missing or multiple package declaration
+   *  2 / Check that the directory path and package name match
+   *  3 / register the content of the file to the package
+   */
+  bool PackageManager::addFileToPackage(const std::string& absfile, const FileReaderPtr& file, ParseResultPtr& pr) {
 
-    std::string par = p.parent_path().filename().string(qi::unicodeFacet());
-    if (par != package)
-      throw std::runtime_error("Error: '" + filename + "' define package '" + package +
-                               "' but the parent folder is not correct: '" + par + "'. Package and directory should match");
-    return fs::absolute(p.parent_path().parent_path()).string(qi::unicodeFacet());
+    // 1
+    NodePtrVector result;
+    result = findNode(pr->ast, NodeType_Package);
+    if (result.size() == 0) {
+      pr->addDiag(Diagnostic(DiagnosticType_Error, "missing package declaration", Location(file->filename())));
+      return false;
+    }
+    if (result.size() > 1) {
+      for (unsigned i = 1; i < result.size(); ++i) {
+        pr->addDiag(Diagnostic(DiagnosticType_Error, "extra package declaration", result.at(i)->loc()));
+
+      }
+      pr->addDiag(Diagnostic(DiagnosticType_Info, "previous declared here", result.at(0)->loc()));
+      return false;
+    }
+    std::string pkgname = extractPackageName(result.at(0));
+    // 2
+    qi::Path pf(file->filename());
+    StringVector leafs = splitPkgName(pkgname);
+
+
+    qi::Path dirname;
+    qi::Path cur = pf.parent().absolute();
+    for (unsigned i = 0; i < leafs.size(); ++i)
+    {
+      dirname = qi::Path(cur.filename()) / dirname;
+      cur = cur.parent();
+      if (cur.isEmpty())
+        break;
+    }
+
+    qi::Path p = pf.parent().absolute();
+    for (int i = leafs.size() - 1; i >= 0; --i) {
+      std::string par = p.filename();
+      if (par != leafs.at(i)) {
+        pr->addDiag(Diagnostic(DiagnosticType_Error,
+                                          "package name '" + pkgname + "' do not match parent directory name '" + (std::string)dirname + "'",
+                                          result.at(0)->loc()));
+        return false;
+      }
+      p = p.parent();
+    }
+
+    std::string pkgpath = p.absolute();
+
+    addInclude(pkgpath);
+    addPackage(pkgname);
+    pr->package = pkgname;
+    package(pkgname)->setContent(absfile, pr);
+    return true;
   }
 
-  NodePtrVector PackageManager::parseFile(const std::string& fname) {
-    std::string filename = fs::absolute(fs::path(fname, qi::unicodeFacet())).string(qi::unicodeFacet());
+  ParseResultPtr PackageManager::parseFile(const FileReaderPtr& file)
+  {
+    qi::Path fsfname = qi::Path(file->filename());
+    std::string filename = fsfname.absolute();
+    if (!fsfname.isRegularFile())
+      throw std::runtime_error(file->filename() + " is not a regular file");
     qiLogVerbose() << "Parsing file: " << filename;
-
     if (_sources.find(filename) != _sources.end()) {
       qiLogVerbose() << "already parsed, skipping '" << filename << "'";
-      return _sources[filename];
+      return package(_sources[filename])->_contents[filename];
     }
-    NodePtrVector ret = qilang::parse(filename);
-    _sources[filename] = ret;
 
-    std::string pkgname;
-    visitNode(ret, boost::bind<void>(&packageVisitor, _1, _2, boost::ref(pkgname)));
-
-    //TODO: handle error location...
-    if (pkgname.empty())
-      throw std::runtime_error("missing package definition");
-
-    std::string path = checkPackagePath(filename, pkgname);
-    addInclude(path);
-
-    addPackage(pkgname);
-    package(pkgname)->setContent(filename, ret);
+    ParseResultPtr ret = qilang::parse(file);
+    if (addFileToPackage(filename, file, ret))
+      _sources[filename] = ret->package;
     return ret;
   }
 
 
-  static bool locateFileInPackage(const std::string& path, const std::string& package, StringVector* result) {
-    fs::directory_iterator dit(fs::path(path, qi::unicodeFacet()));
+  static bool locateFileInDir(const std::string& path, StringVector* resultfile, StringVector* resultdir) {
+    qi::PathVector pv = qi::Path(path).dirs();
     bool ret = false;
-    for (; dit != fs::directory_iterator(); ++dit) {
-      fs::path p = *dit;
+    for (unsigned i = 0; i < pv.size(); ++i) {
+      qi::Path& p = pv.at(i);
+      resultdir->push_back(p);
+    }
 
-      if (fs::is_directory(p)) {
-        StringVector sv;
-        bool b = locateFileInPackage(p.string(qi::unicodeFacet()), package, &sv);
-        if (b) {
-          result->insert(result->end(), sv.begin(), sv.end());
-          ret = true;
-        }
-      }
-      if (fs::is_regular_file(p)) {
+    pv = qi::Path(path).files();
+    for (unsigned i = 0; i < pv.size(); ++i) {
+      qi::Path& p = pv.at(i);
+      if (p.isRegularFile()) {
         if (p.extension() == ".qi") {
-          qiLogVerbose() << "locate file in '" << package << "' found:" << p.string(qi::unicodeFacet());
-          result->push_back(p.string(qi::unicodeFacet()));
+          resultfile->push_back(p);
           ret = true;
         }
       }
@@ -144,29 +183,50 @@ namespace qilang {
   }
 
   void         PackageManager::addInclude(const std::string& include) {
-    if (std::find(_includes.begin(), _includes.end(), include) == _includes.end())
+    if (std::find(_includes.begin(), _includes.end(), include) == _includes.end()) {
+      qiLogVerbose() << "adding include: " << include;
       _includes.insert(_includes.begin(), include);
+    }
   }
 
   StringVector PackageManager::locatePackage(const std::string& pkgName) {
-    StringVector ret;
+
+    if (pkgName.empty())
+      throw std::runtime_error("empty package name");
+
+    qi::Path pkgPath(pkgNameToDir(pkgName));
 
     for (unsigned i = 0; i < _includes.size(); ++i) {
-      fs::path p(_includes.at(i), qi::unicodeFacet());
-      fs::directory_iterator dit(p);
-
-      for (; dit != fs::directory_iterator(); ++dit) {
-        fs::path pd = *dit;
-        if (fs::is_directory(pd) && pd.filename().string(qi::unicodeFacet()) == pkgName) {
-          bool b = locateFileInPackage(fs::absolute(pd).string(qi::unicodeFacet()), pkgName, &ret);
-          if (b) {
-            qiLogVerbose() << "Found pkg '" << pkgName << "'";
-            return ret;
-          }
+      qi::Path p(_includes.at(i));
+      p /= pkgPath;
+      if (p.isDir())
+      {
+        StringVector retfile;
+        StringVector retdir;
+        bool b = locateFileInDir(p, &retfile, &retdir);
+        if (b) {
+          qiLogVerbose() << "Found pkg '" << pkgName << "'";
+          return retfile;
         }
       }
     }
-    return ret;
+    return StringVector();
+  }
+
+  bool PackageManager::hasError() const
+  {
+    PackagePtrMap::const_iterator it;
+    for (it = _packages.begin(); it != _packages.end(); ++it) {
+      if (it->second->hasError())
+        return true;
+    }
+    return false;
+  }
+
+  void PackageManager::printMessage(std::ostream &os) const
+  {
+    for (PackagePtrMap::const_iterator it = _packages.begin(); it != _packages.end(); ++it)
+      it->second->printMessage(os);
   }
 
 
@@ -178,23 +238,153 @@ namespace qilang {
    * a folder with a "pkgname".pkg.qi file
    */
   void PackageManager::parsePackage(const std::string& packageName) {
+    addPackage(packageName);
+    PackagePtr pkg = package(packageName);
+    if (pkg && pkg->_parsed) {
+      qiLogVerbose() << "skipping pkg '" << packageName << "': already parsed";
+      return;
+    }
     StringVector sv = locatePackage(packageName);
 
     for (unsigned i = 0; i < sv.size(); ++i) {
-      parseFile(sv.at(i));
+      parseFile(newFileReader(sv.at(i)));
     }
 
     // for each decl in the package. reference it into the package.
-    PackagePtr pkg = package(packageName);
-
-
-    ASTMap::iterator it;
+    ParseResultMap::iterator it;
     for (it = pkg->_contents.begin(); it != pkg->_contents.end(); ++it) {
       qiLogVerbose() << "Visiting: " << it->first;
-      visitNode(it->second, boost::bind<void>(&importExportDeclVisitor, _1, _2, boost::ref(pkg)));
+      visitNode(it->second->ast, boost::bind<void>(&importExportDeclVisitor, _1, _2, boost::ref(pkg)));
     }
-    pkg->dump();
+    qiLogVerbose() << "parsed pkg '" << packageName << "'";
+    pkg->_parsed = true;
+  }
 
+  void PackageManager::parseDir(const std::string& dirname)
+  {
+    qiLogVerbose() << "parsing dir: " << dirname;
+    qi::Path fsp(dirname);
+    if (!fsp.isDir())
+      throw std::runtime_error(dirname + " is not a directory");
+
+    StringVector resdir;
+    StringVector resfile;
+    locateFileInDir(dirname, &resfile, &resdir);
+    for (unsigned i = 0; i < resfile.size(); ++i)
+      parseFile(newFileReader(resfile.at(i)));
+    for (unsigned i = 0; i < resdir.size(); ++i)
+      parseDir(dirname + "/" + resdir.at(i));
+  }
+
+  void PackageManager::parse(const std::string &fileOrPkg)
+  {
+    qi::Path fsp(fileOrPkg);
+    if (fsp.isRegularFile()) {
+      parseFile(newFileReader(fileOrPkg));
+      return;
+    }
+    if (fsp.isDir()) {
+      parseDir(fileOrPkg);
+      return;
+    }
+    parsePackage(fileOrPkg);
+  }
+
+  //throw on error
+  static StringPair checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
+  {
+    PackagePtr pkg = pm.package(pkgName);
+    NodePtr node = pkg->getExport(type);
+    if (node)
+      return StringPair(pkgName, type);
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
+    throw std::runtime_error("Can't find import");
+  }
+
+  //throw on error
+  StringPair PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
+  {
+    std::string type = tnode->value;
+    qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
+    std::string pkgName = type.substr(0, type.find_last_of('.'));
+    std::string value = type.substr(pkgName.size(), type.size());
+
+    //package name provided
+    if (!pkgName.empty() && pkgName != type)
+      return checkImport(*this, pr, pkgName, tnode, value);
+    value = type;
+
+    //no package name. find the package name
+    NodePtr exportnode = pkg->getExport(type);
+    if (exportnode)
+      return checkImport(*this, pr, pkg->_name, tnode, type);
+
+    ASTMap::const_iterator it;
+    for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
+      const NodePtrVector& v = it->second;
+      for (unsigned i = 0; i < v.size(); ++i) {
+        ImportNode* inode = static_cast<ImportNode*>(v.at(i).get());
+        switch (inode->importType) {
+          case ImportType_All: {
+            return checkImport(*this, pr, inode->name, tnode, type);
+          }
+          case ImportType_List: {
+            StringVector::iterator it = std::find(inode->imports.begin(), inode->imports.end(), type);
+            if (it != inode->imports.end()) {
+              return checkImport(*this, pr, inode->name, tnode, type);
+            }
+            break;
+          }
+          case ImportType_Package:
+            break;
+        }
+      }
+    }
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
+    throw std::runtime_error("cant resolve id");
+  }
+
+  /** parse all dependents packages
+   */
+  void PackageManager::resolvePackage(const std::string& packageName) {
+    PackagePtr pkg = package(packageName);
+
+    DiagnosticVector mv;
+    ASTMap::iterator it;
+    for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
+
+      try {
+        //throw on error? should..
+        parsePackage(it->first);
+      } catch (const std::exception& e) {
+        mv.push_back(Diagnostic(DiagnosticType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
+      }
+    }
+
+    //for each imports verify each symbol are correct
+    //for (it = pkg->_imports.begin(); it != pkg->_imports.end(); ++it) {
+    //}
+
+    //for each customtype expr resolve name
+    //for each files in the package
+    ParseResultMap::iterator it2;
+    for (it2 = pkg->_contents.begin(); it2 != pkg->_contents.end(); ++it2) {
+      NodePtrVector customs = findNode(it2->second->ast, NodeType_CustomTypeExpr);
+
+      for (unsigned j = 0; j < customs.size(); ++j) {
+        CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(customs.at(j).get());
+        StringPair sp;
+        try {
+          sp = resolveImport(it2->second, pkg, tnode);
+        } catch(const std::exception& e) {
+          it2->second->addDiag(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
+          continue;
+        }
+        qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
+        tnode->resolved_package = sp.first;
+        tnode->resolved_value   = sp.second;
+      }
+    }
   }
 
   /**
@@ -208,14 +398,35 @@ namespace qilang {
    * second pass: we resolve all TypeExpr
    */
   void PackageManager::anal(const std::string &packageName) {
-    qiLogVerbose() << "SemAnal pkg:" << packageName;
-    if (!packageName.empty())
+    if (!packageName.empty()) {
+      qiLogVerbose() << "Package Verification pkg:" << packageName;
       parsePackage(packageName);
+      resolvePackage(packageName);
+    }
     else {
       PackagePtrMap::iterator it;
       for (it = _packages.begin(); it != _packages.end(); ++it) {
-        parsePackage(it->first);
+        anal(it->first);
       }
     }
   }
+
+  bool Package::hasError() const
+  {
+    ParseResultMap::const_iterator it;
+    for (it = _contents.begin(); it != _contents.end(); ++it) {
+      if (it->second->hasError())
+        return true;
+    }
+    return false;
+  }
+
+  void Package::printMessage(std::ostream &os) const
+  {
+    ParseResultMap::const_iterator it;
+    for (it = _contents.begin(); it != _contents.end(); ++it) {
+      it->second->printMessage(os);
+    }
+  }
+
 };

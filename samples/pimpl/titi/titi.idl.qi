@@ -1,0 +1,5 @@
+package titi
+
+interface Titi
+  fn titi() int32
+end

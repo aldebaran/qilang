@@ -1,12 +1,12 @@
 package tests
 
 
-interface AudioDevice
+interface AudioDevice2
   fn setDefaultDevice (str, str) int
   fn setDefaultDevice2 (str) int
 end
 
-struct AudioBuffer
+struct AudioBuffer2
   buffer []char
   size   int
   ma     [int]str

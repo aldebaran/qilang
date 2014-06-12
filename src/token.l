@@ -42,59 +42,64 @@
 
 #define RETURN_OP(Symbol)         \
   do { \
-    STEP();\
-    return yy::parser::make_ ## Symbol(qilang_get_extra(yyscanner)->loc); \
+    yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(LOC); \
+    STEP(); \
+    return tok; \
   } while(false)
 
 #define RETURN_VAL(Symbol, Value) \
    do { \
-     STEP();\
-     return yy::parser::make_ ## Symbol(Value, qilang_get_extra(yyscanner)->loc); \
+     yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(Value, LOC); \
+     STEP(); \
+     return tok; \
    } while(false)
+
 
 #define YY_DECL yy::parser::symbol_type qilang_lex(yyscan_t yyscanner)
 
 #define YY_EXTRA_TYPE qilang::Parser*
 
+#define LOC qilang_get_extra(yyscanner)->loc
+
 // Called via YY_USER_ACTION each time we *advance* the cursor, in
 // which case Num is actually the number of bytes read.
 #define COLUMNS(Num)                                        \
-  qilang_get_extra(yyscanner)->loc.columns(Num)
+  LOC.columns(Num)
 
 #define YY_USER_ACTION                          \
   COLUMNS(static_cast<unsigned>(yyleng));
 
 #define LINES(Num)                                  \
   do {                                              \
-    qilang_get_extra(yyscanner)->loc.lines(Num);    \
+    LOC.lines(Num);    \
   } while (false)
 
-#define STEP() qilang_get_extra(yyscanner)->loc.step()
+#define STEP() LOC.step()
 
 #define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
   static void qilang_readsome(qilang::Parser* p, char* buf, size_t *result, size_t max_size)
   {
-    if (p->in->eof() || p->in->fail()) {
+    if (p->file->in().eof() || p->file->in().fail()) {
       *result = 0;
       return;
     }
-    p->in->readsome(buf, max_size);
-    if (!p->in->gcount() && !p->in->eof())
+    p->file->in().readsome(buf, max_size);
+    if (!p->file->in().gcount() && !p->file->in().eof())
     {
-      p->in->peek();
-      p->in->readsome(buf, max_size);
+      p->file->in().peek();
+      p->file->in().readsome(buf, max_size);
     }
-    if (p->in->bad())
+    if (p->file->in().bad())
     {
       *result = -1;
       return;
     }
-    *result = p->in->gcount();
+    *result = p->file->in().gcount();
   }
 
 #define yyterminate()                                   \
-  return yy::parser::make_END_OF_FILE(qilang_get_extra(yyscanner)->loc)
+  return yy::parser::make_END_OF_FILE(LOC)
 %}
 
 BLANKS   [ \t]+
@@ -138,6 +143,7 @@ FLOAT    {UFLOAT}
 "^"             RETURN_OP(XOR);
 "@"             RETURN_OP(ARO);
 ":"             RETURN_OP(COLON);
+"->"            RETURN_OP(ARROW);
 
 "true"          RETURN_OP(TRUE);
 "false"         RETURN_OP(FALSE);
@@ -148,7 +154,6 @@ FLOAT    {UFLOAT}
 "object"        RETURN_OP(OBJECT);
 "interface"     RETURN_OP(INTERFACE);
 "struct"        RETURN_OP(STRUCT);
-"type"          RETURN_OP(TYPE);
 "end"           RETURN_OP(END);
 "const"         RETURN_OP(CONST);
 
@@ -160,39 +165,41 @@ FLOAT    {UFLOAT}
 "for"           RETURN_OP(FOR);
 "if"            RETURN_OP(IF);
 
+"typedef"       RETURN_OP(TYPEDEF);
+"enum"          RETURN_OP(ENUM);
+
 {FLOAT}           {
-  STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::FloatConstDataNode>(boost::lexical_cast<float>(yytext));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {NATURAL}         {
-  STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::IntConstDataNode>(boost::lexical_cast<int>(yytext));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::IntLiteralNode>(boost::lexical_cast<int>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);
 }
 
 {ID}              {
-  STEP();
   RETURN_VAL(ID, std::string(yytext));
 }
 
 {STRING}          {   // "   for indentation
-  STEP();
-  qilang::ConstDataNodePtr node = boost::make_shared<qilang::StringConstDataNode>(std::string(yytext + 1, strlen(yytext) - 2));
+  qilang::LiteralNodePtr node = boost::make_shared<qilang::StringLiteralNode>(std::string(yytext + 1, strlen(yytext) - 2), qilang::makeLocation(LOC));
   RETURN_VAL(STRING, node);
 }
 
 {BLANKS}          {
+  STEP();
 }
 
-"#".*             {} // One-line comment.
+"#".*             { STEP(); } // One-line comment.
 
 .                 {
+                    STEP();
                     std::stringstream ss;
-                    ss << "Invalid token: '" << std::string(yytext) << "'";
-                    qilang_get_extra(yyscanner)->parser.error(qilang_get_extra(yyscanner)->loc, ss.str());
+                    ss << "invalid token '" << std::string(yytext) << "'";
+                    qilang_get_extra(yyscanner)->parser.error(LOC, ss.str());
                   }
-\n                { LINES(1); }
+
+{EOL}             { LINES(1); STEP(); }
 
 %%

@@ -15,12 +15,6 @@ qiLogCategory("qilang.node");
 
 namespace qilang {
 
-  Node::Node(NodeKind kind, NodeType type)
-    : _kind(kind)
-    , _type(type)
-  {
-    qiLogDebug() << "new node(" << _kind << ", " << _type << ")";
-  }
 
   Node::Node(NodeKind kind, NodeType type, const Location& loc)
     : _kind(kind)
@@ -98,6 +92,32 @@ namespace qilang {
       return fetcharray;
     }
     throw std::runtime_error("invalid binary op code");
+  }
+
+  bool FnDeclNode::hasVarArgs() {
+    if (args.size() < 1)
+      return false;
+    if (!hasKeywordArgs())
+      return args.at(args.size() - 1)->isVarArgs();
+
+    if (args.size() < 2)
+      return false;
+    return args.at(args.size() - 2)->isVarArgs();
+  }
+
+  bool FnDeclNode::hasKeywordArgs() {
+    if (!args.size())
+      return false;
+    return args.at(args.size() - 1)->isKeywordArgs();
+  }
+
+  std::string AtNode::sender() {
+    VarExprNode* tnode;
+    if (_sender->type() == NodeType_VarExpr) {
+      tnode = static_cast<VarExprNode*>(_sender.get());
+      return tnode->value;
+    }
+    return "COMPLEX expression";
   }
 
 }

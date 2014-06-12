@@ -3,27 +3,35 @@ project(QiLang)
 find_package(qibuild)
 qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
 
+enable_testing()
+
 include_directories(".")
 
-set(H qilang/node.hpp
+set(H qilang/api.hpp
+      qilang/node.hpp
       qilang/visitor.hpp
       qilang/parser.hpp
       qilang/formatter.hpp
       qilang/packagemanager.hpp
    )
 
-set(C src/node.cpp
+set(C src/codegen.cpp
+      src/node.cpp
       src/parser.cpp
       src/parser_p.hpp
       src/formatter_p.hpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
-      src/format_cppi.cpp
-      src/format_cppr.cpp
+      src/format_cpp_interface.cpp
+      src/format_cpp_bind.cpp
+      src/format_cpp_local.cpp
+      src/format_cpp_remote.cpp
+      src/format_anyvalue.cpp
       src/cpptype.hpp
       src/cpptype.cpp
       src/packagemanager.cpp
-)
+      src/qilang_signature.cpp
+      src/qilang_metaobject.cpp)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -57,6 +65,10 @@ qi_use_lib(qilang qi qitype)
 qi_stage_lib(qilang)
 
 
-qi_create_bin(qic src/qic_main.cpp)
+qi_create_bin(qic src/qic_main.cpp DEPENDS qimessaging qilang)
+qi_stage_bin(qic)
 
-qi_use_lib(qic qilang)
+qi_stage_cmake(qilang-tools-config.cmake)
+include(qilang-tools-config.cmake)
+
+add_subdirectory("tests")

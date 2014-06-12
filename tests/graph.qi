@@ -1,12 +1,12 @@
 package tests
 
 interface Audio.AudioDevice
-  prop titi(Int)
+  prop titi(int)
 
-  fn Finished(Int)
+  fn Finished(int)
   emit Start(Any)
 
-  fn setTimeout(Int) dd
+  fn setTimeout(int) int
 end
 
 

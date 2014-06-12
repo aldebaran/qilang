@@ -1,5 +1,4 @@
 
-from titi import Egg
 from titi import *
 
 package pimpl
@@ -7,4 +6,5 @@ package pimpl
 interface Foo
   fn foo(str)
   fn bar(str) Bar
+  fn titi() Titi
 end

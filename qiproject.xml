@@ -1,5 +1,5 @@
 <project version="3" >
-  <qibuild name="qi" >
+  <qibuild name="libqilang" >
     <depends buildtime="true" runtime="true" names="boost libqimessaging"/>
     <depends buildtime="true" names="gtest pthread"/>
   </qibuild>

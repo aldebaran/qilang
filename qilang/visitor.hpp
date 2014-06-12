@@ -19,7 +19,7 @@ namespace qilang {
   class DefaultNodeVisitor: public DeclNodeVisitor
                           , public StmtNodeVisitor
                           , public ExprNodeVisitor
-                          , public ConstDataNodeVisitor
+                          , public LiteralNodeVisitor
                           , public TypeExprNodeVisitor
   {
   public:
@@ -47,8 +47,8 @@ namespace qilang {
 
     virtual void accept(const NodePtr& node) {
       switch (node->kind()) {
-      case NodeKind_ConstData:
-        acceptData(boost::dynamic_pointer_cast<ConstDataNode>(node));
+      case NodeKind_Literal:
+        acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
         break;
       case NodeKind_Decl:
         acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
@@ -73,31 +73,33 @@ namespace qilang {
       }
     }
 
-    virtual void acceptData(const ConstDataNodePtr& node)    { cb(node); pushParent(node); node->accept(this); popParent(); }
+    virtual void acceptData(const LiteralNodePtr& node)    { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptTypeExpr(const TypeExprNodePtr& node) { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptExpr(const ExprNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptDecl(const DeclNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
     virtual void acceptStmt(const StmtNodePtr& node)         { cb(node); pushParent(node); node->accept(this); popParent(); }
 
-    void visitData(BoolConstDataNode *node) {
+    void visitData(BoolLiteralNode *node) {
     }
-    void visitData(IntConstDataNode *node) {
+    void visitData(IntLiteralNode *node) {
     }
-    void visitData(FloatConstDataNode *node) {
+    void visitData(FloatLiteralNode *node) {
     }
-    void visitData(StringConstDataNode *node) {
+    void visitData(StringLiteralNode *node) {
     }
-    void visitData(ListConstDataNode* node) {
+    void visitData(ListLiteralNode* node) {
       each(node->values);
     }
-    void visitData(TupleConstDataNode* node) {
+    void visitData(TupleLiteralNode* node) {
       each(node->values);
     }
-    void visitData(DictConstDataNode* node) {
+    void visitData(DictLiteralNode* node) {
       //TODO: each(node->values);
     }
 
-    void visitTypeExpr(SimpleTypeExprNode *node) {
+    void visitTypeExpr(BuiltinTypeExprNode *node) {
+    }
+    void visitTypeExpr(CustomTypeExprNode *node) {
     }
     void visitTypeExpr(ListTypeExprNode *node) {
       acceptTypeExpr(node->element);
@@ -109,18 +111,27 @@ namespace qilang {
     void visitTypeExpr(TupleTypeExprNode *node) {
       each(node->elements);
     }
+    void visitTypeExpr(VarArgTypeExprNode *node) {
+      acceptTypeExpr(node->element);
+    }
+    void visitTypeExpr(KeywordArgTypeExprNode *node) {
+      acceptTypeExpr(node->value);
+    }
 
     void visitExpr(BinaryOpExprNode *node) {
-      acceptExpr(node->n1);
-      acceptExpr(node->n2);
+      acceptExpr(node->left);
+      acceptExpr(node->right);
     }
     void visitExpr(UnaryOpExprNode *node) {
-      acceptExpr(node->n1);
+      acceptExpr(node->expr);
     }
     void visitExpr(VarExprNode *node) {
     }
-    void visitExpr(ConstDataExprNode* node) {
+    void visitExpr(LiteralExprNode* node) {
       acceptData(node->data);
+    }
+    void visitExpr(CallExprNode* node) {
+      each(node->args);
     }
 
     void visitDecl(InterfaceDeclNode* node) {
@@ -131,6 +142,11 @@ namespace qilang {
       if (node->ret)
         acceptTypeExpr(node->ret);
     }
+    void visitDecl(ParamFieldDeclNode* node) {
+      if (node->type)
+        acceptTypeExpr(node->type);
+    }
+
     void visitDecl(EmitDeclNode* node) {
       each(node->args);
     }
@@ -138,12 +154,20 @@ namespace qilang {
       each(node->args);
     }
     void visitDecl(StructDeclNode* node) {
-      each(node->fields);
+      each(node->decls);
     }
-    void visitDecl(FieldDeclNode* node) {
+    void visitDecl(StructFieldDeclNode* node) {
       acceptTypeExpr(node->type);
     }
     void visitDecl(ConstDeclNode* node) {
+    }
+    void visitDecl(EnumDeclNode* node) {
+      each(node->fields);
+    }
+    void visitDecl(EnumFieldDeclNode* node) {
+    }
+    void visitDecl(TypeDefDeclNode* node) {
+      acceptTypeExpr(node->type);
     }
 
     void visitStmt(PackageNode* node) {
@@ -161,6 +185,8 @@ namespace qilang {
     void visitStmt(VarDefNode* node) {
       acceptData(node->data);
     }
+    void visitStmt(CommentNode* node) {
+    }
 
   };
 
@@ -171,17 +197,26 @@ namespace qilang {
     DefaultNodeVisitor(nvc).each(nodes);
   }
 
-  void findNodeVisitor(const NodePtr& parent, const NodePtr& node, NodeType wanted, NodePtrVector& result) {
+
+  inline void findNodeTypeVisitor(const NodePtr& parent, const NodePtr& node, NodeType wanted, NodePtrVector& result) {
     if (node->type() == wanted)
       result.push_back(node);
   }
 
-  NodePtrVector findNode(NodePtrVector nodes, NodeType type) {
-    NodePtrVector::iterator it;
+  inline void findNodeKindVisitor(const NodePtr& parent, const NodePtr& node, NodeKind wanted, NodePtrVector& result) {
+    if (node->kind() == wanted)
+      result.push_back(node);
+  }
+
+  inline NodePtrVector findNode(NodePtrVector nodes, NodeType type) {
     NodePtrVector result;
-    for (it = nodes.begin(); it != nodes.end(); ++it) {
-      qilang::visitNode(nodes, boost::bind<void>(&findNodeVisitor, _1, _2, type, boost::ref(result)));
-    }
+    qilang::visitNode(nodes, boost::bind<void>(&findNodeTypeVisitor, _1, _2, type, boost::ref(result)));
+    return result;
+  }
+
+  inline NodePtrVector findNode(NodePtrVector nodes, NodeKind kind) {
+    NodePtrVector result;
+    qilang::visitNode(nodes, boost::bind<void>(&findNodeKindVisitor, _1, _2, kind, boost::ref(result)));
     return result;
   }
 

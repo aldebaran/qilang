@@ -24,16 +24,17 @@
 */
 
 #include <iostream>
+#include <pimpl/api.hpp>
 #include <pimpl/bar.hpp>
 
-class BarImpl : public pimpl::BarInterface {
+class PIMPL_API BarImpl : public pimpl::BarInterface {
 public:
   void foo(const std::string& value) {
     std::cout << "foo:" << value << std::endl;
   }
 };
 
-//QI_REGISTER_IMPL(BarImpl, BarInterface);
+//QI_REGISTER_IMPLEMENTATION(pimpl::BarInterface, BarImpl);
 
 pimpl::Bar pimpl::newBar() {
   return pimpl::Bar(new BarImpl);

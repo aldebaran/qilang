@@ -19,13 +19,17 @@ void qilang_set_extra(qilang::Parser*, void *);
 struct yyscan_t;
 void qilang_set_debug(int debug_flag, void* yyscanner);
 
+qiLogCategory("qilang.parser");
+
 namespace qilang {
 
-  Parser::Parser(std::istream *stream, const std::string &filename)
-    : in(stream)
-    , filename(filename)
+  Parser::Parser(const FileReaderPtr &file)
+    : file(file)
+    , _result(newParseResult())
+    , _parsed(false)
     , parser(this)
   {
+    _result->filename = file->filename();
     qilang_lex_init(&scanner);
     qilang_set_extra(this, scanner);
   }
@@ -35,19 +39,11 @@ namespace qilang {
     qilang_lex_destroy(scanner);
   }
 
-  void Parser::setCurrentPackage(const std::string& pkg) {
-    package = pkg;
-  }
-
-  const std::string& Parser::currentPackage() {
-    if (package.empty())
-      throw std::runtime_error("no package specified");
-    return package;
-  }
-
-  NodePtrVector Parser::parse() {
-
-    loc.initialize(&filename);
+  void Parser::parse() {
+    if (_parsed)
+      return;
+    _parsed = true;
+    loc.initialize(const_cast<std::string*>(&file->filename()));
     std::string pdebug = qi::os::getenv("QILANG_PARSER_DEBUG");
     if (!pdebug.empty() && pdebug != "0") {
       parser.set_debug_level(1);
@@ -62,32 +58,81 @@ namespace qilang {
     else {
       qilang_set_debug(0, scanner);
     }
-    parser.parse();
-    return root;
+    try {
+      parser.parse();
+    } catch (const ParseException& pe) {
+      _result->ast.clear();
+      _result->addDiag(Diagnostic(DiagnosticType_Error, pe.what(), pe.loc()));
+    }
   }
 
-  Location loc(const yy::location& loc) {
-    return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+  void Diagnostic::print(std::ostream &out) const {
+    out << loc() << ":";
+
+    switch (type()) {
+      case DiagnosticType_Error:
+        out << "error: ";
+        break;
+      case DiagnosticType_Warning:
+        out << "warning: ";
+        break;
+      case DiagnosticType_Info:
+        out << "info: ";
+        break;
+      default:
+        break;
+    }
+
+    out << what() << std::endl;
+    out << qilang::getErrorLine(filename(), loc());
   }
 
-  std::string getErrorLine(const yy::location& loc) {
+  void ParseResult::printMessage(std::ostream &out) const {
+    for (unsigned i = 0; i < _messages.size(); ++i)
+      _messages.at(i).print(out);
+  }
+
+  ParseResultPtr Parser::result() {
+    parse();
+    return _result;
+  }
+
+  Location makeLocation(const yy::location& loc) {
+    if (loc.begin.filename)
+      return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column, *loc.begin.filename);
+    else {
+      qiLogWarning() << "missing filename for location";
+      return Location(loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+    }
+  }
+
+  std::string getErrorLine(const std::string& filename, const Location& loc) {
     std::ifstream is;
     std::string   ret;
-    if (loc.begin.filename == 0)
-      return "";
-    is.open(loc.begin.filename->c_str());
+
+    //no location provided just drop
+    if (loc.beg_column == 0 || loc.beg_line == 0)
+      return std::string();
+    is.open(filename.c_str());
+    if (!is.is_open())
+      return std::string();
 
     std::string ln;
-    unsigned int lico = loc.begin.line;
-    for (int i = 0; i < lico; ++i)
+    unsigned int lico = loc.beg_line;
+    for (unsigned int i = 0; i < lico; ++i) {
+      if (!is.good())
+        return std::string();
       getline(is, ln);
-    ret = "in:";
-    ret += ln + "\n";
-    ret += "   ";
-    unsigned int cbeg = loc.begin.column;
-    unsigned int cend = loc.end.column;
+    }
+    //ret = "";
+    ret = ln + "\n";
+    unsigned int cbeg = loc.beg_column;
+    unsigned int cend = loc.end_column;
     int count = cend - cbeg;
-    int space = cbeg;
+    int space = cbeg - 1;
+    //multiline error just display the beginning
+    if (loc.end_line != loc.beg_line)
+      count = 1;
     space = space < 0 ? 0 : space;
     count = count < 1 ? 1 : count;
     for (int i = 0; i < space; ++i)
@@ -98,19 +143,16 @@ namespace qilang {
     return ret;
   }
 
-  NodePtrVector parse(const std::string &filename) {
-    std::ifstream is;
-    is.open(filename.c_str());
-    if (!is.is_open())
-      throw std::runtime_error("Can't open file: " + filename);
-
-    Parser p(&is, filename);
-    return p.parse();
-  }
-
-  NodePtrVector parse(std::istream *stream, const std::string& filename) {
-    Parser p(stream, filename);
-    return p.parse();
+  //public interface
+  ParseResultPtr parse(const FileReaderPtr& file) {
+    ParseResultPtr ret = newParseResult();
+    ret->filename = file->filename();
+    if (!file->isOpen()) {
+      ret->addDiag(Diagnostic(DiagnosticType_Error, "Can't open file '" + file->filename() + "'"));
+      return ret;
+    }
+    Parser p(file);
+    return p.result();
   }
 
 }

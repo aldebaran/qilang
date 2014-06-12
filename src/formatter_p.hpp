@@ -1,26 +1,8 @@
 /*
-** formatter_p.hpp
-** Login : <ctaf@torchbook>
-** Started on  Wed Apr  9 14:14:10 2014
-** $Id$
-**
 ** Author(s):
-**  -  <gestes@aldebaran-robotics.com>
+**  - Cedric GESTES <gestes@aldebaran-robotics.com>
 **
-** Copyright (C) 2014
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 3 of the License, or
-** (at your option) any later version.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+** Copyright (C) 2014 Aldebaran Robotics
 */
 
 #ifndef   	FORMATTER_P_HPP_
@@ -40,41 +22,124 @@ namespace std {
 
 namespace qilang {
 
+  class FormatAttr {
+  public:
+    FormatAttr(bool active = false)
+      : _active(active)
+      , _block(0)
+    {}
+
+    void block() { _block++; }
+    void unblock() { _block--; _block = _block < 0 ? 0 : _block; }
+
+    void activate()    { _active++; }
+    void desactivate() { _active--; _active = _active < 0 ? 0 : _active; }
+
+    bool isActive() const { return _active > 0 && _block == 0; }
+    const std::string &operator()(const std::string& str) const {
+      static std::string empt;
+      if (isActive())
+        return str;
+      else
+        return empt;
+    }
+
+  protected:
+    std::string _name;
+    int         _active;
+    int         _block;
+  };
+
+  class ScopedFormatAttrBlock {
+  public:
+    ScopedFormatAttrBlock(FormatAttr& attr)
+      : _attr(attr)
+    {
+      _attr.block();
+    }
+
+    ~ScopedFormatAttrBlock()
+    {
+      _attr.unblock();
+    }
+  protected:
+    FormatAttr& _attr;
+  };
+
+  class ScopedFormatAttrActivate {
+  public:
+    ScopedFormatAttrActivate(FormatAttr& attr)
+      : _attr(attr)
+    {
+      _attr.activate();
+    }
+
+    ~ScopedFormatAttrActivate()
+    {
+      _attr.desactivate();
+    }
+
+  protected:
+    FormatAttr& _attr;
+  };
+
+
   class BasicNodeFormatter {
   public:
     //virtual void accept(const NodePtr& node) = 0;
     std::stringstream &out() {
       return _ss;
     }
+
+    template <typename T>
+    void join(const std::vector<T>& vals, const std::string& sep) {
+      for (unsigned i = 0; i < vals.size(); ++i) {
+        out() << vals.at(i);
+        if (i + 1 < vals.size())
+          out() << sep;
+      }
+    }
+
   private:
     std::stringstream _ss;
   };
 
-  class ConstDataNodeFormatter : virtual public BasicNodeFormatter, public ConstDataNodeVisitor {
+  class LiteralNodeFormatter : virtual public BasicNodeFormatter, public LiteralNodeVisitor {
   public:
-    const std::string& cdata(ConstDataNodePtr node) {
-      static const std::string ret;
-      acceptData(node);
-      return ret;
+    template <typename T>
+    void joinLiteral(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptData(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
     }
   };
 
   class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
   public:
-    const std::string& expr(ExprNodePtr node) {
-      static const std::string ret;
-      acceptExpr(node);
-      return ret;
+    template <typename T>
+    void joinExpr(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptExpr(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
     }
   };
 
   class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
   public:
-    const std::string& type(const TypeExprNodePtr& node) {
-      static const std::string ret;
-      acceptTypeExpr(node);
-      return ret;
+
+    template <typename T>
+    void joinTypeExpr(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptTypeExpr(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
     }
+
   };
 
   /**
@@ -131,12 +196,6 @@ namespace qilang {
   public:
     virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
-    const std::string& stmt(StmtNodePtr node) {
-      static const std::string ret;
-      acceptStmt(node);
-      return ret;
-    }
-
     void scopedStmt(const qilang::StmtNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
@@ -147,20 +206,24 @@ namespace qilang {
 
   class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
   public:
-
-    const std::string& decl(DeclNodePtr node) {
-      static const std::string ret;
-      acceptDecl(node);
-      return ret;
-    }
-
     void scopedDecl(const qilang::DeclNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
         acceptDecl(vec[i]);
       }
     }
-    void scopedField(const qilang::FieldDeclNodePtrVector& vec) {
+
+    //decl includes params that are not really decl...
+    template <typename T>
+    void joinDecl(const std::vector<T>& vec, const std::string& sep) {
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        acceptDecl(vec.at(i));
+        if (i + 1 < vec.size())
+          out() << sep;
+      }
+    }
+
+    void scopedEnumField(const qilang::EnumFieldDeclNodePtrVector& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
         acceptDecl(vec[i]);
@@ -178,7 +241,7 @@ namespace qilang {
 
     virtual std::string format(const NodePtrVector& node) {
       formatHeader();
-      for (int i = 0; i < node.size(); ++i) {
+      for (unsigned int i = 0; i < node.size(); ++i) {
         if (!node.at(i))
           throw std::runtime_error("Invalid Node");
         accept(node.at(i));

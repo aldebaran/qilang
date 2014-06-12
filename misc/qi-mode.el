@@ -17,10 +17,12 @@
   '("if" "package" "end" "for"                    ;; keywords
     "interface" "fn" "emit" "prop"
     "object" "at" "package" "from" "import"
-    "const" "struct" "enum" "type"
-    "char" "int" "uint" "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
+    "const" "struct" "enum" "typedef"
+    "extern"
+    "char" "int" "uint"
+    "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
     "float" "float32" "float64"
-    "str" "list" "map"
+    "str" "list" "map" "any" "obj" "object"
     )
   '(;; int constant
     ("\\b[0-9]+\\b" . font-lock-constant-face)
@@ -30,7 +32,7 @@
      (2 font-lock-keyword-face))
     ;; @attr
     ("@[a-zA-Z]+" . font-lock-preprocessor-face)
-    ;; fn/in/out/prop names
+    ;; fn/emit/prop names
     ("^[ ]*\\(fn\\|emit\\|prop\\)[ ]*\\([a-zA-Z]+\\)"
      2 font-lock-function-name-face))
 

@@ -39,6 +39,17 @@
   namespace qilang {
     class Parser;
   }
+
+  #define NODE0(TYPE, LOC) \
+    boost::make_shared< qilang::TYPE >(qilang::makeLocation(LOC))
+  #define NODE1(TYPE, LOC, a) \
+    boost::make_shared< qilang::TYPE >(a, qilang::makeLocation(LOC))
+  #define NODE2(TYPE, LOC, a, b) \
+    boost::make_shared< qilang::TYPE >(a, b, qilang::makeLocation(LOC))
+  #define NODE3(TYPE, LOC, a, b, c) \
+    boost::make_shared< qilang::TYPE >(a, b, c, qilang::makeLocation(LOC))
+  #define NODE4(TYPE, LOC, a, b, c, d) \
+    boost::make_shared< qilang::TYPE >(a, b, c, d, qilang::makeLocation(LOC))
 }
 
 %code {
@@ -49,6 +60,30 @@
   yy::parser::symbol_type yylex(qilang::Parser* context)
   {
     return qilang_lex(context->scanner);
+  }
+
+  qilang::TypeExprNodePtr makeType(const yy::location& loc, const std::string& id) {
+    // ### WARNING ###
+    // keep in sync with node.hpp enum BuiltinType
+    const char *builtin[] = { "nothing",
+                              "bool" , "char",
+                              "int"  , "uint",
+                              "int8" , "uint8",
+                              "int16", "uint16",
+                              "int32", "uint32",
+                              "int64", "uint64",
+                              "float",
+                              "float32", "float64",
+                              "str", "any", "obj", 0 };
+    int index = 0;
+    const char *t = builtin[index];
+    while (t != 0) {
+      if (id == t)
+        return NODE2(BuiltinTypeExprNode, loc, static_cast<qilang::BuiltinType>(index), id);
+      index++;
+      t = builtin[index];
+    }
+    return NODE1(CustomTypeExprNode, loc, id);
   }
 
 
@@ -87,6 +122,7 @@
   XOR                 "^"
   ARO                 "@"
   COLON               ":"
+  ARROW               "->"
 
   TRUE                "true"
   FALSE               "false"
@@ -100,12 +136,14 @@
   OBJECT              "object"
   INTERFACE           "interface"
   STRUCT              "struct"
-  TYPE                "type"
   END                 "end"
+
+  TYPEDEF             "typedef"
+  ENUM                "enum"
 
   // IFace Keywords
   FN                  "fn"
-  EMIT                "out"
+  EMIT                "emit"
   PROP                "prop"
 
   CONST               "const"
@@ -116,7 +154,7 @@
   IF                  "if"
 
 
-%token <qilang::ConstDataNodePtr>   STRING CONSTANT
+%token <qilang::LiteralNodePtr>   STRING CONSTANT
 %token <std::string>                ID
 
 // the first item here is the last to evaluate, the last item is the first
@@ -141,7 +179,7 @@
 %type<qilang::NodePtrVector> toplevel;
 toplevel:
   %empty         {}
-| toplevel.1 { context->root.insert(context->root.end(), $1.begin(), $1.end()); }
+| toplevel.1 { context->_result->ast.insert(context->_result->ast.end(), $1.begin(), $1.end()); }
 
 %type<qilang::NodePtrVector> toplevel.1;
 toplevel.1:
@@ -150,14 +188,22 @@ toplevel.1:
 
 %type<qilang::NodePtr> toplevel_def;
 toplevel_def:
-  object  { $$ = $1; }
-| iface   { $$ = $1; }
-| package { $$ = $1; }
-| import  { $$ = $1; }
-| const   { $$ = $1; }
-| struct  { $$ = $1; }
-| exp     { $$ = $1; }
+  object        { $$ = $1; }
+| iface         { $$ = $1; }
+| function_decl { $$ = $1; }
+| package       { $$ = $1; }
+| import        { $$ = $1; }
+| const         { $$ = $1; }
+| struct        { $$ = $1; }
+| typedef       { $$ = $1; }
+| enums         { $$ = $1; }
+| exp           { $$ = $1; }
 
+
+%type<qilang::StringVector> id_list;
+id_list:
+  ID             { $$.push_back($1); }
+| id_list "," ID { std::swap($$, $1); $$.push_back($3); }
 
 // #######################################################################################
 // # PACKAGE MANAGEMENT
@@ -165,18 +211,13 @@ toplevel_def:
 
 %type<qilang::NodePtr> package;
 package:
-  PACKAGE ID                       { $$ = boost::make_shared<qilang::PackageNode>($2, qilang::loc(@$));
-                                     context->setCurrentPackage($2);
-
-                                   }
+  PACKAGE ID                       { $$ = NODE1(PackageNode, @$, $2); }
 
 %type<qilang::NodePtr> import;
 import:
-  IMPORT ID                        { $$ = boost::make_shared<qilang::ImportNode>($2); }
-| FROM ID IMPORT import_defs       { $$ = boost::make_shared<qilang::ImportNode>($2, $4); }
-| FROM ID IMPORT "*"               { qilang::StringVector v;
-                                     v.push_back("*");
-                                     $$ = boost::make_shared<qilang::ImportNode>($2, v); }
+  IMPORT ID                        { $$ = NODE2(ImportNode, @$, qilang::ImportType_Package, $2); }
+| FROM ID IMPORT "*"               { $$ = NODE2(ImportNode, @$, qilang::ImportType_All, $2); }
+| FROM ID IMPORT import_defs       { $$ = NODE3(ImportNode, @$, qilang::ImportType_List, $2, $4); }
 
 %type<qilang::StringVector> import_defs;
 import_defs:
@@ -191,8 +232,8 @@ import_defs:
 
 %type<qilang::StmtNodePtr> object;
 object:
-  OBJECT type STRING object_defs END { qilang::StringConstDataNode* tnode = static_cast<qilang::StringConstDataNode*>($3.get());
-                                       $$ = boost::make_shared<qilang::ObjectDefNode>($2, tnode->value, $4); }
+  OBJECT type STRING object_defs END { qilang::StringLiteralNode* tnode = static_cast<qilang::StringLiteralNode*>($3.get());
+                                       $$ = NODE3(ObjectDefNode, @$, $2, tnode->value, $4); }
 
 %type<qilang::StmtNodePtrVector> object_defs;
 object_defs:
@@ -213,12 +254,12 @@ object_def:
 
 %type<qilang::StmtNodePtr> object_property;
 object_property:
-  ID ":" const_exp             { $$ = boost::make_shared<qilang::PropertyDefNode>($1, $3); }
+  ID ":" const_exp             { $$ = NODE2(PropertyDefNode, @$, $1, $3); }
 
 %type<qilang::StmtNodePtr> at_expr;
 at_expr:
-  AT ID ":" ID               { $$ = boost::make_shared<qilang::AtNode>($2, $4); }
-| AT ID ID END               { $$ = boost::make_shared<qilang::AtNode>($2, $3); }
+  AT exp ":" ID               { $$ = NODE2(AtNode, @$, $2, $4); }
+| AT exp ID END               { $$ = NODE2(AtNode, @$, $2, $3); }
 
 
 // #######################################################################################
@@ -226,15 +267,50 @@ at_expr:
 // #######################################################################################
 %type<qilang::TypeExprNodePtr> type;
 type:
-  ID                      { $$ = boost::make_shared<qilang::SimpleTypeExprNode>($1); }
-| "[" "]" type            { $$ = boost::make_shared<qilang::ListTypeExprNode>($3); }
-| "[" type "]" type       { $$ = boost::make_shared<qilang::MapTypeExprNode>($2, $4); }
-| "(" tuple_type_defs ")" { $$ = boost::make_shared<qilang::TupleTypeExprNode>($2); }
+  ID                      { $$ = makeType(@$, $1); }
+| "[" "]" type            { $$ = NODE1(ListTypeExprNode, @$, $3); }
+| "[" type "]" type       { $$ = NODE2(MapTypeExprNode, @$, $2, $4); }
+| "(" tuple_type_defs ")" { $$ = NODE1(TupleTypeExprNode, @$, $2); }
 
 %type<qilang::TypeExprNodePtrVector> tuple_type_defs;
 tuple_type_defs:
   type                      { $$.push_back($1); }
 | tuple_type_defs "," type  { std::swap($$, $1); $$.push_back($3); }
+
+
+// #######################################################################################
+// # TYPEDEF
+// #######################################################################################
+
+%type<qilang::DeclNodePtr> typedef;
+typedef:
+  TYPEDEF type ID           { $$ = NODE2(TypeDefDeclNode, @$, $3, $2); }
+
+
+
+// #######################################################################################
+// # ENUM
+// #######################################################################################
+
+%type<qilang::DeclNodePtr> enums;
+enums:
+  ENUM ID enums_defs END    { $$ = NODE2(EnumDeclNode, @$, $2, $3); }
+
+%type<qilang::EnumFieldDeclNodePtrVector> enums_defs;
+enums_defs:
+  %empty       {}
+| enums_defs.1 { std::swap($$, $1); }
+
+%type<qilang::EnumFieldDeclNodePtrVector> enums_defs.1;
+enums_defs.1:
+  enums_def               { $$.push_back($1); }
+| enums_defs.1 enums_def  { std::swap($$, $1); $$.push_back($2); }
+
+%type<qilang::EnumFieldDeclNodePtr> enums_def;
+enums_def:
+  const  { $$ = NODE2(EnumFieldDeclNode, @$, qilang::EnumFieldType_Const, $1); }
+| type   { $$ = NODE2(EnumFieldDeclNode, @$, qilang::EnumFieldType_Type, $1); }
+
 
 
 // #######################################################################################
@@ -244,8 +320,8 @@ tuple_type_defs:
 
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = boost::make_shared<qilang::InterfaceDeclNode>(context->currentPackage(), $2, $4, $6); }
-| INTERFACE ID interface_defs END                      { $$ = boost::make_shared<qilang::InterfaceDeclNode>(context->currentPackage(), $2, $3); }
+  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = NODE3(InterfaceDeclNode, @$, $2, $4, $6); }
+| INTERFACE ID interface_defs END                      { $$ = NODE2(InterfaceDeclNode, @$, $2, $3); }
 
 %type<qilang::StringVector> inherit_defs;
 inherit_defs:
@@ -276,33 +352,56 @@ interface_def:
 // fn foooo (t1, t2, t3) tret
 %type<qilang::DeclNodePtr> function_decl;
 function_decl:
-  FN  ID "(" function_args ")" function_arg { $$ = boost::make_shared<qilang::FnDeclNode>($2, $4, $6); }
-| FN  ID "(" function_args ")"              { $$ = boost::make_shared<qilang::FnDeclNode>($2, $4); }
+  FN  ID "(" param_list ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
+| FN  ID "(" param_list ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
 
 %type<qilang::DeclNodePtr> emit_decl;
 emit_decl:
-  EMIT ID "(" function_args ")"              { $$ = boost::make_shared<qilang::EmitDeclNode>($2, $4); }
+  EMIT ID "(" param_list ")"              { $$ = NODE2(EmitDeclNode, @$, $2, $4); }
 
 %type<qilang::DeclNodePtr> prop_decl;
 prop_decl:
-  PROP ID "(" function_args ")"             { $$ = boost::make_shared<qilang::PropDeclNode>($2, $4); }
+  PROP ID "(" param_list ")"             { $$ = NODE2(PropDeclNode, @$, $2, $4); }
 
 
-%type<qilang::TypeExprNodePtrVector> function_args;
-function_args:
+%type<qilang::ParamFieldDeclNodePtrVector> param_list;
+param_list:
   %empty                          {}
-| function_args.1                 { std::swap($$, $1); }
+| param_list.1                 { std::swap($$, $1); }
 
-%type<qilang::TypeExprNodePtrVector> function_args.1;
-function_args.1:
-  function_arg                      { $$.push_back($1); }
-| function_args.1 "," function_arg  { std::swap($$, $1);
-                                      $$.push_back($3); }
+%type<qilang::ParamFieldDeclNodePtrVector> param_list.1;
+param_list.1:
+  param                       { $$.push_back($1); }
+| param_list.1 "," param      { std::swap($$, $1);
+                                $$.push_back($3); }
+| param_list.1 "," param_end  { std::swap($$, $1);
+                                $$.insert($$.end(), $3.begin(), $3.end()); }
 
-%type<qilang::TypeExprNodePtr> function_arg;
-function_arg:
-  type    { $$ = $1; }
-| ID type { $$ = $2; } //TODO
+%type<qilang::ParamFieldDeclNodePtr> param;
+param:
+  ID                          { $$ = NODE1(ParamFieldDeclNode, @$, $1); }
+| ID type                     { $$ = NODE2(ParamFieldDeclNode, @$, $1, $2); }
+| "(" ID "," id_list ")" type { qilang::StringVector sv;
+                                sv.push_back($2);
+                                sv.insert(sv.end(), $4.begin(), $4.end());
+                                $$ = NODE2(ParamFieldDeclNode, @$, sv, $6);
+                              }
+
+%type<qilang::ParamFieldDeclNodePtrVector> param_end;
+param_end:
+  param_vargs                   { $$.push_back($1); }
+| param_kwargs                  { $$.push_back($1); }
+| param_vargs "," param_kwargs  { $$.push_back($1); $$.push_back($3); }
+
+%type<qilang::ParamFieldDeclNodePtr> param_vargs;
+param_vargs:
+  "*" ID             { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(VarArgTypeExprNode, @$), qilang::ParamFieldType_VarArgs); }
+| "*" ID type        { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(VarArgTypeExprNode, @$, $3), qilang::ParamFieldType_VarArgs); }
+
+%type<qilang::ParamFieldDeclNodePtr> param_kwargs;
+param_kwargs:
+  "*" "*" ID         { $$ = NODE3(ParamFieldDeclNode, @$, $3, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
+| "*" "*" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $3, NODE1(KeywordArgTypeExprNode, @$, $4), qilang::ParamFieldType_KeywordArgs); }
 
 
 // #######################################################################################
@@ -311,8 +410,8 @@ function_arg:
 
 %type<qilang::NodePtr> const;
 const:
-  CONST ID "=" const_exp    { $$ = boost::make_shared<qilang::ConstDeclNode>(context->currentPackage(), $2, $4); }
-| CONST ID type "=" const_exp { $$ = boost::make_shared<qilang::ConstDeclNode>(context->currentPackage(), $2, $3, $5); }
+  CONST ID "=" const_exp    { $$ = NODE2(ConstDeclNode, @$, $2, $4); }
+| CONST ID type "=" const_exp { $$ = NODE3(ConstDeclNode, @$, $2, $3, $5); }
 
 
 // #######################################################################################
@@ -320,21 +419,29 @@ const:
 // #######################################################################################
 %type<qilang::NodePtr> struct;
 struct:
-  STRUCT ID struct_field_defs END { $$ = boost::make_shared<qilang::StructDeclNode>(context->currentPackage(), $2, $3); }
+  STRUCT ID struct_field_defs END                      { $$ = NODE2(StructDeclNode, @$, $2, $3); }
+| STRUCT ID "(" inherit_defs ")" struct_field_defs END { $$ = NODE3(StructDeclNode, @$, $2, $4, $6); }
 
-%type<qilang::FieldDeclNodePtrVector> struct_field_defs;
+%type<qilang::DeclNodePtrVector> struct_field_defs;
 struct_field_defs:
   %empty  {}
 | struct_field_defs.1 { std::swap($$, $1); }
 
-%type<qilang::FieldDeclNodePtrVector> struct_field_defs.1;
+%type<qilang::DeclNodePtrVector> struct_field_defs.1;
 struct_field_defs.1:
-  struct_field_def                     { $$.push_back($1); }
-| struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.push_back($2); }
+  struct_field_def                     { std::swap($$, $1); }
+| struct_field_defs.1 struct_field_def { std::swap($$, $1); $$.insert($$.end(), $2.begin(), $2.end()); }
 
-%type<qilang::FieldDeclNodePtr> struct_field_def;
+%type<qilang::DeclNodePtrVector> struct_field_def;
 struct_field_def:
-  ID type   { $$ = boost::make_shared<qilang::FieldDeclNode>($1, $2); }
+  ID type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $2)); }
+// force the ID "," here to avoid reduce conflict between this rules and 'ID type'
+| ID "," id_list type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $4));
+                         for (unsigned i = 0; i < $3.size(); ++i) {
+                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $4));
+                         }
+                       }
+| interface_def        { $$.push_back($1); }
 
 
 // #######################################################################################
@@ -347,60 +454,69 @@ struct_field_def:
 
 %type<qilang::ExprNodePtr> exp;
 exp:
-  exp "+" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Plus);}
-| exp "-" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Minus);}
-| exp "/" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Divide);}
-| exp "*" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Multiply);}
-| exp "%" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Modulus);}
-| exp "^" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Xor);}
-| exp "|" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Or);}
-| exp "&" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_And);}
+  exp "+" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Plus);}
+| exp "-" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Minus);}
+| exp "/" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Divide);}
+| exp "*" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Multiply);}
+| exp "%" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Modulus);}
+| exp "^" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Xor);}
+| exp "|" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Or);}
+| exp "&" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_And);}
 
 exp:
-  "!" exp { $$ = boost::make_shared<qilang::UnaryOpExprNode>($2, qilang::UnaryOpCode_Negate);}
-| "-" exp { $$ = boost::make_shared<qilang::UnaryOpExprNode>($2, qilang::UnaryOpCode_Minus);}
+  "!" exp { $$ = NODE2(UnaryOpExprNode, @$, $2, qilang::UnaryOpCode_Negate);}
+| "-" exp { $$ = NODE2(UnaryOpExprNode, @$, $2, qilang::UnaryOpCode_Minus);}
 
 exp:
-  exp "||" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_BoolOr);}
-| exp "&&" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_BoolAnd);}
+  exp "||" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_BoolOr);}
+| exp "&&" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_BoolAnd);}
 
 exp:
-  const_exp { $$ = boost::make_shared<qilang::ConstDataExprNode>($1); }
+  const_exp { $$ = NODE1(LiteralExprNode, @$, $1); }
 
 exp:
-  ID       { $$ = boost::make_shared<qilang::VarExprNode>($1); }
+  ID       { $$ = NODE1(VarExprNode, @$, $1); }
 
 exp:
-   exp "==" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_EqEq);}
-|  exp "<"  exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Lt);}
-|  exp "<=" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Le);}
-|  exp ">"  exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Gt);}
-|  exp ">=" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Ge);}
-|  exp "!=" exp { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_Ne);}
+   exp "==" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_EqEq);}
+|  exp "<"  exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Lt);}
+|  exp "<=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Le);}
+|  exp ">"  exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Gt);}
+|  exp ">=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Ge);}
+|  exp "!=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Ne);}
 
 exp:
   "(" exp ")" { $$ = $2; }
 
 exp:
-  exp "[" exp "]" { $$ = boost::make_shared<qilang::BinaryOpExprNode>($1, $3, qilang::BinaryOpCode_FetchArray);}
+  exp "[" exp "]" { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_FetchArray);}
+
+exp:
+  ID "(" ")"          { $$ = NODE1(CallExprNode, @$, $1); }
+| ID "(" exp_list ")" { $$ = NODE2(CallExprNode, @$, $1, $3); }
+
+%type<qilang::ExprNodePtrVector> exp_list;
+exp_list:
+  exp               { $$.push_back($1); }
+| exp_list "," exp  { std::swap($$, $1); $$.push_back($3); }
 
 
 // #######################################################################################
 // # CONST DATA
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> const_data;
+%type<qilang::LiteralNodePtr> const_data;
 const_data:
   CONSTANT { $$ = $1; }
 | STRING   { $$ = $1; }
-| TRUE     { $$ = boost::make_shared<qilang::BoolConstDataNode>(true); }
-| FALSE    { $$ = boost::make_shared<qilang::BoolConstDataNode>(false); }
+| TRUE     { $$ = NODE1(BoolLiteralNode, @$, true); }
+| FALSE    { $$ = NODE1(BoolLiteralNode, @$, false); }
 | dict     { $$ = $1; }
 | list     { $$ = $1; }
 | tuple    { $$ = $1; }
 
 //later it will be more
-%type<qilang::ConstDataNodePtr> const_exp;
+%type<qilang::LiteralNodePtr> const_exp;
 const_exp:
   const_data { std::swap($$, $1); }
 
@@ -409,22 +525,22 @@ const_exp:
 // # CONST DATA: Dict
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> dict;
+%type<qilang::LiteralNodePtr> dict;
 dict:
-  "{" dict_defs "}" { $$ = boost::make_shared<qilang::DictConstDataNode>($2); }
+  "{" dict_defs "}" { $$ = NODE1(DictLiteralNode, @$, $2); }
 
-%type<qilang::ConstDataNodePtrPairVector> dict_defs;
+%type<qilang::LiteralNodePtrPairVector> dict_defs;
 dict_defs:
   %empty      {}
 | dict_defs.1 { std::swap($$, $1); }
 
-%type<qilang::ConstDataNodePtrPairVector> dict_defs.1;
+%type<qilang::LiteralNodePtrPairVector> dict_defs.1;
 dict_defs.1:
   dict_def               { $$.push_back($1); }
 | dict_defs "," dict_def { std::swap($$, $1); $$.push_back($3); }
 
 
-%type<qilang::ConstDataNodePtrPair> dict_def;
+%type<qilang::LiteralNodePtrPair> dict_def;
 dict_def:
   const_exp ":" const_exp { $$ = std::make_pair($1, $3); }
 
@@ -433,20 +549,26 @@ dict_def:
 // # CONST DATA: List & Tuple
 // #######################################################################################
 
-%type<qilang::ConstDataNodePtr> list;
+%type<qilang::LiteralNodePtr> list;
 list:
-  "(" list_defs ")" { $$ = boost::make_shared<qilang::ListConstDataNode>($2); }
+  "[" list_defs "]" { $$ = NODE1(ListLiteralNode, @$, $2); }
 
-%type<qilang::ConstDataNodePtr> tuple;
+%type<qilang::LiteralNodePtr> tuple;
 tuple:
-  "[" list_defs "]" { $$ = boost::make_shared<qilang::TupleConstDataNode>($2); }
+  "(" ")"           { qilang::LiteralNodePtrVector empty;
+                      $$ = NODE1(TupleLiteralNode, @$, empty);
+                    }
+//1 elt tuple conflict with (exp), force the ","
+| "(" const_exp "," list_defs ")" { $4.insert($4.begin(), $2);
+                                    $$ = NODE1(TupleLiteralNode, @$, $4);
+                                  }
 
-%type<qilang::ConstDataNodePtrVector> list_defs;
+%type<qilang::LiteralNodePtrVector> list_defs;
 list_defs:
   %empty       {}
 | list_defs.1  { std::swap($$, $1); }
 
-%type<qilang::ConstDataNodePtrVector> list_defs.1;
+%type<qilang::LiteralNodePtrVector> list_defs.1;
 list_defs.1:
   const_exp                 { $$.push_back($1); }
 | list_defs.1 "," const_exp { std::swap($$, $1); $$.push_back($3); }
@@ -455,11 +577,7 @@ list_defs.1:
 
 %%
 
-
 void yy::parser::error(const yy::parser::location_type& loc, const std::string& msg)
 {
-  std::stringstream ss;
-  ss << "error: " << loc << ": " << msg << std::endl;
-  ss << qilang::getErrorLine(loc);
-  throw std::runtime_error(ss.str());
+  throw qilang::ParseException(qilang::makeLocation(loc), msg);
 }

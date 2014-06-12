@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <qilang/node.hpp>
+#include <qilang/packagemanager.hpp>
 #include "formatter_p.hpp"
 
 namespace qilang {
@@ -22,36 +23,38 @@ namespace qilang {
    */
   class CppTypeFormatter: public TypeExprNodeFormatter {
   public:
+    //should we add const if possible? (for function params)
+    //contextual disable const ref.  (const std::vector<std::string>&)
+    FormatAttr constattr;
+
     explicit CppTypeFormatter();
 
     virtual void acceptTypeExpr(const TypeExprNodePtr& node);
 
-    const std::string& noconst(TypeExprNodePtr node);
-    const std::string& addconst();
-    const std::string& addref();
+    void unconstify(TypeExprNodePtr node);
 
     //ask for a const ref expression.
-    const std::string& consttype(const TypeExprNodePtr& node);
+    void constify(const TypeExprNodePtr& node);
 
-    void visitTypeExpr(SimpleTypeExprNode* node);
+    void visitTypeExpr(BuiltinTypeExprNode* node);
+    void visitTypeExpr(CustomTypeExprNode* node);
     void visitTypeExpr(ListTypeExprNode* node);
     void visitTypeExpr(MapTypeExprNode* node);
     void visitTypeExpr(TupleTypeExprNode* node);
-
-    int addconstref;   //should we add const if possible? (for function params)
-    int noconstref;    //contextual disable const ref.  (const std::vector<std::string>&)
+    void visitTypeExpr(VarArgTypeExprNode* node);
+    void visitTypeExpr(KeywordArgTypeExprNode* node);
   };
 
-  class DataCppFormatter : public ConstDataNodeFormatter {
+  class DataCppFormatter : public LiteralNodeFormatter {
   public:
-    virtual void acceptData(const ConstDataNodePtr& node);
-    void visitData(BoolConstDataNode *node);
-    void visitData(IntConstDataNode *node);
-    void visitData(FloatConstDataNode *node);
-    void visitData(StringConstDataNode *node);
-    void visitData(TupleConstDataNode* node);
-    void visitData(ListConstDataNode* node);
-    void visitData(DictConstDataNode* node);
+    virtual void acceptData(const LiteralNodePtr& node);
+    void visitData(BoolLiteralNode *node);
+    void visitData(IntLiteralNode *node);
+    void visitData(FloatLiteralNode *node);
+    void visitData(StringLiteralNode *node);
+    void visitData(TupleLiteralNode* node);
+    void visitData(ListLiteralNode* node);
+    void visitData(DictLiteralNode* node);
   };
 
   class ExprCppFormatter : public ExprNodeFormatter, virtual public DataCppFormatter {
@@ -61,11 +64,33 @@ namespace qilang {
     void visitExpr(BinaryOpExprNode *node);
     void visitExpr(UnaryOpExprNode *node);
     void visitExpr(VarExprNode *node);
-    void visitExpr(ConstDataExprNode* node);
+    void visitExpr(LiteralExprNode* node);
+    void visitExpr(CallExprNode* node);
   };
 
 
+  // if self == true then and include on self is returned
+  StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResultPtr& nodes, bool self);
+
   //std::string typeToCpp(TypeExprNode* type, bool constref=true);
+  //pkgName to include dir
+  std::string pkgNameToDir(const std::string& name);
+
+  //pkgName to *_API var
+  std::string pkgNameToAPI(const std::string& name);
+
   std::vector<std::string> splitPkgName(const std::string& name);
   std::string formatNs(const std::string& package);
+
+  std::string filenameToCppHeaderGuard(const std::string& pkgName, const std::string& filename);
+
+  void formatBlock(std::ostream& os, const std::string& name, const std::string& sep, int indent);
+
+  enum CppParamsFormat {
+    CppParamsFormat_Normal,
+    CppParamsFormat_TypeOnly,
+    CppParamsFormat_NameOnly,
+  };
+  void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector node, CppParamsFormat cfpt = CppParamsFormat_Normal);
+
 }
