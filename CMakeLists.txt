@@ -33,8 +33,8 @@ set(C src/codegen.cpp
       src/qilang_signature.cpp
       src/qilang_metaobject.cpp)
 
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
+find_package(FLEX NO_MODULE REQUIRED)
+find_package(BISON NO_MODULE REQUIRED)
 
 add_definitions("-DYYDEBUG")
 
@@ -42,7 +42,7 @@ qi_generate_src(
   ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
    SRC src/token.l src/grammar.y
    COMMENT "flexing ..."
-   COMMAND ${FLEX_EXECUTABLE} -o lex.y.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/token.l
+   COMMAND ${FLEX_EXECUTABLE} --batch -o lex.y.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/token.l
 )
 
 qi_generate_src(
@@ -56,6 +56,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("src")
 
 qi_create_lib(qilang
+  SHARED
   ${H}
   ${C}
   ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp

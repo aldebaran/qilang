@@ -78,7 +78,16 @@
 
 #define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
 
-  static void qilang_readsome(qilang::Parser* p, char* buf, size_t *result, size_t max_size)
+#ifdef _WIN32
+  static bool isatty(int fp) {
+    return false;
+  }
+#endif
+#ifdef _WIN32
+  static void qilang_readsome(qilang::Parser* p, char* buf, int *result, size_t max_size)
+#else
+  static void qilang_readsome(qilang::Parser* p, char* buf, yy_size_t *result, size_t max_size)
+#endif
   {
     if (p->file->in().eof() || p->file->in().fail()) {
       *result = 0;
