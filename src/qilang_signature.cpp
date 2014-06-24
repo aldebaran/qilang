@@ -9,9 +9,9 @@
 #include <cstring>
 #include <qi/log.hpp>
 #include <qilang/parser.hpp>
-#include <qitype/signature.hpp>
+#include <qi/signature.hpp>
 #include <boost/algorithm/string.hpp>
-#include <qitype/metaobject.hpp>
+#include <qi/type/metaobject.hpp>
 
 namespace qilang {
 

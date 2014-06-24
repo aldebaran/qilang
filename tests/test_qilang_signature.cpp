@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include <qimessaging/applicationsession.hpp>
+#include <qi/applicationsession.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
 #include <qilang/parser.hpp>

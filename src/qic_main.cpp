@@ -6,7 +6,7 @@
 */
 
 #include <iostream>
-#include <qimessaging/applicationsession.hpp>
+#include <qi/applicationsession.hpp>
 #include <qi/log.hpp>
 #include <fstream>
 #include <qilang/node.hpp>
@@ -14,7 +14,7 @@
 #include <qilang/formatter.hpp>
 #include <qilang/packagemanager.hpp>
 #include <boost/program_options.hpp>
-#include <qimessaging/session.hpp>
+#include <qi/session.hpp>
 
 qiLogCategory("qic");
 namespace po = boost::program_options;
