@@ -395,9 +395,9 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         if (tnode->value == "str") {
           pushIfNot(includes, "<string>");
         } else if (tnode->value == "any") {
-          pushIfNot(includes, "<qitype/anyvalue.hpp>");
+          pushIfNot(includes, "<qi/anyvalue.hpp>");
         } else if (tnode->value == "obj") {
-          pushIfNot(includes, "<qitype/anyobject.hpp>");
+          pushIfNot(includes, "<qi/anyobject.hpp>");
         } else {
           pushIfNot(includes, "<qi/types.hpp>");
         }
@@ -405,7 +405,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
       }
       case NodeType_KeywordArgTypeExpr:
       case NodeType_VarArgTypeExpr: {
-        pushIfNot(includes, "<qitype/anyfunction.hpp>");
+        pushIfNot(includes, "<qi/anyfunction.hpp>");
         break;
       }
       case NodeType_CustomTypeExpr: {
@@ -427,13 +427,13 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
     NodePtr& node = decls.at(i);
     switch (node->type()) {
       case NodeType_EmitDecl:
-        pushIfNot(includes, "<qitype/signal.hpp>");
+        pushIfNot(includes, "<qi/signal.hpp>");
         break;
       case NodeType_PropDecl:
-        pushIfNot(includes, "<qitype/property.hpp>");
+        pushIfNot(includes, "<qi/property.hpp>");
         break;
       case NodeType_InterfaceDecl:
-        pushIfNot(includes, "<qitype/anyobject.hpp>");
+        pushIfNot(includes, "<qi/anyobject.hpp>");
         break;
       default:
         break;

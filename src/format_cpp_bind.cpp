@@ -63,7 +63,7 @@ public:
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
-    indent() << "#include <qitype/objecttypebuilder.hpp>" << std::endl;
+    indent() << "#include <qi/type/objecttypebuilder.hpp>" << std::endl;
     for (unsigned i = 0; i < _includes.size(); ++i) {
       indent() << "#include " << _includes.at(i) << std::endl;
     }
