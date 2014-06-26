@@ -59,6 +59,8 @@ qi_create_lib(qilang
   SHARED
   ${H}
   ${C}
+  src/grammar.y
+  src/token.l
   ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp)
 
