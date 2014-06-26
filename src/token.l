@@ -127,6 +127,7 @@ FLOAT    {UFLOAT}
 "!"             RETURN_OP(BANG);
 "%"             RETURN_OP(PERCENT);
 "*"             RETURN_OP(STAR);
+"**"            RETURN_OP(STARSTAR);
 "+"             RETURN_OP(PLUS);
 "-"             RETURN_OP(MINUS);
 "/"             RETURN_OP(SLASH);
