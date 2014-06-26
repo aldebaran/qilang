@@ -17,14 +17,20 @@ qiLogCategory("qigen.cppremote");
 
 namespace qilang {
 
-  class CppRemoteGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
+  //Generate Type Registration Information
+  class CppRemoteQiLangGen: public CppTypeFormatter
+  {
   public:
-    CppRemoteGenFormatter()
+    CppRemoteQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
+      : toclose(0)
+      , _includes(includes)
     {}
 
-    FormatAttr methodAttr;
+    void doAccept(Node* node) { node->accept(this); }
 
-    virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
+    int          toclose;
+    StringVector _includes;
+    FormatAttr   methodAttr;
 
     void visitDecl(InterfaceDeclNode* node) {
       indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface";
@@ -60,7 +66,7 @@ namespace qilang {
 
 
         for (unsigned int i = 0; i < node->values.size(); ++i) {
-          acceptDecl(node->values.at(i));
+          accept(node->values.at(i));
         }
       }
       out() << std::endl;
@@ -71,7 +77,7 @@ namespace qilang {
 
     void walkParams(const ParamFieldDeclNodePtrVector& params) {
       for (unsigned i = 0; i < params.size(); ++i) {
-        acceptDecl(params.at(i));
+        accept(params.at(i));
         if (i + 1 < params.size())
           out() << ", ";
       }
@@ -87,7 +93,7 @@ namespace qilang {
       if (!methodAttr.isActive())
         return;
       indent();
-      acceptTypeExpr(node->effectiveRet());
+      accept(node->effectiveRet());
       out() << " " << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
@@ -96,7 +102,7 @@ namespace qilang {
         if (!node->hasNoReturn())
         {
           indent() << "return _obj.call< ";
-          acceptTypeExpr(node->ret);
+          accept(node->ret);
           out() << " >(";
         }
         else
@@ -135,45 +141,6 @@ namespace qilang {
       qiLogError() << "TypeDefDeclNode not implemented";
     }
 
-  };
-
-//Generate Type Registration Information
-class CppRemoteQiLangGen: public FileFormatter,
-                          public StmtNodeFormatter,
-                          public CppRemoteGenFormatter
-{
-public:
-  CppRemoteQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
-    : toclose(0)
-    , _includes(includes)
-  {}
-
-  int toclose;
-  StringVector _includes;
-
-  virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
-
-  virtual void accept(const NodePtr& node) {
-    switch (node->kind()) {
-    case NodeKind_Literal:
-      acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
-      break;
-    case NodeKind_Decl:
-      acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
-      break;
-    case NodeKind_Expr:
-      acceptExpr(boost::dynamic_pointer_cast<ExprNode>(node));
-      break;
-    case NodeKind_Stmt:
-      acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
-      break;
-    case NodeKind_TypeExpr:
-      acceptTypeExpr(boost::dynamic_pointer_cast<TypeExprNode>(node));
-      break;
-    }
-  }
-
-
   void formatHeader() {
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
@@ -191,7 +158,6 @@ public:
     }
   }
 
-protected:
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
     for (unsigned int i = 0; i < ns.size(); ++i) {

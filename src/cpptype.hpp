@@ -21,7 +21,7 @@ namespace qilang {
    *  noconst increment noconstref to avoid constref even when they are asked.
    *  Think string in a vector.
    */
-  class CppTypeFormatter: public TypeExprNodeFormatter {
+  class CppTypeFormatter: public NodeFormatter {
   public:
     //should we add const if possible? (for function params)
     //contextual disable const ref.  (const std::vector<std::string>&)
@@ -29,7 +29,7 @@ namespace qilang {
 
     explicit CppTypeFormatter();
 
-    virtual void acceptTypeExpr(const TypeExprNodePtr& node);
+    virtual void doAccept(Node* node) { node->accept(this); }
 
     void unconstify(TypeExprNodePtr node);
 
@@ -43,11 +43,7 @@ namespace qilang {
     void visitTypeExpr(TupleTypeExprNode* node);
     void visitTypeExpr(VarArgTypeExprNode* node);
     void visitTypeExpr(KeywordArgTypeExprNode* node);
-  };
 
-  class DataCppFormatter : public LiteralNodeFormatter {
-  public:
-    virtual void acceptData(const LiteralNodePtr& node);
     void visitData(BoolLiteralNode *node);
     void visitData(IntLiteralNode *node);
     void visitData(FloatLiteralNode *node);
@@ -55,11 +51,6 @@ namespace qilang {
     void visitData(TupleLiteralNode* node);
     void visitData(ListLiteralNode* node);
     void visitData(DictLiteralNode* node);
-  };
-
-  class ExprCppFormatter : public ExprNodeFormatter, virtual public DataCppFormatter {
-  public:
-    virtual void acceptExpr(const ExprNodePtr& node) { node->accept(this); }
 
     void visitExpr(BinaryOpExprNode *node);
     void visitExpr(UnaryOpExprNode *node);

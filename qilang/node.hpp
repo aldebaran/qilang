@@ -144,10 +144,20 @@ typedef std::vector<CommentNodePtr>           CommentNodePtrVector;
 
 /* All Statements
  */
-class DeclNodeVisitor {
-public:
-  virtual void acceptDecl(const DeclNodePtr& node) = 0;
+class NodeVisitor {
+protected:
+  //to be implemented by the top level visitor
+  virtual void doAccept(Node* node) = 0;
 
+public:
+  template <typename T>
+  void accept(const boost::shared_ptr<T>& nodeptr) {
+    doAccept(nodeptr.get());
+  }
+
+  //##### #### #####
+  //##### DECL
+  //##### #### #####
   // Interface Declaration
   virtual void visitDecl(InterfaceDeclNode* node) = 0;
   virtual void visitDecl(FnDeclNode* node) = 0;
@@ -166,12 +176,10 @@ public:
   // Enum
   virtual void visitDecl(EnumDeclNode* node) = 0;
   virtual void visitDecl(EnumFieldDeclNode* node) = 0;
-};
 
-class StmtNodeVisitor {
-public:
-  virtual void acceptStmt(const StmtNodePtr& node) = 0;
-
+  //##### #### #####
+  //##### STMT
+  //##### #### #####
   // Package Management
   virtual void visitStmt(PackageNode* node) = 0;
   virtual void visitStmt(ImportNode* node) = 0;
@@ -185,27 +193,19 @@ public:
   virtual void visitStmt(VarDefNode* node) = 0;
 
   virtual void visitStmt(CommentNode* node) = 0;
-};
 
-
-class ExprNodeVisitor {
-public:
-  virtual void acceptExpr(const ExprNodePtr& node) = 0;
-
-  // Expr
+  //##### #### #####
+  //##### Expr
+  //##### #### #####
   virtual void visitExpr(BinaryOpExprNode* node) = 0;
   virtual void visitExpr(UnaryOpExprNode* node) = 0;
   virtual void visitExpr(VarExprNode* node) = 0;
   virtual void visitExpr(LiteralExprNode* node) = 0;
   virtual void visitExpr(CallExprNode* node) = 0;
-};
 
-/** Const Data Expression Visitor
- */
-class LiteralNodeVisitor {
-public:
-  virtual void acceptData(const LiteralNodePtr& node) = 0;
-
+  //##### #### #####
+  //##### Data
+  //##### #### #####
   virtual void visitData(BoolLiteralNode* node) = 0;
   virtual void visitData(IntLiteralNode* node) = 0;
   virtual void visitData(FloatLiteralNode* node) = 0;
@@ -213,15 +213,10 @@ public:
   virtual void visitData(TupleLiteralNode* node) = 0;
   virtual void visitData(ListLiteralNode* node) = 0;
   virtual void visitData(DictLiteralNode* node) = 0;
-};
 
-/** Type Expression Visitor
- */
-class TypeExprNodeVisitor {
-protected:
-public:
-  virtual void acceptTypeExpr(const TypeExprNodePtr& node) = 0;
-
+  //##### #### #####
+  //##### TypeExpr
+  //##### #### #####
   virtual void visitTypeExpr(BuiltinTypeExprNode* node) = 0;
   virtual void visitTypeExpr(CustomTypeExprNode* node) = 0;
   virtual void visitTypeExpr(ListTypeExprNode* node) = 0;
@@ -297,6 +292,8 @@ public:
   NodeType type() const { return _type; }
   Location loc() const { return _loc; }
 
+  virtual void accept(NodeVisitor *visitor) = 0;
+
 private:
   NodeKind _kind;
   NodeType _type;
@@ -348,7 +345,7 @@ protected:
     : Node(NodeKind_Expr, type, loc)
   {}
 public:
-  virtual void accept(ExprNodeVisitor *visitor) = 0;
+  virtual void accept(NodeVisitor *visitor) = 0;
 };
 
 class QILANG_API BinaryOpExprNode : public ExprNode {
@@ -360,7 +357,7 @@ public:
     , right(right)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitExpr(this); }
 
   BinaryOpCode op;
   ExprNodePtr  left;
@@ -375,7 +372,7 @@ public:
     , expr(node)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitExpr(this); }
 
   UnaryOpCode op;
   ExprNodePtr expr;
@@ -393,7 +390,7 @@ public:
     , args(args)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitExpr(this); }
 
   std::string       name;
   ExprNodePtrVector args;
@@ -406,7 +403,7 @@ public:
     , value(name)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitExpr(this); }
 
   std::string value;
 };
@@ -418,7 +415,7 @@ public:
     , data(data)
   {}
 
-  void accept(ExprNodeVisitor* visitor) { visitor->visitExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitExpr(this); }
 
   LiteralNodePtr data;
 };
@@ -432,7 +429,7 @@ public:
     : Node(NodeKind_Literal, type, loc)
   {}
 
-  virtual void accept(LiteralNodeVisitor* visitor) = 0;
+  virtual void accept(NodeVisitor* visitor) = 0;
 };
 
 class QILANG_API BoolLiteralNode: public LiteralNode {
@@ -442,7 +439,7 @@ public:
     , value(val)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   bool value;
 };
@@ -454,7 +451,7 @@ public:
     , value(val)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   qi::uint64_t value;
 };
@@ -466,7 +463,7 @@ public:
     , value(val)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   double value;
 };
@@ -478,7 +475,7 @@ public:
     , value(value)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   const std::string value;
 };
@@ -490,7 +487,7 @@ public:
     , values(values)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   LiteralNodePtrVector values;
 };
@@ -502,7 +499,7 @@ public:
     , values(values)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   LiteralNodePtrVector values;
 };
@@ -514,7 +511,7 @@ public:
     , values(values)
   {}
 
-  void accept(LiteralNodeVisitor* visitor) { visitor->visitData(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitData(this); }
 
   LiteralNodePtrPairVector values;
 };
@@ -529,7 +526,7 @@ public:
     : Node(NodeKind_TypeExpr, type, loc)
   {}
 
-  virtual void accept(TypeExprNodeVisitor* visitor) = 0;
+  virtual void accept(NodeVisitor* visitor) = 0;
 };
 
 // ### WARNING ###
@@ -566,7 +563,7 @@ public:
     //TODO: check sym is know and match builtinType
   }
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   BuiltinType builtinType;
   std::string value;
@@ -579,7 +576,7 @@ public:
     , value(sym)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   std::string resolved_package;
   std::string resolved_value;
@@ -593,7 +590,7 @@ public:
     , element(element)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr element;
 };
@@ -615,7 +612,7 @@ public:
     return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
   }
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr element;
 };
@@ -628,7 +625,7 @@ public:
     , value(value)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr key;
   TypeExprNodePtr value;
@@ -650,7 +647,7 @@ public:
     return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
   }
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtr value;
 };
@@ -662,7 +659,7 @@ public:
     , elements(elements)
   {}
 
-  void accept(TypeExprNodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
 
   TypeExprNodePtrVector elements;
 };
@@ -679,7 +676,7 @@ public:
     : Node(NodeKind_Stmt, type, loc)
   {}
 
-  virtual void accept(StmtNodeVisitor* visitor) = 0;
+  virtual void accept(NodeVisitor* visitor) = 0;
 };
 
 class QILANG_API PackageNode : public StmtNode {
@@ -689,7 +686,7 @@ public:
     , name(packageName)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string name;
@@ -720,7 +717,7 @@ public:
       throw std::runtime_error("Empty import list");
   }
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
 public:
   std::string  name;
@@ -751,7 +748,7 @@ public:
     return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
   }
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
   TypeExprNodePtr  type;
@@ -767,7 +764,7 @@ public:
     , values(defs)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
   TypeExprNodePtr   type;
   std::string       name;
@@ -782,7 +779,7 @@ public:
     , data(data)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      name;
   LiteralNodePtr data;
@@ -796,7 +793,7 @@ public:
     , receiver(receiver)
   {}
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
   //TODO: remove me. (this is only for compat reason atm)
   std::string sender();
@@ -814,7 +811,7 @@ public:
   {}
 
 
-  void accept(StmtNodeVisitor* visitor) { visitor->visitStmt(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
 
   std::string      comments;
 };
@@ -830,7 +827,7 @@ public:
     : Node(NodeKind_Decl, type, loc)
   {}
 
-  virtual void accept(DeclNodeVisitor* visitor) = 0;
+  virtual void accept(NodeVisitor* visitor) = 0;
 };
 
 class QILANG_API TypeDefDeclNode : public DeclNode
@@ -842,7 +839,7 @@ public:
     , type(type)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string     name;
   TypeExprNodePtr type;
@@ -862,7 +859,7 @@ public:
     , node(node)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   EnumFieldType   fieldType;
   NodePtr         node;
@@ -881,7 +878,7 @@ public:
     , fields(fields)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string                name;
   EnumFieldDeclNodePtrVector fields;
@@ -908,7 +905,7 @@ public:
     return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
   }
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   StringVector    names;  //at least one
   TypeExprNodePtr type;
@@ -934,7 +931,7 @@ public:
     , decls(decls)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string       package;
   std::string       name;
@@ -957,7 +954,7 @@ public:
     , inherits(inherits)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string       name;
   DeclNodePtrVector values;
@@ -1006,7 +1003,7 @@ public:
     , paramType(ParamFieldType_Normal)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   bool isVarArgs()     { return paramType == ParamFieldType_VarArgs; }
   bool isKeywordArgs() { return paramType == ParamFieldType_KeywordArgs; }
@@ -1111,7 +1108,7 @@ public:
       return true;
     return false;
   }
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   TypeExprNodePtr             effectiveRet() {
     if (ret)
@@ -1135,7 +1132,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
   std::string                 name;
@@ -1150,7 +1147,7 @@ public:
     , args(args)
   {}
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
 public:
   std::string                 name;
@@ -1178,7 +1175,7 @@ public:
     return boost::make_shared<BuiltinTypeExprNode>(BuiltinType_Value, "any", loc());
   }
 
-  void accept(DeclNodeVisitor* visitor) { visitor->visitDecl(this); }
+  void accept(NodeVisitor* visitor) { visitor->visitDecl(this); }
 
   std::string      name;
   TypeExprNodePtr  type;

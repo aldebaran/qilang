@@ -18,11 +18,7 @@ qiLogCategory("qigen.cppbind");
 namespace qilang {
 
 //Generate Type Registration Information
-class CppBindQiLangGen  : public FileFormatter,
-                          public StmtNodeFormatter,
-                          public DeclNodeFormatter,
-                          virtual public CppTypeFormatter,
-                          virtual public ExprCppFormatter
+class CppBindQiLangGen  : public CppTypeFormatter
 {
 public:
   CppBindQiLangGen(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
@@ -32,32 +28,15 @@ public:
     , id(0)
   {}
 
+  virtual void doAccept(Node* node) { node->accept(this); }
+
   int toclose;
   StringVector _includes;
   const ParseResultPtr& _pr;
+  FormatAttr methodAttr;
 
-  virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
-
-  virtual void accept(const NodePtr& node) {
-    switch (node->kind()) {
-    case NodeKind_Literal:
-      acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
-      break;
-    case NodeKind_Decl:
-      acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
-      break;
-    case NodeKind_Expr:
-      acceptExpr(boost::dynamic_pointer_cast<ExprNode>(node));
-      break;
-    case NodeKind_Stmt:
-      acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
-      break;
-    case NodeKind_TypeExpr:
-      acceptTypeExpr(boost::dynamic_pointer_cast<TypeExprNode>(node));
-      break;
-    }
-  }
-
+  int id;
+  std::string currentParent;
 
   void formatHeader() {
     indent() << "/*" << std::endl;
@@ -76,14 +55,6 @@ public:
     }
   }
 
-protected:
-  FormatAttr methodAttr;
-
-  int id;
-  std::string currentParent;
-
-  virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
-
   void visitDecl(InterfaceDeclNode* node) {
     int current = id;
     id++;
@@ -97,7 +68,7 @@ protected:
         indent() << "builder.inherits< " << node->inherits.at(i) << "Interface >();" << std::endl;
       }
       for (unsigned int i = 0; i < node->values.size(); ++i) {
-        acceptDecl(node->values.at(i));
+        accept(node->values.at(i));
       }
       indent() << "builder.registerType();" << std::endl;
 
@@ -114,7 +85,7 @@ protected:
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
       indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
-      acceptTypeExpr(node->effectiveRet());
+      accept(node->effectiveRet());
       out() << "(" << currentParent << "::*)(";
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << ") >(&" << currentParent << "::" << node->name;
@@ -135,7 +106,7 @@ protected:
     return;
     indent() << "QI_REGISTER_STRUCT(" << node->name << ", ";
     for (unsigned int i = 0; i < node->decls.size(); ++i) {
-      acceptDecl(node->decls.at(i));
+      accept(node->decls.at(i));
       if (i + 1 < node->decls.size())
         out() << ", ";
     }
@@ -156,7 +127,6 @@ protected:
   void visitDecl(TypeDefDeclNode* node) {
     qiLogError() << "TypeDefDeclNode not implemented";
   }
-
 
   void visitStmt(PackageNode* node) {
     std::vector<std::string> ns = splitPkgName(node->name);
