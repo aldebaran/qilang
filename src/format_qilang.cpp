@@ -113,7 +113,7 @@ namespace qilang {
 
     // a, ..., z
     void declParamList(const std::string& declname, const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
-      if (comment && comment->comments.empty())
+      if (comment && !comment->comments.empty())
         indent() << comment->comments << std::endl;
       indent() << declname << " " << name << "(";
       join(vec, ", ");
