@@ -15,7 +15,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 qi_gen_idl(idlsrc CPP qilang2 ${CMAKE_CURRENT_BINARY_DIR} qilang2/node.idl.qi)
 qi_create_lib(qilang2 ${idlsrc} src/nodeimpl.cpp)
-qi_use_lib(qilang2 qi qitype qimessaging)
+qi_use_lib(qilang2 qi)
 qi_stage_lib(qilang2)
 
 add_dependencies(qilang2 qi_idl_qilang2)

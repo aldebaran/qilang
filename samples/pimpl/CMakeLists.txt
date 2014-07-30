@@ -19,7 +19,7 @@ qi_gen_idl(titi_idlsrc CPP "titi" "${CMAKE_CURRENT_BINARY_DIR}"  ${IDL_TITI})
 qi_create_lib(qipimpl ${C} ${pimpl_idlsrc} ${titi_idlsrc})
 add_dependencies(qipimpl pimpl_idl_target titi_idl_target)
 
-qi_use_lib(qipimpl qi qitype qimessaging)
+qi_use_lib(qipimpl qi)
 qi_stage_lib(qipimpl)
 
 

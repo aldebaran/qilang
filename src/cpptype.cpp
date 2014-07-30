@@ -68,11 +68,6 @@ static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
 }
 
 
-void CppTypeFormatter::acceptTypeExpr(const TypeExprNodePtr& node) {
-  node->accept(this);
-}
-
-
 static std::string toName(const std::string& name, int counter) {
   if (name != "_")
    return name;
@@ -97,7 +92,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
       case ParamFieldType_VarArgs: {
         if (cfpt != CppParamsFormat_NameOnly) {
           ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->acceptTypeExpr(node->effectiveType());
+          fmt->accept(node->effectiveType());
         }
         if (cfpt != CppParamsFormat_TypeOnly)
           fmt->out() << toName(node->names.at(i), counter);
@@ -106,7 +101,7 @@ static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, Cp
       case ParamFieldType_KeywordArgs: {
         if (cfpt != CppParamsFormat_NameOnly) {
           ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->acceptTypeExpr(node->effectiveType());
+          fmt->accept(node->effectiveType());
         }
         if (cfpt != CppParamsFormat_TypeOnly)
           fmt->out() << toName(node->names.at(i), counter);
@@ -132,12 +127,12 @@ CppTypeFormatter::CppTypeFormatter()
 
 void CppTypeFormatter::unconstify(TypeExprNodePtr node) {
   ScopedFormatAttrBlock _(constattr);
-  acceptTypeExpr(node);
+  accept(node);
 }
 
 void CppTypeFormatter::constify(const TypeExprNodePtr& node) {
   ScopedFormatAttrActivate _(constattr);
-  acceptTypeExpr(node);
+  accept(node);
 }
 
 void CppTypeFormatter::visitTypeExpr(BuiltinTypeExprNode* node) {
@@ -187,52 +182,48 @@ void CppTypeFormatter::visitTypeExpr(KeywordArgTypeExprNode* node) {
   out() << " >" << constattr("&");
 }
 
-void DataCppFormatter::acceptData(const LiteralNodePtr& node) {
-  node->accept(this);
-}
-
-void DataCppFormatter::visitData(BoolLiteralNode *node) {
+void CppTypeFormatter::visitData(BoolLiteralNode *node) {
   if (node->value)
     out() << "true";
   else
     out() << "false";
 }
-void DataCppFormatter::visitData(IntLiteralNode *node) {
+void CppTypeFormatter::visitData(IntLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(FloatLiteralNode *node) {
+void CppTypeFormatter::visitData(FloatLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(StringLiteralNode *node) {
+void CppTypeFormatter::visitData(StringLiteralNode *node) {
   out() << node->value;
 }
-void DataCppFormatter::visitData(TupleLiteralNode* node) {
+void CppTypeFormatter::visitData(TupleLiteralNode* node) {
   out() << "(" << "FAIL" << ")";
 }
-void DataCppFormatter::visitData(ListLiteralNode* node) {
+void CppTypeFormatter::visitData(ListLiteralNode* node) {
   out() << "[" << "FAIL" << "]";
 }
-void DataCppFormatter::visitData(DictLiteralNode* node) {
+void CppTypeFormatter::visitData(DictLiteralNode* node) {
   out() << "{" << "FAIL" << "}";
 }
 
-void ExprCppFormatter::visitExpr(BinaryOpExprNode *node) {
+void CppTypeFormatter::visitExpr(BinaryOpExprNode *node) {
   throw std::runtime_error("unimplemented");
 }
-void ExprCppFormatter::visitExpr(UnaryOpExprNode *node) {
+void CppTypeFormatter::visitExpr(UnaryOpExprNode *node) {
   throw std::runtime_error("unimplemented");
 }
-void ExprCppFormatter::visitExpr(VarExprNode *node) {
+void CppTypeFormatter::visitExpr(VarExprNode *node) {
   //throw std::runtime_error("unimplemented");
 }
-void ExprCppFormatter::visitExpr(LiteralExprNode* node) {
+void CppTypeFormatter::visitExpr(LiteralExprNode* node) {
   throw std::runtime_error("unimplemented");
 }
 
-void ExprCppFormatter::visitExpr(CallExprNode* node) {
+void CppTypeFormatter::visitExpr(CallExprNode* node) {
   out() << node->name << "(";
   for (unsigned i = 0; i < node->args.size(); ++i) {
-    acceptExpr(node->args.at(i));
+    accept(node->args.at(i));
     if (i + 1 != node->args.size())
       out() << ", ";
   }
@@ -395,9 +386,9 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         if (tnode->value == "str") {
           pushIfNot(includes, "<string>");
         } else if (tnode->value == "any") {
-          pushIfNot(includes, "<qitype/anyvalue.hpp>");
+          pushIfNot(includes, "<qi/anyvalue.hpp>");
         } else if (tnode->value == "obj") {
-          pushIfNot(includes, "<qitype/anyobject.hpp>");
+          pushIfNot(includes, "<qi/anyobject.hpp>");
         } else {
           pushIfNot(includes, "<qi/types.hpp>");
         }
@@ -405,7 +396,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
       }
       case NodeType_KeywordArgTypeExpr:
       case NodeType_VarArgTypeExpr: {
-        pushIfNot(includes, "<qitype/anyfunction.hpp>");
+        pushIfNot(includes, "<qi/anyfunction.hpp>");
         break;
       }
       case NodeType_CustomTypeExpr: {
@@ -427,13 +418,13 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
     NodePtr& node = decls.at(i);
     switch (node->type()) {
       case NodeType_EmitDecl:
-        pushIfNot(includes, "<qitype/signal.hpp>");
+        pushIfNot(includes, "<qi/signal.hpp>");
         break;
       case NodeType_PropDecl:
-        pushIfNot(includes, "<qitype/property.hpp>");
+        pushIfNot(includes, "<qi/property.hpp>");
         break;
       case NodeType_InterfaceDecl:
-        pushIfNot(includes, "<qitype/anyobject.hpp>");
+        pushIfNot(includes, "<qi/anyobject.hpp>");
         break;
       default:
         break;

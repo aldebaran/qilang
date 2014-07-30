@@ -86,60 +86,12 @@ namespace qilang {
 
   class BasicNodeFormatter {
   public:
-    //virtual void accept(const NodePtr& node) = 0;
     std::stringstream &out() {
       return _ss;
     }
 
-    template <typename T>
-    void join(const std::vector<T>& vals, const std::string& sep) {
-      for (unsigned i = 0; i < vals.size(); ++i) {
-        out() << vals.at(i);
-        if (i + 1 < vals.size())
-          out() << sep;
-      }
-    }
-
   private:
     std::stringstream _ss;
-  };
-
-  class LiteralNodeFormatter : virtual public BasicNodeFormatter, public LiteralNodeVisitor {
-  public:
-    template <typename T>
-    void joinLiteral(const std::vector<T>& vec, const std::string& sep) {
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptData(vec.at(i));
-        if (i + 1 < vec.size())
-          out() << sep;
-      }
-    }
-  };
-
-  class ExprNodeFormatter : virtual public BasicNodeFormatter, public ExprNodeVisitor {
-  public:
-    template <typename T>
-    void joinExpr(const std::vector<T>& vec, const std::string& sep) {
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptExpr(vec.at(i));
-        if (i + 1 < vec.size())
-          out() << sep;
-      }
-    }
-  };
-
-  class TypeExprNodeFormatter : virtual public BasicNodeFormatter, public TypeExprNodeVisitor {
-  public:
-
-    template <typename T>
-    void joinTypeExpr(const std::vector<T>& vec, const std::string& sep) {
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptTypeExpr(vec.at(i));
-        if (i + 1 < vec.size())
-          out() << sep;
-      }
-    }
-
   };
 
   /**
@@ -152,7 +104,6 @@ namespace qilang {
    */
   class IndentNodeFormatter : virtual public BasicNodeFormatter {
   public:
-    virtual void acceptStmt(const StmtNodePtr& node) = 0;
 
     IndentNodeFormatter()
       : _indent(0)
@@ -192,49 +143,34 @@ namespace qilang {
     int               _indent;
   };
 
-  class StmtNodeFormatter : virtual public IndentNodeFormatter, public StmtNodeVisitor {
+  class NodeFormatter : public IndentNodeFormatter, public NodeVisitor {
   public:
-    virtual void acceptStmt(const StmtNodePtr& node) = 0;
-
-    void scopedStmt(const qilang::StmtNodePtrVector& vec) {
-      ScopedIndent _(_indent);
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptStmt(vec[i]);
-      }
-    }
-  };
-
-  class DeclNodeFormatter : virtual public IndentNodeFormatter, public DeclNodeVisitor {
-  public:
-    void scopedDecl(const qilang::DeclNodePtrVector& vec) {
-      ScopedIndent _(_indent);
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptDecl(vec[i]);
-      }
-    }
-
-    //decl includes params that are not really decl...
     template <typename T>
-    void joinDecl(const std::vector<T>& vec, const std::string& sep) {
+    void join(const std::vector< boost::shared_ptr<T> >& vec, const std::string& sep) {
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptDecl(vec.at(i));
+        accept(vec.at(i));
         if (i + 1 < vec.size())
           out() << sep;
       }
     }
 
-    void scopedEnumField(const qilang::EnumFieldDeclNodePtrVector& vec) {
-      ScopedIndent _(_indent);
-      for (unsigned int i = 0; i < vec.size(); ++i) {
-        acceptDecl(vec[i]);
+    template <typename T>
+    void join(const std::vector<T>& vals, const std::string& sep) {
+      for (unsigned i = 0; i < vals.size(); ++i) {
+        out() << vals.at(i);
+        if (i + 1 < vals.size())
+          out() << sep;
       }
     }
 
-  };
-
-  class FileFormatter: virtual public BasicNodeFormatter {
-  public:
-    virtual void accept(const NodePtr& node) = 0;
+    //assuming T is a shared_ptr<SomeNode>
+    template <typename T>
+    void scoped(const std::vector< boost::shared_ptr<T> >& vec) {
+      ScopedIndent _(_indent);
+      for (unsigned int i = 0; i < vec.size(); ++i) {
+        accept(vec.at(i));
+      }
+    }
 
     virtual void formatHeader() {}
     virtual void formatFooter() {}

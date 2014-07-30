@@ -17,14 +17,20 @@ qiLogCategory("qigen.cpplocal");
 
 namespace qilang {
 
-  class LocalCppGenFormatter : public DeclNodeFormatter, virtual public CppTypeFormatter, virtual public ExprCppFormatter {
+  //Generate Type Registration Information
+  class QiLangGenObjectLocal: public CppTypeFormatter
+  {
   public:
-    LocalCppGenFormatter()
+    QiLangGenObjectLocal(const PackageManagerPtr& pm, const StringVector& includes)
+      : toclose(0)
+      , _includes(includes)
     {}
 
+    int toclose;
+    StringVector _includes;
     FormatAttr methodAttr;
 
-    virtual void acceptDecl(const DeclNodePtr& node) { node->accept(this); }
+    virtual void doAccept(Node* node) { node->accept(this); }
 
     void visitDecl(InterfaceDeclNode* node) {
       indent() << "template<class T>" << std::endl;
@@ -34,7 +40,7 @@ namespace qilang {
         ScopedIndent _(_indent);
         ScopedFormatAttrActivate _2(methodAttr);
         for (unsigned int i = 0; i < node->values.size(); ++i) {
-          acceptDecl(node->values.at(i));
+          accept(node->values.at(i));
         }
       }
       out() << std::endl;
@@ -48,7 +54,7 @@ namespace qilang {
 
     void visitDecl(FnDeclNode* node) {
       indent() << "";
-      acceptTypeExpr(node->effectiveRet());
+      accept(node->effectiveRet());
       out() << " " << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
@@ -85,45 +91,6 @@ namespace qilang {
     void visitDecl(TypeDefDeclNode* node) {
       qiLogError() << "TypeDefDeclNode not implemented";
     }
-
-  };
-
-//Generate Type Registration Information
-class QiLangGenObjectLocal  : public FileFormatter,
-                              public StmtNodeFormatter,
-                              public LocalCppGenFormatter
-{
-public:
-  QiLangGenObjectLocal(const PackageManagerPtr& pm, const StringVector& includes)
-    : toclose(0)
-    , _includes(includes)
-  {}
-
-  int toclose;
-  StringVector _includes;
-
-  virtual void acceptStmt(const StmtNodePtr& node) { node->accept(this); }
-
-  virtual void accept(const NodePtr& node) {
-    switch (node->kind()) {
-    case NodeKind_Literal:
-      acceptData(boost::dynamic_pointer_cast<LiteralNode>(node));
-      break;
-    case NodeKind_Decl:
-      acceptDecl(boost::dynamic_pointer_cast<DeclNode>(node));
-      break;
-    case NodeKind_Expr:
-      acceptExpr(boost::dynamic_pointer_cast<ExprNode>(node));
-      break;
-    case NodeKind_Stmt:
-      acceptStmt(boost::dynamic_pointer_cast<StmtNode>(node));
-      break;
-    case NodeKind_TypeExpr:
-      acceptTypeExpr(boost::dynamic_pointer_cast<TypeExprNode>(node));
-      break;
-    }
-  }
-
 
   void formatHeader() {
     indent() << "/*" << std::endl;

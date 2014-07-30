@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <pimpl/bar.hpp>
-#include <qimessaging/session.hpp>
+#include <qi/session.hpp>
 
 
 int main(int argc, char *argv[])

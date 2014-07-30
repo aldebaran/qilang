@@ -97,6 +97,7 @@
   BANG                "!"
   PERCENT             "%"
   STAR                "*"
+  STARSTAR            "**"
   PLUS                "+"
   MINUS               "-"
   SLASH               "/"
@@ -400,8 +401,8 @@ param_vargs:
 
 %type<qilang::ParamFieldDeclNodePtr> param_kwargs;
 param_kwargs:
-  "*" "*" ID         { $$ = NODE3(ParamFieldDeclNode, @$, $3, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
-| "*" "*" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $3, NODE1(KeywordArgTypeExprNode, @$, $4), qilang::ParamFieldType_KeywordArgs); }
+  "**" ID         { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
+| "**" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(KeywordArgTypeExprNode, @$, $3), qilang::ParamFieldType_KeywordArgs); }
 
 
 // #######################################################################################

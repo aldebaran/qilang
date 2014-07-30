@@ -7,30 +7,27 @@
 
 #include <qilang/formatter.hpp>
 #include <qilang/node.hpp>
-#include <qitype/anyvalue.hpp>
+#include <qilang/visitor.hpp>
+
+#include <qi/anyvalue.hpp>
 
 namespace qilang {
   /**
- * @brief The DataToAnyValueVisitor class
- * convert data to an AnyValue...
- *
- */
-  class DataToAnyValueVisitor : public LiteralNodeVisitor {
+   * @brief The DataToAnyValueVisitor class
+   * convert data to an AnyValue...
+   *
+   */
+  class DataToAnyValueVisitor : public DefaultNodeVisitor {
   public:
     qi::AnyValue av;
 
     qi::AnyValue convert(const LiteralNodePtr& node)
     {
       av.reset();
-      acceptData(node);
+      accept(node);
       return av;
     }
 
-    virtual void acceptData(const LiteralNodePtr &node)      { node->accept(this); }
-
-    /** Convert Data to AnyValue
-   */
-    /// to put into anyvaluedata.hpp/cpp  (its generic)
     void visitData(BoolLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
@@ -43,7 +40,6 @@ namespace qilang {
     void visitData(StringLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
-
     void visitData(TupleLiteralNode* node) {
       std::cout << "TupleConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
