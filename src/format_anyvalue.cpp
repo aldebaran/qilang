@@ -44,10 +44,19 @@ namespace qilang {
       std::cout << "TupleConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
     }
+
     void visitData(ListLiteralNode* node) {
-      std::cout << "ListConstNode visitor" << std::endl;
-      throw std::runtime_error("not implemented");
+      qi::AnyValueVector vect;
+      for (std::vector<boost::shared_ptr<qilang::LiteralNode> >::iterator v = node->values.begin();
+           v != node->values.end();
+           ++v)
+      {
+        qi::AnyValue tmp = convert(*v);
+        vect.push_back(tmp);
+      }
+      av = qi::AnyValue::from(vect);
     }
+
     void visitData(DictLiteralNode* node) {
       std::cout << "DictConstNode visitor" << std::endl;
       throw std::runtime_error("not implemented");
