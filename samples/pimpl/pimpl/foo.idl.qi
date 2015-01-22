@@ -4,7 +4,7 @@ from titi import *
 package pimpl
 
 interface Foo
-  fn foo(str)
-  fn bar(str) Bar
-  fn titi() Titi
+  fn foo(arg str)
+  fn bar(arg str) -> Bar
+  fn titi() -> Titi
 end
