@@ -205,7 +205,7 @@ namespace qilang {
         StringVector retdir;
         bool b = locateFileInDir(p, &retfile, &retdir);
         if (b) {
-          qiLogVerbose() << "Found pkg '" << pkgName << "'";
+          qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
           return retfile;
         }
       }
