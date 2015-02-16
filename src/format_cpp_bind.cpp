@@ -58,14 +58,14 @@ public:
   void visitDecl(InterfaceDeclNode* node) {
     int current = id;
     id++;
-    currentParent = formatNs(_pr->package) + "::" + node->name + "Interface";
+    currentParent = formatNs(_pr->package) + "::" + node->name;
     indent() << "static int initType" << current << "() {" << std::endl;
     {
       ScopedIndent _(_indent);
       ScopedFormatAttrActivate _2(methodAttr);
       indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
       for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        indent() << "builder.inherits< " << node->inherits.at(i) << "Interface >();" << std::endl;
+        indent() << "builder.inherits< " << node->inherits.at(i) << " >();" << std::endl;
       }
       for (unsigned int i = 0; i < node->values.size(); ++i) {
         accept(node->values.at(i));

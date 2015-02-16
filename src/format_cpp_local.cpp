@@ -34,7 +34,7 @@ namespace qilang {
 
     void visitDecl(InterfaceDeclNode* node) {
       indent() << "template<class T>" << std::endl;
-      indent() << "class " << node->name + "Local" << ": public " << node->name + "Interface, public T {" << std::endl;
+      indent() << "class " << node->name + "Local" << ": public " << node->name + ", public T {" << std::endl;
       indent() << "public:" << std::endl;
       {
         ScopedIndent _(_indent);

@@ -144,7 +144,8 @@ void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
 
   out() << constattr("const ");
   if (!ns.empty())
-    out() << ns << "::" << node->resolved_value << constattr("&");
+    // only for objects for the moment
+    out() << ns << "::" << node->resolved_value << "Ptr" << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << constattr("const ") << "std::vector< ";

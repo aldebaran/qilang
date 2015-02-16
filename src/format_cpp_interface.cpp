@@ -44,11 +44,11 @@ namespace qilang {
     ScopedFormatAttrActivate _(virtualAttr);
     ScopedFormatAttrBlock    _2(apiAttr);
 
-    indent() << "class " << apiExport << " " << node->name << "Interface";
+    indent() << "class " << apiExport << " " << node->name;
     if (node->inherits.size() > 0) {
       out() << ": ";
       for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        out() << "virtual public " << node->inherits.at(i) << "Interface";
+        out() << "virtual public " << node->inherits.at(i);
         if (i + 1 != node->inherits.size())
           out() << ", ";
       }
@@ -56,10 +56,10 @@ namespace qilang {
     out() << " {" << std::endl;
     indent() << "public:" << std::endl;
     //add a virtual destructor
-    indent() << "  virtual ~" << node->name << "Interface() {}" << std::endl;
+    indent() << "  virtual ~" << node->name << "() {}" << std::endl;
     scoped(node->values);
     indent() << "};" << std::endl << std::endl;
-    indent() << "typedef qi::Object<" << node->name << "Interface> " << node->name << ";" << std::endl;
+    indent() << "typedef qi::Object<" << node->name << "> " << node->name << "Ptr;" << std::endl;
   }
 
   void visitDecl(ParamFieldDeclNode* node) {

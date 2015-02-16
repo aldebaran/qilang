@@ -12,14 +12,14 @@
 
 int main(int argc, char *argv[])
 {
-  pimpl::Bar b = pimpl::newBar();
+  pimpl::BarPtr b = pimpl::newBar();
 
   qi::AnyObject ao = b;
 
   b->foo("42");
 
   ao.call<void>("foo", "33");
-  qi::Object<pimpl::BarInterface> obj = ao;
+  qi::Object<pimpl::Bar> obj = ao;
 
   obj->foo("41");
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
   s->registerService("bim", b);
 
-  pimpl::Bar b2 = s2->service("bim");
+  pimpl::BarPtr b2 = s2->service("bim");
   b2->foo("yatta");
 
   return 0;
