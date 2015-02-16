@@ -5,13 +5,14 @@
 ## Copyright (C) 2014 Aldebaran Robotics
 ##
 
-if (QIC_USER_EXECUTABLE)
-  set(QIC_EXECUTABLE ${QIC_USER_EXECUTABLE})
+if (QICC_USER_EXECUTABLE)
+  set(QICC_EXECUTABLE ${QICC_USER_EXECUTABLE})
 else()
-  find_package(qic REQUIRED)
+  find_package(qicc REQUIRED)
 endif()
 
-message(STATUS "Using qic: ${QIC_EXECUTABLE}")
+message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
+
 #!
 # generate qic cpp files.
 #
