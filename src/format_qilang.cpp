@@ -44,7 +44,7 @@ namespace qilang {
       out() << node->value;
     }
     void visitData(StringLiteralNode *node) {
-      out() << node->value;
+      out() << "\"" << node->value << "\"";
     }
     void visitData(ListLiteralNode* node) {
       out() << "[ ";
@@ -197,6 +197,7 @@ namespace qilang {
       out() << std::endl;
     }
     void visitDecl(StructFieldDeclNode* node) {
+      indent() << "";
       join(node->names, ", ");
       if (node->type) {
         out() << " ";
