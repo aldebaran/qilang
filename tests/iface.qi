@@ -2,8 +2,8 @@ package tests
 
 
 interface AudioDevice2
-  fn setDefaultDevice (str, str) int
-  fn setDefaultDevice2 (str) int
+  fn setDefaultDevice (str, str) -> int
+  fn setDefaultDevice2 (str) -> int
 end
 
 struct AudioBuffer2
