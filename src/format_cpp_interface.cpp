@@ -91,6 +91,25 @@ namespace qilang {
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
     scoped(node->decls);
+    {
+      ScopedIndent _i(_indent);
+      out() << std::endl;
+      indent() << node->name << "()" << std::endl;
+      std::vector<std::string> fieldInits;
+      for (unsigned int i = 0; i < node->decls.size(); ++i) {
+        if (StructFieldDeclNodePtr field =
+            boost::dynamic_pointer_cast<StructFieldDeclNode>(node->decls[i])) {
+          for (unsigned int j = 0; j < field->names.size(); ++j)
+            fieldInits.push_back(field->names[j] + "()");
+        }
+      }
+      if (!fieldInits.empty()) {
+        indent() << ": ";
+        join(fieldInits, ", ");
+      }
+      out() << std::endl;
+      indent() << "{}" << std::endl;
+    }
     indent() << "};" << std::endl << std::endl;
   }
 
