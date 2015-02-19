@@ -121,6 +121,19 @@ namespace qilang {
 
   typedef boost::shared_ptr<DiagnosticManager> DiagnosticManagerPtr;
 
+  struct ResolutionResult {
+    std::string pkg;
+    std::string type;
+    TypeKind kind;
+
+    ResolutionResult() {}
+    ResolutionResult(const std::string& pkg, const std::string& type, TypeKind kind)
+      : pkg(pkg)
+      , type(type)
+      , kind(kind)
+    {}
+  };
+
   /**
    *  PackageManager...
    *
@@ -161,7 +174,7 @@ namespace qilang {
 
     void parseDir(const std::string &dirname);
 
-    StringPair resolveImport(const ParseResultPtr& pr, const PackagePtr &pkg, const CustomTypeExprNode* node);
+    ResolutionResult resolveImport(const ParseResultPtr& pr, const PackagePtr &pkg, const CustomTypeExprNode* node);
 
   protected:
     PackagePtr addPackage(const std::string& name) {

@@ -281,6 +281,12 @@ enum NodeType {
   NodeType_Comment,
 };
 
+enum TypeKind {
+  TypeKind_Interface,
+  TypeKind_Enum,
+  TypeKind_Struct
+};
+
 //Base Node used to describe the AST
 class QILANG_API Node
 {
@@ -580,6 +586,7 @@ public:
 
   std::string resolved_package;
   std::string resolved_value;
+  TypeKind resolved_kind;
   std::string value;
 };
 

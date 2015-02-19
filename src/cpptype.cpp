@@ -145,7 +145,11 @@ void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
   out() << constattr("const ");
   if (!ns.empty())
     // only for objects for the moment
-    out() << ns << "::" << node->resolved_value << "Ptr" << constattr("&");
+    out() << ns << "::";
+  out() << node->resolved_value;
+  if (node->resolved_kind == TypeKind_Interface)
+    out() << "Ptr";
+  out() << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << constattr("const ") << "std::vector< ";
