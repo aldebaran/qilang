@@ -116,16 +116,12 @@ public:
     throw std::runtime_error("unimplemented");
   }
   void visitDecl(StructFieldDeclNode* node) {
-    qiLogError() << "EnumDeclNode not implemented";
   }
   void visitDecl(EnumDeclNode* node) {
-    qiLogError() << "EnumDeclNode not implemented";
   }
   void visitDecl(EnumFieldDeclNode* node) {
-    qiLogError() << "EnumFieldDeclNode not implemented";
   }
   void visitDecl(TypeDefDeclNode* node) {
-    qiLogError() << "TypeDefDeclNode not implemented";
   }
 
   void visitStmt(PackageNode* node) {
