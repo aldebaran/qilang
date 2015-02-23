@@ -39,37 +39,41 @@ function(qi_gen_idl OUT lang pkg dir)
     if(NOT ARG_NOINTERFACE)
       qi_generate_src("${absdir}/${pkg}/${fout}.hpp"
         SRC "${absname}"
-        COMMENT "IDL: interface ${pkg}/${fout}.hpp ..."
+        COMMENT "Generating interface ${pkg}/${fout}.hpp"
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${absname}" -o "${absdir}/${pkg}/${fout}.hpp")
       list(APPEND _out "${absdir}/${pkg}/${fout}.hpp")
+      set(${OUT}_INTERFACE "${absdir}/${pkg}/${fout}.hpp" PARENT_SCOPE)
     endif()
 
     if(NOT ARG_NOBIND)
       qi_generate_src("${absdir}/src/${fout}.cpp"
         SRC "${absname}"
-        COMMENT "IDL: bind src/${fout}.cpp ..."
+        COMMENT "Generating bind src/${fout}.cpp"
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_bind "${absname}" -o "${absdir}/src/${fout}.cpp")
       list(APPEND _out "${absdir}/src/${fout}.cpp")
+      set(${OUT}_BIND "${absdir}/src/${fout}.cpp" PARENT_SCOPE)
     endif()
 
     if(NOT ARG_NOLOCAL)
       qi_generate_src("${absdir}/src/${fout}_p.hpp"
         SRC "${absname}"
-        COMMENT "IDL: local src/${fout}_p.hpp ..."
+        COMMENT "Generating local src/${fout}_p.hpp"
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${absname}" -o "${absdir}/src/${fout}_p.hpp")
       list(APPEND _out "${absdir}/src/${fout}_p.hpp")
+      set(${OUT}_LOCAL "${absdir}/src/${fout}_p.hpp" PARENT_SCOPE)
     endif()
 
     if(NOT ARG_NOREMOTE)
       qi_generate_src("${absdir}/src/${fout}remote.cpp"
         SRC "${absname}"
-        COMMENT "IDL: remote src/${fout}remote.cpp ..."
+        COMMENT "Generating remote src/${fout}remote.cpp"
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${absname}" -o "${absdir}/src/${fout}remote.cpp")
       list(APPEND _out "${absdir}/src/${fout}remote.cpp")
+      set(${OUT}_REMOTE "${absdir}/src/${fout}remote.cpp" PARENT_SCOPE)
     endif()
   endforeach()
   #this custom target ensure that all idl file are generated before building
