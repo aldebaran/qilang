@@ -291,12 +291,13 @@ enum TypeKind {
 class QILANG_API Node
 {
 public:
-  Node(NodeKind kind, NodeType type, const Location& loc);
+  Node(NodeKind kind, NodeType type, const Location& loc, const std::string& comment = "");
   virtual ~Node() {}
 
   NodeKind kind() const { return _kind; }
   NodeType type() const { return _type; }
   Location loc() const { return _loc; }
+  std::string comment() const { return _comment; }
 
   virtual void accept(NodeVisitor *visitor) = 0;
 
@@ -304,7 +305,19 @@ private:
   NodeKind _kind;
   NodeType _type;
   Location _loc;
+  std::string _comment;
 };
+
+class KeywordNode : public Node {
+public:
+  KeywordNode(const Location& loc, const std::string& comment) :
+    Node(NodeKind_Literal, NodeType_LiteralExpr, loc, comment)
+  {}
+
+  void accept(NodeVisitor*) { throw std::runtime_error("visiting keywords not supported"); };
+};
+
+typedef boost::shared_ptr<KeywordNode> KeywordNodePtr;
 
 enum UnaryOpCode {
   UnaryOpCode_Negate,
@@ -830,8 +843,8 @@ public:
 class QILANG_API DeclNode : public Node
 {
 public:
-  DeclNode(NodeType type, const Location& loc)
-    : Node(NodeKind_Decl, type, loc)
+  DeclNode(NodeType type, const Location& loc, const std::string& comment = "")
+    : Node(NodeKind_Decl, type, loc, comment)
   {}
 
   virtual void accept(NodeVisitor* visitor) = 0;
@@ -948,14 +961,14 @@ public:
 
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
-  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
-    : DeclNode(NodeType_InterfaceDecl, loc)
+  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_InterfaceDecl, loc, comment)
     , name(name)
     , values(decls)
   {}
 
-  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc)
-    : DeclNode(NodeType_InterfaceDecl, loc)
+  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_InterfaceDecl, loc, comment)
     , name(name)
     , values(decls)
     , inherits(inherits)
@@ -1029,38 +1042,9 @@ typedef std::vector<ParamFieldDeclNodePtr>    ParamFieldDeclNodePtrVector;
 
 class QILANG_API FnDeclNode : public DeclNode {
 public:
-  FnDeclNode(const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
-    , name(name)
-    , comment(comment)
-    , args(args)
-    , ret(ret)
-  {
-    //if ret is nothing, just drop it. (to simplify codegen)
-    if (ret && ret->type() == NodeType_BuiltinTypeExpr) {
-      BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(ret.get());
-      if (tnode->builtinType == BuiltinType_Nothing)
-        this->ret = TypeExprNodePtr();
-    }
 
-    unsigned cvar = 0;
-    unsigned ckwvar = 0;
-    for (unsigned i = 0; i < args.size(); ++i) {
-      if (args.at(i)->isVarArgs()) {
-        cvar++;
-        if (cvar > 1)
-          throw std::runtime_error("More than one variable argument specified");
-      }
-      if (args.at(i)->isKeywordArgs()) {
-        ckwvar++;
-        if (ckwvar > 1)
-          throw std::runtime_error("More than one keyword argument specified");
-      }
-    }
-  }
-
-  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_FnDecl, loc, comment)
     , name(name)
     , args(args)
     , ret(ret)
@@ -1087,6 +1071,12 @@ public:
       }
     }
   }
+
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_FnDecl, loc, comment)
+    , name(name)
+    , args(args)
+  {}
 
   bool isVariadic() {
     for (unsigned i = 0; i < args.size(); ++i) {
@@ -1095,12 +1085,6 @@ public:
     }
     return false;
   }
-
-  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
-    , name(name)
-    , args(args)
-  {}
 
   bool hasVarArgs();
   bool hasKeywordArgs();

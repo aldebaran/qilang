@@ -28,6 +28,7 @@ namespace qilang {
     , _result(newParseResult())
     , _parsed(false)
     , parser(this)
+    , linesSinceLastComment(0)
   {
     _result->filename = file->filename();
     qilang_lex_init(&scanner);

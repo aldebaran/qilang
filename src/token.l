@@ -47,6 +47,14 @@
     return tok; \
   } while(false)
 
+#define RETURN_OP2(Symbol)         \
+  do { \
+    qilang::KeywordNodePtr node = boost::make_shared<qilang::KeywordNode>(qilang::makeLocation(LOC), qilang_get_extra(yyscanner)->lastComment); \
+    yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(node, LOC); \
+    STEP(); \
+    return tok; \
+  } while(false)
+
 #define RETURN_VAL(Symbol, Value) \
    do { \
      yy::parser::symbol_type tok = yy::parser::make_ ## Symbol(Value, LOC); \
@@ -162,12 +170,11 @@ FLOAT    {UFLOAT}
 "from"          RETURN_OP(FROM);
 "import"        RETURN_OP(IMPORT);
 "object"        RETURN_OP(OBJECT);
-"interface"     RETURN_OP(INTERFACE);
 "struct"        RETURN_OP(STRUCT);
 "end"           RETURN_OP(END);
 "const"         RETURN_OP(CONST);
 
-"fn"            RETURN_OP(FN);
+"fn"            RETURN_OP2(FN);
 "emit"          RETURN_OP(EMIT);
 "prop"          RETURN_OP(PROP);
 
@@ -177,6 +184,8 @@ FLOAT    {UFLOAT}
 
 "typedef"       RETURN_OP(TYPEDEF);
 "enum"          RETURN_OP(ENUM);
+
+"interface"     RETURN_OP2(INTERFACE);
 
 {FLOAT}           {
   qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
@@ -201,7 +210,11 @@ FLOAT    {UFLOAT}
   STEP();
 }
 
-"#".*             { STEP(); } // One-line comment.
+"#".*             {
+  qilang::Parser* parser = qilang_get_extra(yyscanner);
+  parser->lastComment += (yytext+1);
+  parser->linesSinceLastComment = 0;
+}
 
 .                 {
                     STEP();
@@ -210,6 +223,18 @@ FLOAT    {UFLOAT}
                     qilang_get_extra(yyscanner)->parser.error(LOC, ss.str());
                   }
 
-{EOL}             { LINES(1); STEP(); }
+{EOL}             {
+  qilang::Parser* parser = qilang_get_extra(yyscanner);
+  if (!parser->lastComment.empty())
+  {
+    if (++parser->linesSinceLastComment == 2)
+    {
+      parser->linesSinceLastComment = 0;
+      parser->lastComment.clear();
+    }
+  }
+  LINES(1);
+  STEP();
+}
 
 %%

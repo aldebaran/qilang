@@ -43,7 +43,7 @@ namespace qilang {
 
     ParseResultPtr   result();
 
-    //parser context
+    // parser context
     FileReaderPtr        file;
     ParseResultPtr       _result;
     bool                 _parsed;
@@ -54,6 +54,10 @@ namespace qilang {
     // flex / bison struct
     void*                scanner;  // flex context
     yy::parser           parser;
+
+    // comment handling (only used by lexer)
+    std::string          lastComment;
+    unsigned int         linesSinceLastComment;
 
   };
 

@@ -50,6 +50,17 @@
     boost::make_shared< qilang::TYPE >(a, b, c, qilang::makeLocation(LOC))
   #define NODE4(TYPE, LOC, a, b, c, d) \
     boost::make_shared< qilang::TYPE >(a, b, c, d, qilang::makeLocation(LOC))
+
+  #define NODEC0(TYPE, LOC, N) \
+    boost::make_shared< qilang::TYPE >(qilang::makeLocation(LOC), N->comment())
+  #define NODEC1(TYPE, LOC, N, a) \
+    boost::make_shared< qilang::TYPE >(a, qilang::makeLocation(LOC), N->comment())
+  #define NODEC2(TYPE, LOC, N, a, b) \
+    boost::make_shared< qilang::TYPE >(a, b, qilang::makeLocation(LOC), N->comment())
+  #define NODEC3(TYPE, LOC, N, a, b, c) \
+    boost::make_shared< qilang::TYPE >(a, b, c, qilang::makeLocation(LOC), N->comment())
+  #define NODEC4(TYPE, LOC, N, a, b, c, d) \
+    boost::make_shared< qilang::TYPE >(a, b, c, d, qilang::makeLocation(LOC), N->comment())
 }
 
 %code {
@@ -135,7 +146,6 @@
 
   // Blocks Types
   OBJECT              "object"
-  INTERFACE           "interface"
   STRUCT              "struct"
   END                 "end"
 
@@ -143,7 +153,6 @@
   ENUM                "enum"
 
   // IFace Keywords
-  FN                  "fn"
   EMIT                "emit"
   PROP                "prop"
 
@@ -154,9 +163,13 @@
   FOR                 "for"
   IF                  "if"
 
+%token <qilang::KeywordNodePtr>
+  INTERFACE           "interface"
+  FN                  "fn"
 
 %token <qilang::LiteralNodePtr>   STRING CONSTANT
-%token <std::string>                ID
+%token <qilang::CommentNodePtr>   COMMENT
+%token <std::string>              ID
 
 // the first item here is the last to evaluate, the last item is the first
 %left  "||"
@@ -321,8 +334,8 @@ enums_def:
 
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = NODE3(InterfaceDeclNode, @$, $2, $4, $6); }
-| INTERFACE ID interface_defs END                      { $$ = NODE2(InterfaceDeclNode, @$, $2, $3); }
+  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = NODEC3(InterfaceDeclNode, @$, $1, $2, $4, $6); }
+| INTERFACE ID interface_defs END                      { $$ = NODEC2(InterfaceDeclNode, @$, $1, $2, $3); }
 
 %type<qilang::StringVector> inherit_defs;
 inherit_defs:
@@ -353,8 +366,8 @@ interface_def:
 // fn foooo (t1, t2, t3) tret
 %type<qilang::DeclNodePtr> function_decl;
 function_decl:
-  FN  ID "(" param_list ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
-| FN  ID "(" param_list ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
+  FN  ID "(" param_list ")"              { $$ = NODEC2(FnDeclNode, @$, $1, $2, $4); }
+| FN  ID "(" param_list ")" "->" type    { $$ = NODEC3(FnDeclNode, @$, $1, $2, $4, $7); }
 
 %type<qilang::DeclNodePtr> emit_decl;
 emit_decl:

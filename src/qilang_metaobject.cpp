@@ -64,7 +64,7 @@ namespace qilang {
     return params;
   }
 
-  static CommentNodePtr commentToQiLang(const qi::MetaMethod& meth) {
+  static std::string commentToQiLang(const qi::MetaMethod& meth) {
     std::string                   commentsOut;
     std::stringstream             commentsOutS;
     qi::MetaMethodParameterVector parameters;
@@ -100,11 +100,11 @@ namespace qilang {
     }
     commentsOut = commentsOutS.str();
 
-    return boost::make_shared<qilang::CommentNode>(commentsOut, Location());
+    return commentsOut;
   }
 
   static DeclNodePtr metaMethodToQiLang(const qi::MetaMethod& meth) {
-    CommentNodePtr                 comment;
+    std::string                    comment;
     ParamFieldDeclNodePtrVector    params;
     qi::MetaMethodParameterVector  parametersName;
     TypeExprNodePtr                ret;
@@ -114,7 +114,7 @@ namespace qilang {
     params = sigToParams(parametersName, meth.parametersSignature());
     ret = signatureToQiLang(meth.returnSignature());
 
-    return boost::make_shared<qilang::FnDeclNode>(meth.name(), comment, params, ret, Location());
+    return boost::make_shared<qilang::FnDeclNode>(meth.name(), params, ret, Location(), comment);
   }
 
   static DeclNodePtr metaSignalToQiLang(const qi::MetaSignal& sig){
