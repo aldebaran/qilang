@@ -20,6 +20,7 @@ set(C src/codegen.cpp
       src/parser.cpp
       src/parser_p.hpp
       src/formatter_p.hpp
+      src/format_doc.cpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
       src/format_cpp_interface.cpp

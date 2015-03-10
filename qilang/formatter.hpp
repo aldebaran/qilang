@@ -64,6 +64,9 @@ namespace qilang {
   QILANG_API std::string formatAST(const NodePtr& node);
   QILANG_API std::string format(const NodePtr& node);
 
+  QILANG_API std::string genDoc(const NodePtr& node);
+  QILANG_API std::string genDoc(const NodePtrVector& node);
+
   QILANG_API qi::AnyValue toAnyValue(const NodePtr& node);
 
 

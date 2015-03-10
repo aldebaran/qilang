@@ -22,7 +22,7 @@ namespace qilang {
                                   "cpp_bind", "cppb",
                                   "cpp_local", "cppl",
                                   "cpp_remote", "cppr",
-                                  "sexpr", "qilang", 0 };
+                                  "sexpr", "qilang", "doc", 0 };
     int index = 0;
     const char* v = vals[index];
     while (v) {
@@ -43,6 +43,10 @@ namespace qilang {
     }
     else if (codegen == "sexpr") {
       out->out() << qilang::formatAST(pr->ast);
+      return true;
+    }
+    else if (codegen == "doc") {
+      out->out() << qilang::genDoc(pr->ast);
       return true;
     }
     pm->anal();
