@@ -171,8 +171,6 @@ namespace qilang {
     void visitStmt(VarDefNode* node) {
       acceptWithCb(node->data);
     }
-    void visitStmt(CommentNode* node) {
-    }
 
   };
 

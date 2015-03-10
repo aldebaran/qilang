@@ -168,7 +168,6 @@
   FN                  "fn"
 
 %token <qilang::LiteralNodePtr>   STRING CONSTANT
-%token <qilang::CommentNodePtr>   COMMENT
 %token <std::string>              ID
 
 // the first item here is the last to evaluate, the last item is the first

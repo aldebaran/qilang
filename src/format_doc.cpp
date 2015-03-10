@@ -186,8 +186,6 @@ protected:
   }
   void visitStmt(VarDefNode* node) {
   }
-  void visitStmt(CommentNode* node) {
-  }
 
 };
 

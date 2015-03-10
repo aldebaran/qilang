@@ -68,7 +68,6 @@ class ObjectDefNode;
 class PropertyDefNode;
 class AtNode;
 class VarDefNode;
-class CommentNode;
 
 // EXPR: Const Data
 class LiteralNode;  // VIRTUAL
@@ -139,9 +138,6 @@ typedef std::vector<LiteralNodePtrPair>           LiteralNodePtrPairVector;
 
 typedef boost::shared_ptr<ConstDeclNode> ConstDeclNodePtr;
 
-typedef boost::shared_ptr<CommentNode>        CommentNodePtr;
-typedef std::vector<CommentNodePtr>           CommentNodePtrVector;
-
 /* All Statements
  */
 class NodeVisitor {
@@ -191,8 +187,6 @@ public:
 
   // Definitions
   virtual void visitStmt(VarDefNode* node) = 0;
-
-  virtual void visitStmt(CommentNode* node) = 0;
 
   //##### #### #####
   //##### Expr
@@ -823,19 +817,6 @@ public:
   std::string receiver;
 };
 
-class QILANG_API CommentNode : public StmtNode {
-public:
-  CommentNode(const std::string& comments, const Location& loc)
-    : StmtNode(NodeType_Comment, loc)
-    , comments(comments)
-  {}
-
-
-  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
-
-  std::string      comments;
-};
-
 // ####################
 // # DECL Node
 // ####################
@@ -1109,7 +1090,6 @@ public:
 
 public:
   std::string                 name;
-  CommentNodePtr              comment;
   ParamFieldDeclNodePtrVector args;
   TypeExprNodePtr             ret;
 };

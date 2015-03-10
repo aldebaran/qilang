@@ -260,9 +260,6 @@ namespace qilang {
       }
       out() << ")" << std::endl;
     }
-    void visitStmt(CommentNode* node) {
-      formatBlock(out(), node->comments, ";; ", _indent);
-    }
 
   };
 
