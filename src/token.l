@@ -210,9 +210,10 @@ FLOAT    {UFLOAT}
   STEP();
 }
 
-"#".*             {
+"//".*             {
   qilang::Parser* parser = qilang_get_extra(yyscanner);
-  parser->lastComment += (yytext+1);
+  parser->lastComment += (yytext+2);
+  parser->lastComment += '\n';
   parser->linesSinceLastComment = 0;
 }
 

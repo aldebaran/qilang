@@ -1,9 +1,14 @@
 package tests
 
-
+// comment comment
 interface AudioDevice2
-  fn setDefaultDevice (str, str) -> int
-  fn setDefaultDevice2 (str) -> int
+  // set the default device
+  //
+  // \param a name of the device
+  // \param b value
+  // \return true on success
+  fn setDefaultDevice (a str, b str) -> int
+  fn setDefaultDevice2 (x str) -> int
 end
 
 struct AudioBuffer2

@@ -9,49 +9,22 @@
 #define QILANG_DOCPARSER_HPP
 
 #include <string>
-#include <vector>
+#include <map>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 #include <boost/fusion/adapted/struct/define_struct.hpp>
 
 #include <qilang/api.hpp>
 
-BOOST_FUSION_DEFINE_STRUCT(
-    (qilang),
-    ParamDecl,
-    (std::string, name)
-    (std::string, description)
-)
-
-BOOST_FUSION_DEFINE_STRUCT(
-    (qilang),
-    ReturnDecl,
-    (std::string, description)
-)
-
-BOOST_FUSION_DEFINE_STRUCT(
-    (qilang),
-    ThrowDecl,
-    (std::string, description)
-)
-
-namespace qilang {
-  typedef boost::variant<ParamDecl, ReturnDecl, ThrowDecl> Decl;
-  typedef std::vector<Decl> DeclVec;
-}
-
-BOOST_FUSION_DEFINE_STRUCT(
-    (qilang),
-    DocInternal,
-    (std::vector<std::string>, description)
-    (qilang::DeclVec, declarations)
-)
-
 namespace qilang {
   struct Doc {
+    typedef std::map<std::string, std::string> Parameters;
+
     boost::optional<std::string> brief;
     boost::optional<std::string> description;
-    DeclVec declarations;
+    Parameters throw_;
+    Parameters parameters;
+    boost::optional<std::string> return_;
   };
 
   Doc QILANG_API parseDoc(const std::string& str);

@@ -10,10 +10,12 @@
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
 #include <qilang/packagemanager.hpp>
+#include <qilang/docparser.hpp>
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/lambda/lambda.hpp>
+#include <boost/scope_exit.hpp>
 #include <stack>
 #include "cpptype.hpp"
 
@@ -30,6 +32,7 @@ public:
   }
 
   std::stack<bool> first;
+  boost::scoped_ptr<Doc> curDoc;
 
   void putComma() {
     if (first.top())
@@ -58,7 +61,7 @@ public:
     putComma();
 
     out() << "\"" << node->name << "\" : {";
-    out() << "\"type\" : \"interface\",";
+    out() << "\"type\" : \"interface\", ";
     out() << "\"inherits\" : [";
 
     for (unsigned int i = 0; i < node->inherits.size(); ++i) {
@@ -84,16 +87,39 @@ public:
     out() << "\"" << node->names.at(0) << "\" : ";
     out() << "{ \"type\": \"";
     out() << "TODO";
-    out() << "\" }";
+    out() << "\"";
+    if (curDoc) {
+      Doc::Parameters::const_iterator doc = curDoc->parameters.find(node->names.at(0));
+      if (doc != curDoc->parameters.end())
+        out() << ", \"description\" : \"" << doc->second << "\"";
+      else
+        qiLogWarning() << "undocumented parameter: " << node->names.at(0);
+    }
+    out() << " }";
   }
 
   void visitDecl(FnDeclNode* node) {
     putComma();
 
+    if (!node->comment().empty())
+    {
+      Doc doc = parseDoc(node->comment());
+
+      curDoc.reset(new Doc(doc));
+    }
+    BOOST_SCOPE_EXIT(&curDoc) {
+      curDoc.reset();
+    } BOOST_SCOPE_EXIT_END
+
     out() << "\"" << node->name << "\" : {";
     out() << "\"type\" : \"method\", ";
+    if (curDoc && curDoc->brief)
+      out() << "\"brief\" : \"" << *curDoc->brief << "\", ";
+    if (curDoc && curDoc->description)
+      out() << "\"description\" : \"" << *curDoc->brief << "\", ";
+    if (curDoc && curDoc->return_)
+      out() << "\"returnDescription\" : \"" << *curDoc->brief << "\", ";
     out() << "\"return\" : \"";
-    out() << "TODO";
     accept(node->effectiveRet());
     out() << "\", ";
     out() << "\"parameters\" : {";

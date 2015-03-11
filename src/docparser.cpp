@@ -4,8 +4,74 @@
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/fusion/include/boost_tuple.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <qi/log.hpp>
+
+qiLogCategory("qilang.docparser");
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (qilang),
+    ParamDecl,
+    (std::string, name)
+    (std::string, description)
+)
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (qilang),
+    ReturnDecl,
+    (std::string, description)
+)
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (qilang),
+    ThrowDecl,
+    (std::string, name)
+    (std::string, description)
+)
 
 namespace qilang {
+  typedef boost::variant<ParamDecl, ReturnDecl, ThrowDecl> Decl;
+  typedef std::vector<Decl> DeclVec;
+}
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (qilang),
+    DocInternal,
+    (std::vector<std::string>, description)
+    (qilang::DeclVec, declarations)
+)
+
+namespace qilang {
+
+class Filler : public boost::static_visitor<void>
+{
+public:
+  Filler(Doc& doc)
+    : _doc(doc)
+  {}
+
+  void operator()(const ParamDecl& p) const
+  {
+    std::pair<Doc::Parameters::iterator, bool> ret = _doc.parameters.insert(std::make_pair(p.name, p.description));
+    if (!ret.second)
+      qiLogWarning() << p.name << " documented multiple times";
+  }
+  void operator()(const ReturnDecl& p) const
+  {
+    if (!_doc.return_)
+      _doc.return_ = p.description;
+    else
+      qiLogWarning() << "multiple \\return declaration";
+  }
+  void operator()(const ThrowDecl& p) const
+  {
+    std::pair<Doc::Parameters::iterator, bool> ret = _doc.throw_.insert(std::make_pair(p.name, p.description));
+    if (!ret.second)
+      qiLogWarning() << p.name << " documented multiple times";
+  }
+
+private:
+  Doc& _doc;
+};
 
 template <typename Iterator>
 Doc parseDoc(Iterator begin, Iterator end)
@@ -51,7 +117,7 @@ Doc parseDoc(Iterator begin, Iterator end)
 
   return_decl %= lit("\\return") > paragraph;
 
-  throw_decl %= lit("\\throw") > paragraph;
+  throw_decl %= lit("\\throw") > lexeme[ +(char_ - ' ') ] > paragraph;
 
   param_decl %= lit("\\param") > lexeme[ +(char_ - ' ') ] > paragraph;
 
@@ -88,13 +154,14 @@ Doc parseDoc(Iterator begin, Iterator end)
   if (!outint.description.empty())
   {
     std::size_t dot = outint.description[0].find('.');
-    if (dot != std::string::npos)
-      out.brief = std::string(outint.description[0], 0, dot);
+    out.brief = std::string(outint.description[0], 0, dot);
 
     out.description = boost::algorithm::join(outint.description, "\n\n");
   }
 
-  out.declarations = outint.declarations;
+  BOOST_FOREACH(const Decl& decl, outint.declarations) {
+    boost::apply_visitor(Filler(out), decl);
+  }
 
   return out;
 }
