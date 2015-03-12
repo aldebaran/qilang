@@ -24,6 +24,50 @@ qiLogCategory("qigen.hppinterface");
 
 namespace qilang {
 
+static std::string builtinTypeToString(BuiltinType type) {
+  switch (type) {
+  case BuiltinType_Nothing:
+    return "nothing";
+  case BuiltinType_Bool:
+    return "bool";
+  case BuiltinType_Char:
+    return "char";
+  case BuiltinType_Int:
+    return "int";
+  case BuiltinType_UInt:
+    return "uint";
+  case BuiltinType_Int8:
+    return "int8";
+  case BuiltinType_UInt8:
+    return "uint8";
+  case BuiltinType_Int16:
+    return "int16";
+  case BuiltinType_UInt16:
+    return "uint16";
+  case BuiltinType_Int32:
+    return "int32";
+  case BuiltinType_UInt32:
+    return "uint32";
+  case BuiltinType_Int64:
+    return "int64";
+  case BuiltinType_UInt64:
+    return "uint64";
+  case BuiltinType_Float:
+    return "float";
+  case BuiltinType_Float32:
+    return "float32";
+  case BuiltinType_Float64:
+    return "float64";
+  case BuiltinType_String:
+    return "str";
+  case BuiltinType_Value:
+    return "any";
+  case BuiltinType_Object:
+    return "obj";
+  }
+  throw std::runtime_error("unreachable code");
+}
+
 class QiLangGenDoc: public NodeFormatter
 {
 public:
@@ -86,7 +130,7 @@ public:
 
     out() << "\"" << node->names.at(0) << "\" : ";
     out() << "{ \"type\": \"";
-    out() << "TODO";
+    accept(node->effectiveType());
     out() << "\"";
     if (curDoc) {
       Doc::Parameters::const_iterator doc = curDoc->parameters.find(node->names.at(0));
@@ -187,7 +231,9 @@ public:
   virtual void visitData(TupleLiteralNode* node) {}
   virtual void visitData(ListLiteralNode* node) {}
   virtual void visitData(DictLiteralNode* node) {}
-  virtual void visitTypeExpr(BuiltinTypeExprNode* node) {}
+  virtual void visitTypeExpr(BuiltinTypeExprNode* node) {
+    out() << builtinTypeToString(node->builtinType);
+  }
   virtual void visitTypeExpr(CustomTypeExprNode* node) {}
   virtual void visitTypeExpr(ListTypeExprNode* node) {}
   virtual void visitTypeExpr(MapTypeExprNode* node) {}
