@@ -1,12 +1,12 @@
-package tests
+package iface
 
 # comment comment
 interface AudioDevice2
-  // set the default device
-  //
-  // \param a name of the device
-  // \param b value
-  // \return true on success
+  //! set the default device
+  //!
+  //! \param a name of the device
+  //! \param b value
+  //! \return true on success
   fn setDefaultDevice (a: str, b: str) -> int
   fn setDefaultDevice2 (x: str) -> int
 

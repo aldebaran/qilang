@@ -162,7 +162,7 @@ public:
     if (curDoc && curDoc->description)
       out() << "\"description\" : \"" << *curDoc->brief << "\", ";
     if (curDoc && curDoc->return_)
-      out() << "\"returnDescription\" : \"" << *curDoc->brief << "\", ";
+      out() << "\"returnDescription\" : \"" << *curDoc->return_ << "\", ";
     out() << "\"return\" : \"";
     accept(node->effectiveRet());
     out() << "\", ";

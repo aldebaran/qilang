@@ -214,19 +214,23 @@ FLOAT    {UFLOAT}
   STEP();
 }
 
-"#".*             {
-  qilang::Parser* parser = qilang_get_extra(yyscanner);
-  parser->lastComment += (yytext+1);
-  parser->lastComment += '\n';
-  parser->linesSinceLastComment = 0;
-}
-
-"//".*             {
+"#!".*            {
   qilang::Parser* parser = qilang_get_extra(yyscanner);
   parser->lastComment += (yytext+2);
   parser->lastComment += '\n';
   parser->linesSinceLastComment = 0;
 }
+
+"#".*             { STEP(); } // One-line comment.
+
+"//!".*           {
+  qilang::Parser* parser = qilang_get_extra(yyscanner);
+  parser->lastComment += (yytext+3);
+  parser->lastComment += '\n';
+  parser->linesSinceLastComment = 0;
+}
+
+"//".*            { STEP(); } // One-line comment.
 
 .                 {
                     STEP();

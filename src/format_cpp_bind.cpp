@@ -9,7 +9,9 @@
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/docparser.hpp>
 #include <qi/os.hpp>
+#include <boost/foreach.hpp>
 #include "formatter_p.hpp"
 #include "cpptype.hpp"
 
@@ -84,12 +86,27 @@ public:
   }
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
-      indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
-      accept(node->effectiveRet());
-      out() << "(" << currentParent << "::*)(";
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << ") >(&" << currentParent << "::" << node->name;
-      out() << "));" << std::endl;
+      indent() << "{" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        Doc doc = parseDoc(node->comment());
+        indent() << "qi::MetaMethodBuilder mmb;" << std::endl;
+        indent() << "mmb.setName(\"" << node->name << "\");" << std::endl;
+        BOOST_FOREACH(Doc::Parameters::value_type it, doc.parameters) {
+          indent() << "mmb.appendParameter(\"" << it.first << "\", \"" << it.second << "\");" << std::endl;
+        }
+        if (doc.return_)
+          indent() << "mmb.setReturnDescription(\"" << *doc.return_ << "\");" << std::endl;
+        if (doc.description)
+          indent() << "mmb.setDescription(\"" << *doc.description << "\");" << std::endl;
+        indent() << "builder.advertiseMethod(mmb, static_cast< ";
+        accept(node->effectiveRet());
+        out() << "(" << currentParent << "::*)(";
+        cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+        out() << ")>(&" << currentParent << "::" << node->name;
+        out() << "));" << std::endl;
+      }
+      indent() << "}" << std::endl;
     } else {
       indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
     }
