@@ -7,14 +7,14 @@ interface AudioDevice2
   // \param a name of the device
   // \param b value
   // \return true on success
-  fn setDefaultDevice (a str, b str) -> int
-  fn setDefaultDevice2 (x str) -> int
+  fn setDefaultDevice (a: str, b: str) -> int
+  fn setDefaultDevice2 (x: str) -> int
 end
 
 struct AudioBuffer2
-  buffer Vec<char>
-  size   int
-  ma     Map<int, str>
+  buffer: Vec<char>
+  size:   int
+  ma:     Map<int, str>
 end
 
 const AudioType_Mono = 0

@@ -396,13 +396,7 @@ param_list.1:
 
 %type<qilang::ParamFieldDeclNodePtr> param;
 param:
-  ID                          { $$ = NODE1(ParamFieldDeclNode, @$, $1); }
-| ID type                     { $$ = NODE2(ParamFieldDeclNode, @$, $1, $2); }
-| "(" ID "," id_list ")" type { qilang::StringVector sv;
-                                sv.push_back($2);
-                                sv.insert(sv.end(), $4.begin(), $4.end());
-                                $$ = NODE2(ParamFieldDeclNode, @$, sv, $6);
-                              }
+  ID ":" type                 { $$ = NODE2(ParamFieldDeclNode, @$, $1, $3); }
 
 %type<qilang::ParamFieldDeclNodePtrVector> param_end;
 param_end:
@@ -451,11 +445,10 @@ struct_field_defs.1:
 
 %type<qilang::DeclNodePtrVector> struct_field_def;
 struct_field_def:
-  ID type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $2)); }
-// force the ID "," here to avoid reduce conflict between this rules and 'ID type'
-| ID "," id_list type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $4));
+  ID ":" type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $3)); }
+| ID "," id_list ":" type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $5));
                          for (unsigned i = 0; i < $3.size(); ++i) {
-                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $4));
+                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $5));
                          }
                        }
 | interface_def        { $$.push_back($1); }
