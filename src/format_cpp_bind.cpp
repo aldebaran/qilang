@@ -94,7 +94,7 @@ public:
       indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
     }
   }
-  void visitDecl(EmitDeclNode* node) {
+  void visitDecl(SigDeclNode* node) {
     indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
     out() << ");" << std::endl;
   }

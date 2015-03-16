@@ -9,6 +9,10 @@ interface AudioDevice2
   // \return true on success
   fn setDefaultDevice (a: str, b: str) -> int
   fn setDefaultDevice2 (x: str) -> int
+
+  sig test(s: float)
+
+  prop current(s: Vec<float>)
 end
 
 struct AudioBuffer2

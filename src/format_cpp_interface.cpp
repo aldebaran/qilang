@@ -102,7 +102,7 @@ public:
     out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
 
-  void visitDecl(EmitDeclNode* node) {
+  void visitDecl(SigDeclNode* node) {
     indent() << "qi::Signal< ";
     ScopedFormatAttrBlock _(constattr);
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);

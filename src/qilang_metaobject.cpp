@@ -121,7 +121,7 @@ namespace qilang {
     ParamFieldDeclNodePtrVector params;
 
     params = sigToParams(sig.parametersSignature());
-    return boost::make_shared<qilang::EmitDeclNode>(sig.name(), params, Location());
+    return boost::make_shared<qilang::SigDeclNode>(sig.name(), params, Location());
   }
 
   static DeclNodePtr metaPropertyToQiLang(const qi::MetaProperty& prop){

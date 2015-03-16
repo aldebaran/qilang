@@ -176,7 +176,7 @@ public:
     out() << "}}";
   }
 
-  void visitDecl(EmitDeclNode* node) {
+  void visitDecl(SigDeclNode* node) {
     putComma();
 
     out() << "\"" << node->name << "\" : {";

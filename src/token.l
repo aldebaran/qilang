@@ -175,7 +175,7 @@ FLOAT    {UFLOAT}
 "const"         RETURN_OP(CONST);
 
 "fn"            RETURN_OP2(FN);
-"emit"          RETURN_OP(EMIT);
+"sig"           RETURN_OP(SIG);
 "prop"          RETURN_OP(PROP);
 
 "at"            RETURN_OP(AT);

@@ -422,7 +422,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   for (unsigned i = 0; i < decls.size(); ++i) {
     NodePtr& node = decls.at(i);
     switch (node->type()) {
-      case NodeType_EmitDecl:
+      case NodeType_SigDecl:
         pushIfNot(includes, "<qi/signal.hpp>");
         break;
       case NodeType_PropDecl:

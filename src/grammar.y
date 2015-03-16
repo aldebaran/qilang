@@ -153,7 +153,7 @@
   ENUM                "enum"
 
   // IFace Keywords
-  EMIT                "emit"
+  SIG                 "sig"
   PROP                "prop"
 
   CONST               "const"
@@ -362,7 +362,7 @@ interface_defs.1:
 %type<qilang::DeclNodePtr> interface_def;
 interface_def:
   function_decl           { std::swap($$, $1); }
-| emit_decl               { std::swap($$, $1); }
+| sig_decl                { std::swap($$, $1); }
 | prop_decl               { std::swap($$, $1); }
 
 // fn foooo (t1, t2, t3) tret
@@ -371,9 +371,9 @@ function_decl:
   FN  ID "(" param_list ")"              { $$ = NODEC2(FnDeclNode, @$, $1, $2, $4); }
 | FN  ID "(" param_list ")" "->" type    { $$ = NODEC3(FnDeclNode, @$, $1, $2, $4, $7); }
 
-%type<qilang::DeclNodePtr> emit_decl;
-emit_decl:
-  EMIT ID "(" param_list ")"              { $$ = NODE2(EmitDeclNode, @$, $2, $4); }
+%type<qilang::DeclNodePtr> sig_decl;
+sig_decl:
+  SIG ID "(" param_list ")"              { $$ = NODE2(SigDeclNode, @$, $2, $4); }
 
 %type<qilang::DeclNodePtr> prop_decl;
 prop_decl:

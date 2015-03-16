@@ -67,8 +67,8 @@ namespace qilang {
       indent() << "}" << std::endl;
     }
 
-    void visitDecl(EmitDeclNode* node) {
-      qiLogError() << "EmitDeclNode not implemented";
+    void visitDecl(SigDeclNode* node) {
+      qiLogError() << "SigDeclNode not implemented";
     }
     void visitDecl(PropDeclNode* node) {
       qiLogError() << "PropDeclNode not implemented";

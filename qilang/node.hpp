@@ -102,7 +102,7 @@ class DeclNode;          //VIRTUAL
 class InterfaceDeclNode;
 class FnDeclNode;
 class ParamFieldDeclNode;
-class EmitDeclNode;
+class SigDeclNode;
 class PropDeclNode;
 class StructDeclNode; //Struct Decl
 class StructFieldDeclNode;
@@ -157,7 +157,7 @@ public:
   // Interface Declaration
   virtual void visitDecl(InterfaceDeclNode* node) = 0;
   virtual void visitDecl(FnDeclNode* node) = 0;
-  virtual void visitDecl(EmitDeclNode* node) = 0;
+  virtual void visitDecl(SigDeclNode* node) = 0;
   virtual void visitDecl(PropDeclNode* node) = 0;
   virtual void visitDecl(ParamFieldDeclNode* node) = 0;
 
@@ -262,7 +262,7 @@ enum NodeType {
   NodeType_InterfaceDecl,
   NodeType_FnDecl,
   NodeType_ParamFieldDecl,
-  NodeType_EmitDecl,
+  NodeType_SigDecl,
   NodeType_PropDecl,
   NodeType_TypeDefDecl,
   NodeType_EnumDecl,
@@ -1095,10 +1095,10 @@ public:
 };
 
 
-class QILANG_API EmitDeclNode : public DeclNode {
+class QILANG_API SigDeclNode : public DeclNode {
 public:
-  EmitDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
-    : DeclNode(NodeType_EmitDecl, loc)
+  SigDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
+    : DeclNode(NodeType_SigDecl, loc)
     , name(name)
     , args(args)
   {}

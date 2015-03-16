@@ -155,7 +155,7 @@ namespace qilang {
     void visitDecl(FnDeclNode* node) {
       declParamList("fn", node->name, node->comment(), node->args, node->ret);
     }
-    void visitDecl(EmitDeclNode* node) {
+    void visitDecl(SigDeclNode* node) {
       declParamList("emit", node->name, node->args);
     }
     void visitDecl(PropDeclNode* node) {
