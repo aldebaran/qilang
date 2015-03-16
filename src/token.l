@@ -187,6 +187,10 @@ FLOAT    {UFLOAT}
 
 "interface"     RETURN_OP2(INTERFACE);
 
+"Vec"           RETURN_OP(VEC);
+"Map"           RETURN_OP(MAP);
+"Tuple"         RETURN_OP(TUPLE);
+
 {FLOAT}           {
   qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));
   RETURN_VAL(CONSTANT, node);

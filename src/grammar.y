@@ -163,6 +163,10 @@
   FOR                 "for"
   IF                  "if"
 
+  VEC                 "Vec"
+  MAP                 "Map"
+  TUPLE               "Tuple"
+
 %token <qilang::KeywordNodePtr>
   INTERFACE           "interface"
   FN                  "fn"
@@ -280,10 +284,10 @@ at_expr:
 // #######################################################################################
 %type<qilang::TypeExprNodePtr> type;
 type:
-  ID                      { $$ = makeType(@$, $1); }
-| "[" "]" type            { $$ = NODE1(ListTypeExprNode, @$, $3); }
-| "[" type "]" type       { $$ = NODE2(MapTypeExprNode, @$, $2, $4); }
-| "(" tuple_type_defs ")" { $$ = NODE1(TupleTypeExprNode, @$, $2); }
+  ID                                { $$ = makeType(@$, $1); }
+| "Vec" "<" type ">"                { $$ = NODE1(ListTypeExprNode, @$, $3); }
+| "Map" "<" type "," type ">"       { $$ = NODE2(MapTypeExprNode, @$, $3, $5); }
+| "Tuple" "<" tuple_type_defs ">"   { $$ = NODE1(TupleTypeExprNode, @$, $3); }
 
 %type<qilang::TypeExprNodePtrVector> tuple_type_defs;
 tuple_type_defs:

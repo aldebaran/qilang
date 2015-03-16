@@ -12,9 +12,9 @@ interface AudioDevice2
 end
 
 struct AudioBuffer2
-  buffer []char
+  buffer Vec<char>
   size   int
-  ma     [int]str
+  ma     Map<int, str>
 end
 
 const AudioType_Mono = 0
