@@ -214,7 +214,6 @@ toplevel_def:
 | struct        { $$ = $1; }
 | typedef       { $$ = $1; }
 | enums         { $$ = $1; }
-| exp           { $$ = $1; }
 
 
 %type<qilang::StringVector> id_list;
