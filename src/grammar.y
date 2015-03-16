@@ -388,11 +388,15 @@ param_list:
 
 %type<qilang::ParamFieldDeclNodePtrVector> param_list.1;
 param_list.1:
-  param                       { $$.push_back($1); }
-| param_list.1 "," param      { std::swap($$, $1);
-                                $$.push_back($3); }
-| param_list.1 "," param_end  { std::swap($$, $1);
+  param_list.2                { std::swap($$, $1); }
+| param_list.2 "," param_end  { std::swap($$, $1);
                                 $$.insert($$.end(), $3.begin(), $3.end()); }
+
+%type<qilang::ParamFieldDeclNodePtrVector> param_list.2;
+param_list.2:
+  param                       { $$.push_back($1); }
+| param_list.2 "," param      { std::swap($$, $1);
+                                $$.push_back($3); }
 
 %type<qilang::ParamFieldDeclNodePtr> param;
 param:
