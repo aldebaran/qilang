@@ -406,13 +406,13 @@ param_end:
 
 %type<qilang::ParamFieldDeclNodePtr> param_vargs;
 param_vargs:
-  "*" ID             { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(VarArgTypeExprNode, @$), qilang::ParamFieldType_VarArgs); }
-| "*" ID type        { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(VarArgTypeExprNode, @$, $3), qilang::ParamFieldType_VarArgs); }
+  "*" ID            { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(VarArgTypeExprNode, @$), qilang::ParamFieldType_VarArgs); }
+| "*" ID ":" type   { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(VarArgTypeExprNode, @$, $4), qilang::ParamFieldType_VarArgs); }
 
 %type<qilang::ParamFieldDeclNodePtr> param_kwargs;
 param_kwargs:
-  "**" ID         { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
-| "**" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(KeywordArgTypeExprNode, @$, $3), qilang::ParamFieldType_KeywordArgs); }
+  "**" ID           { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
+| "**" ID ":" type  { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(KeywordArgTypeExprNode, @$, $4), qilang::ParamFieldType_KeywordArgs); }
 
 
 // #######################################################################################

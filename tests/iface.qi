@@ -1,6 +1,6 @@
 package tests
 
-// comment comment
+# comment comment
 interface AudioDevice2
   // set the default device
   //
