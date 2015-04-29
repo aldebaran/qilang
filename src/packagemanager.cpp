@@ -205,7 +205,7 @@ namespace qilang {
         StringVector retdir;
         bool b = locateFileInDir(p, &retfile, &retdir);
         if (b) {
-          qiLogVerbose() << "Found pkg '" << pkgName << "'";
+          qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
           return retfile;
         }
       }
@@ -291,18 +291,35 @@ namespace qilang {
   }
 
   //throw on error
-  static StringPair checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
+  static ResolutionResult checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
   {
     PackagePtr pkg = pm.package(pkgName);
     NodePtr node = pkg->getExport(type);
-    if (node)
-      return StringPair(pkgName, type);
+    TypeKind kind;
+    if (node) {
+      switch (node->type()) {
+      case NodeType_InterfaceDecl:
+        kind = TypeKind_Interface;
+        break;
+      case NodeType_EnumDecl:
+        kind = TypeKind_Enum;
+        break;
+      case NodeType_StructDecl:
+        kind = TypeKind_Struct;
+        break;
+      default:
+        pr->addDiag(Diagnostic(DiagnosticType_Error, "'" + type + "' in package '" + pkgName + "' is not a type", tnode->loc()));
+        throw std::runtime_error("Not a type");
+        break;
+      }
+      return ResolutionResult(pkgName, type, kind);
+    }
     pr->addDiag(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
     throw std::runtime_error("Can't find import");
   }
 
   //throw on error
-  StringPair PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
+  ResolutionResult PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
   {
     std::string type = tnode->value;
     qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
@@ -373,16 +390,17 @@ namespace qilang {
 
       for (unsigned j = 0; j < customs.size(); ++j) {
         CustomTypeExprNode* tnode = static_cast<CustomTypeExprNode*>(customs.at(j).get());
-        StringPair sp;
+        ResolutionResult sp;
         try {
           sp = resolveImport(it2->second, pkg, tnode);
         } catch(const std::exception& e) {
           it2->second->addDiag(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
           continue;
         }
-        qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.first << "." << sp.second << "'";
-        tnode->resolved_package = sp.first;
-        tnode->resolved_value   = sp.second;
+        qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.pkg << "." << sp.type << "'";
+        tnode->resolved_package = sp.pkg;
+        tnode->resolved_value   = sp.type;
+        tnode->resolved_kind    = sp.kind;
       }
     }
   }

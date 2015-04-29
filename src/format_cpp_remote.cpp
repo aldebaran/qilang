@@ -33,7 +33,7 @@ namespace qilang {
     FormatAttr   methodAttr;
 
     void visitDecl(InterfaceDeclNode* node) {
-      indent() << "class " << node->name + "Remote" << ": public " << node->name + "Interface";
+      indent() << "class " << node->name + "Remote" << ": public " << node->name;
       //there is some inherits, so proxy is already inherited by the parent.
       if (node->inherits.size() == 0) {
         out() << ", public qi::Proxy {" << std::endl;
@@ -71,7 +71,7 @@ namespace qilang {
       }
       out() << std::endl;
       indent() << "};" << std::endl;
-      indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << "Interface);" << std::endl;
+      indent() << "QI_REGISTER_PROXY_INTERFACE(" << node->name + "Remote, " << node->name << ");" << std::endl;
       indent() << std::endl;
     }
 
@@ -116,8 +116,8 @@ namespace qilang {
       indent() << "}" << std::endl;
     }
 
-    void visitDecl(EmitDeclNode* node) {
-      qiLogError() << "EmitDeclNode not implemented";
+    void visitDecl(SigDeclNode* node) {
+      qiLogError() << "SigDeclNode not implemented";
     }
     void visitDecl(PropDeclNode* node) {
       qiLogError() << "PropDeclNode not implemented";
@@ -181,9 +181,6 @@ namespace qilang {
   }
   void visitStmt(VarDefNode* node) {
     throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(CommentNode* node) {
-    formatBlock(out(), node->comments, "// ", _indent);
   }
 
 };

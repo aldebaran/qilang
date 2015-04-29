@@ -34,7 +34,7 @@ namespace qilang {
 
     void visitDecl(InterfaceDeclNode* node) {
       indent() << "template<class T>" << std::endl;
-      indent() << "class " << node->name + "Local" << ": public " << node->name + "Interface, public T {" << std::endl;
+      indent() << "class " << node->name + "Local" << ": public " << node->name + ", public T {" << std::endl;
       indent() << "public:" << std::endl;
       {
         ScopedIndent _(_indent);
@@ -67,8 +67,8 @@ namespace qilang {
       indent() << "}" << std::endl;
     }
 
-    void visitDecl(EmitDeclNode* node) {
-      qiLogError() << "EmitDeclNode not implemented";
+    void visitDecl(SigDeclNode* node) {
+      qiLogError() << "SigDeclNode not implemented";
     }
     void visitDecl(PropDeclNode* node) {
       qiLogError() << "PropDeclNode not implemented";
@@ -133,9 +133,6 @@ protected:
   }
   void visitStmt(VarDefNode* node) {
     throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(CommentNode* node) {
-    formatBlock(out(), node->comments, "// ", _indent);
   }
 
 };

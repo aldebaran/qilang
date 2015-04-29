@@ -50,6 +50,17 @@
     boost::make_shared< qilang::TYPE >(a, b, c, qilang::makeLocation(LOC))
   #define NODE4(TYPE, LOC, a, b, c, d) \
     boost::make_shared< qilang::TYPE >(a, b, c, d, qilang::makeLocation(LOC))
+
+  #define NODEC0(TYPE, LOC, N) \
+    boost::make_shared< qilang::TYPE >(qilang::makeLocation(LOC), N->comment())
+  #define NODEC1(TYPE, LOC, N, a) \
+    boost::make_shared< qilang::TYPE >(a, qilang::makeLocation(LOC), N->comment())
+  #define NODEC2(TYPE, LOC, N, a, b) \
+    boost::make_shared< qilang::TYPE >(a, b, qilang::makeLocation(LOC), N->comment())
+  #define NODEC3(TYPE, LOC, N, a, b, c) \
+    boost::make_shared< qilang::TYPE >(a, b, c, qilang::makeLocation(LOC), N->comment())
+  #define NODEC4(TYPE, LOC, N, a, b, c, d) \
+    boost::make_shared< qilang::TYPE >(a, b, c, d, qilang::makeLocation(LOC), N->comment())
 }
 
 %code {
@@ -135,7 +146,6 @@
 
   // Blocks Types
   OBJECT              "object"
-  INTERFACE           "interface"
   STRUCT              "struct"
   END                 "end"
 
@@ -143,8 +153,7 @@
   ENUM                "enum"
 
   // IFace Keywords
-  FN                  "fn"
-  EMIT                "emit"
+  SIG                 "sig"
   PROP                "prop"
 
   CONST               "const"
@@ -154,9 +163,16 @@
   FOR                 "for"
   IF                  "if"
 
+  VEC                 "Vec"
+  MAP                 "Map"
+  TUPLE               "Tuple"
+
+%token <qilang::KeywordNodePtr>
+  INTERFACE           "interface"
+  FN                  "fn"
 
 %token <qilang::LiteralNodePtr>   STRING CONSTANT
-%token <std::string>                ID
+%token <std::string>              ID
 
 // the first item here is the last to evaluate, the last item is the first
 %left  "||"
@@ -198,7 +214,6 @@ toplevel_def:
 | struct        { $$ = $1; }
 | typedef       { $$ = $1; }
 | enums         { $$ = $1; }
-| exp           { $$ = $1; }
 
 
 %type<qilang::StringVector> id_list;
@@ -268,10 +283,10 @@ at_expr:
 // #######################################################################################
 %type<qilang::TypeExprNodePtr> type;
 type:
-  ID                      { $$ = makeType(@$, $1); }
-| "[" "]" type            { $$ = NODE1(ListTypeExprNode, @$, $3); }
-| "[" type "]" type       { $$ = NODE2(MapTypeExprNode, @$, $2, $4); }
-| "(" tuple_type_defs ")" { $$ = NODE1(TupleTypeExprNode, @$, $2); }
+  ID                                { $$ = makeType(@$, $1); }
+| "Vec" "<" type ">"                { $$ = NODE1(ListTypeExprNode, @$, $3); }
+| "Map" "<" type "," type ">"       { $$ = NODE2(MapTypeExprNode, @$, $3, $5); }
+| "Tuple" "<" tuple_type_defs ">"   { $$ = NODE1(TupleTypeExprNode, @$, $3); }
 
 %type<qilang::TypeExprNodePtrVector> tuple_type_defs;
 tuple_type_defs:
@@ -321,8 +336,8 @@ enums_def:
 
 %type<qilang::NodePtr> iface;
 iface:
-  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = NODE3(InterfaceDeclNode, @$, $2, $4, $6); }
-| INTERFACE ID interface_defs END                      { $$ = NODE2(InterfaceDeclNode, @$, $2, $3); }
+  INTERFACE ID "(" inherit_defs ")" interface_defs END { $$ = NODEC3(InterfaceDeclNode, @$, $1, $2, $4, $6); }
+| INTERFACE ID interface_defs END                      { $$ = NODEC2(InterfaceDeclNode, @$, $1, $2, $3); }
 
 %type<qilang::StringVector> inherit_defs;
 inherit_defs:
@@ -347,18 +362,18 @@ interface_defs.1:
 %type<qilang::DeclNodePtr> interface_def;
 interface_def:
   function_decl           { std::swap($$, $1); }
-| emit_decl               { std::swap($$, $1); }
+| sig_decl                { std::swap($$, $1); }
 | prop_decl               { std::swap($$, $1); }
 
 // fn foooo (t1, t2, t3) tret
 %type<qilang::DeclNodePtr> function_decl;
 function_decl:
-  FN  ID "(" param_list ")"              { $$ = NODE2(FnDeclNode, @$, $2, $4); }
-| FN  ID "(" param_list ")" "->" type    { $$ = NODE3(FnDeclNode, @$, $2, $4, $7); }
+  FN  ID "(" param_list ")"              { $$ = NODEC2(FnDeclNode, @$, $1, $2, $4); }
+| FN  ID "(" param_list ")" "->" type    { $$ = NODEC3(FnDeclNode, @$, $1, $2, $4, $7); }
 
-%type<qilang::DeclNodePtr> emit_decl;
-emit_decl:
-  EMIT ID "(" param_list ")"              { $$ = NODE2(EmitDeclNode, @$, $2, $4); }
+%type<qilang::DeclNodePtr> sig_decl;
+sig_decl:
+  SIG ID "(" param_list ")"              { $$ = NODE2(SigDeclNode, @$, $2, $4); }
 
 %type<qilang::DeclNodePtr> prop_decl;
 prop_decl:
@@ -372,21 +387,19 @@ param_list:
 
 %type<qilang::ParamFieldDeclNodePtrVector> param_list.1;
 param_list.1:
-  param                       { $$.push_back($1); }
-| param_list.1 "," param      { std::swap($$, $1);
-                                $$.push_back($3); }
-| param_list.1 "," param_end  { std::swap($$, $1);
+  param_list.2                { std::swap($$, $1); }
+| param_list.2 "," param_end  { std::swap($$, $1);
                                 $$.insert($$.end(), $3.begin(), $3.end()); }
+
+%type<qilang::ParamFieldDeclNodePtrVector> param_list.2;
+param_list.2:
+  param                       { $$.push_back($1); }
+| param_list.2 "," param      { std::swap($$, $1);
+                                $$.push_back($3); }
 
 %type<qilang::ParamFieldDeclNodePtr> param;
 param:
-  ID                          { $$ = NODE1(ParamFieldDeclNode, @$, $1); }
-| ID type                     { $$ = NODE2(ParamFieldDeclNode, @$, $1, $2); }
-| "(" ID "," id_list ")" type { qilang::StringVector sv;
-                                sv.push_back($2);
-                                sv.insert(sv.end(), $4.begin(), $4.end());
-                                $$ = NODE2(ParamFieldDeclNode, @$, sv, $6);
-                              }
+  ID ":" type                 { $$ = NODE2(ParamFieldDeclNode, @$, $1, $3); }
 
 %type<qilang::ParamFieldDeclNodePtrVector> param_end;
 param_end:
@@ -396,13 +409,13 @@ param_end:
 
 %type<qilang::ParamFieldDeclNodePtr> param_vargs;
 param_vargs:
-  "*" ID             { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(VarArgTypeExprNode, @$), qilang::ParamFieldType_VarArgs); }
-| "*" ID type        { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(VarArgTypeExprNode, @$, $3), qilang::ParamFieldType_VarArgs); }
+  "*" ID            { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(VarArgTypeExprNode, @$), qilang::ParamFieldType_VarArgs); }
+| "*" ID ":" type   { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(VarArgTypeExprNode, @$, $4), qilang::ParamFieldType_VarArgs); }
 
 %type<qilang::ParamFieldDeclNodePtr> param_kwargs;
 param_kwargs:
-  "**" ID         { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
-| "**" ID type    { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(KeywordArgTypeExprNode, @$, $3), qilang::ParamFieldType_KeywordArgs); }
+  "**" ID           { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE0(KeywordArgTypeExprNode, @$), qilang::ParamFieldType_KeywordArgs); }
+| "**" ID ":" type  { $$ = NODE3(ParamFieldDeclNode, @$, $2, NODE1(KeywordArgTypeExprNode, @$, $4), qilang::ParamFieldType_KeywordArgs); }
 
 
 // #######################################################################################
@@ -435,11 +448,10 @@ struct_field_defs.1:
 
 %type<qilang::DeclNodePtrVector> struct_field_def;
 struct_field_def:
-  ID type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $2)); }
-// force the ID "," here to avoid reduce conflict between this rules and 'ID type'
-| ID "," id_list type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $4));
+  ID ":" type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $3)); }
+| ID "," id_list ":" type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $5));
                          for (unsigned i = 0; i < $3.size(); ++i) {
-                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $4));
+                            $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $5));
                          }
                        }
 | interface_def        { $$.push_back($1); }

@@ -44,7 +44,7 @@ namespace qilang {
       out() << node->value;
     }
     void visitData(StringLiteralNode *node) {
-      out() << node->value;
+      out() << "\"" << node->value << "\"";
     }
     void visitData(ListLiteralNode* node) {
       out() << "[ ";
@@ -112,9 +112,9 @@ namespace qilang {
     }
 
     // a, ..., z
-    void declParamList(const std::string& declname, const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
-      if (comment && !comment->comments.empty())
-        indent() << comment->comments << std::endl;
+    void declParamList(const std::string& declname, const std::string& name, const std::string& comment, const ParamFieldDeclNodePtrVector& vec, const TypeExprNodePtr& ret = TypeExprNodePtr()) {
+      if (!comment.empty())
+        indent() << comment << std::endl;
       indent() << declname << " " << name << "(";
       join(vec, ", ");
       out() << ")";
@@ -153,9 +153,9 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      declParamList("fn", node->name, node->comment, node->args, node->ret);
+      declParamList("fn", node->name, node->comment(), node->args, node->ret);
     }
-    void visitDecl(EmitDeclNode* node) {
+    void visitDecl(SigDeclNode* node) {
       declParamList("emit", node->name, node->args);
     }
     void visitDecl(PropDeclNode* node) {
@@ -197,6 +197,7 @@ namespace qilang {
       out() << std::endl;
     }
     void visitDecl(StructFieldDeclNode* node) {
+      indent() << "";
       join(node->names, ", ");
       if (node->type) {
         out() << " ";
@@ -264,9 +265,6 @@ namespace qilang {
         accept(node->data);
       }
       out() << std::endl;
-    }
-    void visitStmt(CommentNode* node) {
-      formatBlock(out(), node->comments, "# ", _indent);
     }
 
   };

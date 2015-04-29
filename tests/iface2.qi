@@ -7,7 +7,7 @@ from tutu import tutu, toto
 #comment
 #comment
 interface AudioDevice
-  fn setDefaultDevice (str, str) int
+  fn setDefaultDevice (str, str) -> int
 
   fn start()
   fn stop()

@@ -133,7 +133,7 @@ namespace qilang {
         acceptWithCb(node->type);
     }
 
-    void visitDecl(EmitDeclNode* node) {
+    void visitDecl(SigDeclNode* node) {
       each(node->args);
     }
     void visitDecl(PropDeclNode* node) {
@@ -170,8 +170,6 @@ namespace qilang {
     }
     void visitStmt(VarDefNode* node) {
       acceptWithCb(node->data);
-    }
-    void visitStmt(CommentNode* node) {
     }
 
   };

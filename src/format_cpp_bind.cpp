@@ -9,7 +9,9 @@
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/docparser.hpp>
 #include <qi/os.hpp>
+#include <boost/foreach.hpp>
 #include "formatter_p.hpp"
 #include "cpptype.hpp"
 
@@ -58,14 +60,14 @@ public:
   void visitDecl(InterfaceDeclNode* node) {
     int current = id;
     id++;
-    currentParent = formatNs(_pr->package) + "::" + node->name + "Interface";
+    currentParent = formatNs(_pr->package) + "::" + node->name;
     indent() << "static int initType" << current << "() {" << std::endl;
     {
       ScopedIndent _(_indent);
       ScopedFormatAttrActivate _2(methodAttr);
       indent() << "qi::ObjectTypeBuilder< " << currentParent << " > builder;" << std::endl;
       for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        indent() << "builder.inherits< " << node->inherits.at(i) << "Interface >();" << std::endl;
+        indent() << "builder.inherits< " << node->inherits.at(i) << " >();" << std::endl;
       }
       for (unsigned int i = 0; i < node->values.size(); ++i) {
         accept(node->values.at(i));
@@ -84,17 +86,32 @@ public:
   }
   void visitDecl(FnDeclNode* node) {
     if (methodAttr.isActive()) {
-      indent() << "builder.advertiseMethod(\"" << node->name << "\", static_cast< ";
-      accept(node->effectiveRet());
-      out() << "(" << currentParent << "::*)(";
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << ") >(&" << currentParent << "::" << node->name;
-      out() << "));" << std::endl;
+      indent() << "{" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        Doc doc = parseDoc(node->comment());
+        indent() << "qi::MetaMethodBuilder mmb;" << std::endl;
+        indent() << "mmb.setName(\"" << node->name << "\");" << std::endl;
+        BOOST_FOREACH(Doc::Parameters::value_type it, doc.parameters) {
+          indent() << "mmb.appendParameter(\"" << it.first << "\", \"" << it.second << "\");" << std::endl;
+        }
+        if (doc.return_)
+          indent() << "mmb.setReturnDescription(\"" << *doc.return_ << "\");" << std::endl;
+        if (doc.description)
+          indent() << "mmb.setDescription(\"" << *doc.description << "\");" << std::endl;
+        indent() << "builder.advertiseMethod(mmb, static_cast< ";
+        accept(node->effectiveRet());
+        out() << "(" << currentParent << "::*)(";
+        cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+        out() << ")>(&" << currentParent << "::" << node->name;
+        out() << "));" << std::endl;
+      }
+      indent() << "}" << std::endl;
     } else {
       indent() << "//QI_REGISTER_OBJECT_FACTORY(" << node->name << ");" << std::endl;
     }
   }
-  void visitDecl(EmitDeclNode* node) {
+  void visitDecl(SigDeclNode* node) {
     indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << currentParent << "::" << node->name;
     out() << ");" << std::endl;
   }
@@ -116,16 +133,12 @@ public:
     throw std::runtime_error("unimplemented");
   }
   void visitDecl(StructFieldDeclNode* node) {
-    qiLogError() << "EnumDeclNode not implemented";
   }
   void visitDecl(EnumDeclNode* node) {
-    qiLogError() << "EnumDeclNode not implemented";
   }
   void visitDecl(EnumFieldDeclNode* node) {
-    qiLogError() << "EnumFieldDeclNode not implemented";
   }
   void visitDecl(TypeDefDeclNode* node) {
-    qiLogError() << "TypeDefDeclNode not implemented";
   }
 
   void visitStmt(PackageNode* node) {
@@ -151,9 +164,6 @@ public:
   }
   void visitStmt(VarDefNode* node) {
     throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(CommentNode* node) {
-    formatBlock(out(), node->comments, "// ", _indent);
   }
 
 };

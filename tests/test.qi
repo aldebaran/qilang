@@ -1,31 +1,31 @@
 package tests
 
-type AudioBuffer struct
+struct AudioBuffer
   size   uint32
   lock   Mutex
   buffer []uint32
 end
 
 interface AudioDevice
-  fn setDefaultDevice (a str, b str) a:int
+  fn setDefaultDevice (a str, b str) -> int
 
-  in start
-  in stop
-  in mute
-  in unmute
+  fn start()
+  fn stop()
+  fn mute()
+  fn unmute()
 
-  out started
-  out stopped
-  out muted
-  out unmuted
+  emit started()
+  emit stopped()
+  emit muted()
+  emit unmuted()
 end
 
-interface Adder<T>
-  in   add T
-  prop value T
-end
+#interface Adder<T>
+#  in   add T
+#  prop value T
+#end
 
 interface Adder
-  in   add(int)
+  fn   add(int)
   prop value(int)
 end

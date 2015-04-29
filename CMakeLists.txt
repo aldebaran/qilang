@@ -13,6 +13,7 @@ set(H qilang/api.hpp
       qilang/parser.hpp
       qilang/formatter.hpp
       qilang/packagemanager.hpp
+      qilang/docparser.hpp
    )
 
 set(C src/codegen.cpp
@@ -20,6 +21,7 @@ set(C src/codegen.cpp
       src/parser.cpp
       src/parser_p.hpp
       src/formatter_p.hpp
+      src/format_doc.cpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
       src/format_cpp_interface.cpp
@@ -31,7 +33,8 @@ set(C src/codegen.cpp
       src/cpptype.cpp
       src/packagemanager.cpp
       src/qilang_signature.cpp
-      src/qilang_metaobject.cpp)
+      src/qilang_metaobject.cpp
+      src/docparser.cpp)
 
 find_package(FLEX NO_MODULE REQUIRED)
 find_package(BISON NO_MODULE REQUIRED)
@@ -68,8 +71,8 @@ qi_use_lib(qilang qi)
 qi_stage_lib(qilang)
 
 
-qi_create_bin(qic src/qic_main.cpp DEPENDS qi qilang)
-qi_stage_bin(qic)
+qi_create_bin(qicc src/qic_main.cpp DEPENDS qi qilang)
+qi_stage_bin(qicc)
 
 qi_stage_cmake(qilang-tools-config.cmake)
 include(qilang-tools-config.cmake)

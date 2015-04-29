@@ -144,7 +144,12 @@ void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
 
   out() << constattr("const ");
   if (!ns.empty())
-    out() << ns << "::" << node->resolved_value << constattr("&");
+    // only for objects for the moment
+    out() << ns << "::";
+  out() << node->resolved_value;
+  if (node->resolved_kind == TypeKind_Interface)
+    out() << "Ptr";
+  out() << constattr("&");
 }
 void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
   out() << constattr("const ") << "std::vector< ";
@@ -417,7 +422,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   for (unsigned i = 0; i < decls.size(); ++i) {
     NodePtr& node = decls.at(i);
     switch (node->type()) {
-      case NodeType_EmitDecl:
+      case NodeType_SigDecl:
         pushIfNot(includes, "<qi/signal.hpp>");
         break;
       case NodeType_PropDecl:

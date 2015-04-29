@@ -68,7 +68,6 @@ class ObjectDefNode;
 class PropertyDefNode;
 class AtNode;
 class VarDefNode;
-class CommentNode;
 
 // EXPR: Const Data
 class LiteralNode;  // VIRTUAL
@@ -103,7 +102,7 @@ class DeclNode;          //VIRTUAL
 class InterfaceDeclNode;
 class FnDeclNode;
 class ParamFieldDeclNode;
-class EmitDeclNode;
+class SigDeclNode;
 class PropDeclNode;
 class StructDeclNode; //Struct Decl
 class StructFieldDeclNode;
@@ -139,9 +138,6 @@ typedef std::vector<LiteralNodePtrPair>           LiteralNodePtrPairVector;
 
 typedef boost::shared_ptr<ConstDeclNode> ConstDeclNodePtr;
 
-typedef boost::shared_ptr<CommentNode>        CommentNodePtr;
-typedef std::vector<CommentNodePtr>           CommentNodePtrVector;
-
 /* All Statements
  */
 class NodeVisitor {
@@ -161,7 +157,7 @@ public:
   // Interface Declaration
   virtual void visitDecl(InterfaceDeclNode* node) = 0;
   virtual void visitDecl(FnDeclNode* node) = 0;
-  virtual void visitDecl(EmitDeclNode* node) = 0;
+  virtual void visitDecl(SigDeclNode* node) = 0;
   virtual void visitDecl(PropDeclNode* node) = 0;
   virtual void visitDecl(ParamFieldDeclNode* node) = 0;
 
@@ -191,8 +187,6 @@ public:
 
   // Definitions
   virtual void visitStmt(VarDefNode* node) = 0;
-
-  virtual void visitStmt(CommentNode* node) = 0;
 
   //##### #### #####
   //##### Expr
@@ -268,7 +262,7 @@ enum NodeType {
   NodeType_InterfaceDecl,
   NodeType_FnDecl,
   NodeType_ParamFieldDecl,
-  NodeType_EmitDecl,
+  NodeType_SigDecl,
   NodeType_PropDecl,
   NodeType_TypeDefDecl,
   NodeType_EnumDecl,
@@ -281,16 +275,23 @@ enum NodeType {
   NodeType_Comment,
 };
 
+enum TypeKind {
+  TypeKind_Interface,
+  TypeKind_Enum,
+  TypeKind_Struct
+};
+
 //Base Node used to describe the AST
 class QILANG_API Node
 {
 public:
-  Node(NodeKind kind, NodeType type, const Location& loc);
+  Node(NodeKind kind, NodeType type, const Location& loc, const std::string& comment = "");
   virtual ~Node() {}
 
   NodeKind kind() const { return _kind; }
   NodeType type() const { return _type; }
   Location loc() const { return _loc; }
+  std::string comment() const { return _comment; }
 
   virtual void accept(NodeVisitor *visitor) = 0;
 
@@ -298,7 +299,19 @@ private:
   NodeKind _kind;
   NodeType _type;
   Location _loc;
+  std::string _comment;
 };
+
+class KeywordNode : public Node {
+public:
+  KeywordNode(const Location& loc, const std::string& comment) :
+    Node(NodeKind_Literal, NodeType_LiteralExpr, loc, comment)
+  {}
+
+  void accept(NodeVisitor*) { throw std::runtime_error("visiting keywords not supported"); };
+};
+
+typedef boost::shared_ptr<KeywordNode> KeywordNodePtr;
 
 enum UnaryOpCode {
   UnaryOpCode_Negate,
@@ -580,6 +593,7 @@ public:
 
   std::string resolved_package;
   std::string resolved_value;
+  TypeKind resolved_kind;
   std::string value;
 };
 
@@ -803,19 +817,6 @@ public:
   std::string receiver;
 };
 
-class QILANG_API CommentNode : public StmtNode {
-public:
-  CommentNode(const std::string& comments, const Location& loc)
-    : StmtNode(NodeType_Comment, loc)
-    , comments(comments)
-  {}
-
-
-  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
-
-  std::string      comments;
-};
-
 // ####################
 // # DECL Node
 // ####################
@@ -823,8 +824,8 @@ public:
 class QILANG_API DeclNode : public Node
 {
 public:
-  DeclNode(NodeType type, const Location& loc)
-    : Node(NodeKind_Decl, type, loc)
+  DeclNode(NodeType type, const Location& loc, const std::string& comment = "")
+    : Node(NodeKind_Decl, type, loc, comment)
   {}
 
   virtual void accept(NodeVisitor* visitor) = 0;
@@ -941,14 +942,14 @@ public:
 
 class QILANG_API InterfaceDeclNode : public DeclNode {
 public:
-  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc)
-    : DeclNode(NodeType_InterfaceDecl, loc)
+  InterfaceDeclNode(const std::string& name, const DeclNodePtrVector& decls, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_InterfaceDecl, loc, comment)
     , name(name)
     , values(decls)
   {}
 
-  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc)
-    : DeclNode(NodeType_InterfaceDecl, loc)
+  InterfaceDeclNode(const std::string& name, const StringVector& inherits, const DeclNodePtrVector& decls, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_InterfaceDecl, loc, comment)
     , name(name)
     , values(decls)
     , inherits(inherits)
@@ -1022,38 +1023,9 @@ typedef std::vector<ParamFieldDeclNodePtr>    ParamFieldDeclNodePtrVector;
 
 class QILANG_API FnDeclNode : public DeclNode {
 public:
-  FnDeclNode(const std::string& name, const CommentNodePtr& comment, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
-    , name(name)
-    , comment(comment)
-    , args(args)
-    , ret(ret)
-  {
-    //if ret is nothing, just drop it. (to simplify codegen)
-    if (ret && ret->type() == NodeType_BuiltinTypeExpr) {
-      BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(ret.get());
-      if (tnode->builtinType == BuiltinType_Nothing)
-        this->ret = TypeExprNodePtr();
-    }
 
-    unsigned cvar = 0;
-    unsigned ckwvar = 0;
-    for (unsigned i = 0; i < args.size(); ++i) {
-      if (args.at(i)->isVarArgs()) {
-        cvar++;
-        if (cvar > 1)
-          throw std::runtime_error("More than one variable argument specified");
-      }
-      if (args.at(i)->isKeywordArgs()) {
-        ckwvar++;
-        if (ckwvar > 1)
-          throw std::runtime_error("More than one keyword argument specified");
-      }
-    }
-  }
-
-  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const TypeExprNodePtr& ret, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_FnDecl, loc, comment)
     , name(name)
     , args(args)
     , ret(ret)
@@ -1080,6 +1052,12 @@ public:
       }
     }
   }
+
+  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc, const std::string& comment = "")
+    : DeclNode(NodeType_FnDecl, loc, comment)
+    , name(name)
+    , args(args)
+  {}
 
   bool isVariadic() {
     for (unsigned i = 0; i < args.size(); ++i) {
@@ -1088,12 +1066,6 @@ public:
     }
     return false;
   }
-
-  FnDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
-    : DeclNode(NodeType_FnDecl, loc)
-    , name(name)
-    , args(args)
-  {}
 
   bool hasVarArgs();
   bool hasKeywordArgs();
@@ -1118,16 +1090,15 @@ public:
 
 public:
   std::string                 name;
-  CommentNodePtr              comment;
   ParamFieldDeclNodePtrVector args;
   TypeExprNodePtr             ret;
 };
 
 
-class QILANG_API EmitDeclNode : public DeclNode {
+class QILANG_API SigDeclNode : public DeclNode {
 public:
-  EmitDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
-    : DeclNode(NodeType_EmitDecl, loc)
+  SigDeclNode(const std::string& name, const ParamFieldDeclNodePtrVector& args, const Location& loc)
+    : DeclNode(NodeType_SigDecl, loc)
     , name(name)
     , args(args)
   {}

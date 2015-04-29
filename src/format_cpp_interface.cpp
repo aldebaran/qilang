@@ -13,6 +13,7 @@
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/lambda/lambda.hpp>
 #include "cpptype.hpp"
 
 qiLogCategory("qigen.hppinterface");
@@ -20,19 +21,46 @@ qiLogCategory("qigen.hppinterface");
 
 namespace qilang {
 
-  class QiLangGenObjectDef: public CppTypeFormatter
+class ScopedNamespaceEscaper {
+public:
+  ScopedNamespaceEscaper(std::ostream& out, const StringVector& ns)
+    : out(out)
+    , currentNs(ns)
   {
-  public:
-    QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
-      : toclose(0)
-      , _pm(pm)
-      , _pr(pr)
-      , _includes(includes)
-    {
-      apiExport = pkgNameToAPI(pr->package);
-      //force api export activation by default
-      apiAttr.activate();
+    for (int i = 0; i < currentNs.size(); ++i) {
+      out << "}" << std::endl;
     }
+    out << std::endl;
+  }
+
+  ~ScopedNamespaceEscaper() {
+    unsigned int indent = 0;
+    for (unsigned int i = 0; i < currentNs.size(); ++i) {
+      for (unsigned int j = 0; j < indent; ++j) {
+        out << "  ";
+      }
+      out << "namespace " << currentNs.at(i) << " {" << std::endl;
+      indent += 1;
+    }
+    out << std::endl;
+  }
+
+  std::ostream& out;
+  StringVector currentNs;
+};
+
+class QiLangGenObjectDef: public CppTypeFormatter
+{
+public:
+  QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
+    : _pm(pm)
+    , _pr(pr)
+    , _includes(includes)
+  {
+    apiExport = pkgNameToAPI(pr->package);
+    //force api export activation by default
+    apiAttr.activate();
+  }
 
   FormatAttr  virtualAttr;
   FormatAttr  apiAttr;
@@ -44,11 +72,11 @@ namespace qilang {
     ScopedFormatAttrActivate _(virtualAttr);
     ScopedFormatAttrBlock    _2(apiAttr);
 
-    indent() << "class " << apiExport << " " << node->name << "Interface";
+    indent() << "class " << apiExport << " " << node->name;
     if (node->inherits.size() > 0) {
       out() << ": ";
       for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        out() << "virtual public " << node->inherits.at(i) << "Interface";
+        out() << "virtual public " << node->inherits.at(i);
         if (i + 1 != node->inherits.size())
           out() << ", ";
       }
@@ -56,10 +84,10 @@ namespace qilang {
     out() << " {" << std::endl;
     indent() << "public:" << std::endl;
     //add a virtual destructor
-    indent() << "  virtual ~" << node->name << "Interface() {}" << std::endl;
+    indent() << "  virtual ~" << node->name << "() {}" << std::endl;
     scoped(node->values);
     indent() << "};" << std::endl << std::endl;
-    indent() << "typedef qi::Object<" << node->name << "Interface> " << node->name << ";" << std::endl;
+    indent() << "typedef qi::Object<" << node->name << "> " << node->name << "Ptr;" << std::endl;
   }
 
   void visitDecl(ParamFieldDeclNode* node) {
@@ -74,7 +102,7 @@ namespace qilang {
     out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
 
-  void visitDecl(EmitDeclNode* node) {
+  void visitDecl(SigDeclNode* node) {
     indent() << "qi::Signal< ";
     ScopedFormatAttrBlock _(constattr);
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
@@ -91,7 +119,45 @@ namespace qilang {
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
     scoped(node->decls);
+    StringVector fields;
+    {
+      ScopedIndent _i(_indent);
+      out() << std::endl;
+      indent() << node->name << "()" << std::endl;
+      for (unsigned int i = 0; i < node->decls.size(); ++i) {
+        if (StructFieldDeclNodePtr field =
+            boost::dynamic_pointer_cast<StructFieldDeclNode>(node->decls[i])) {
+          for (unsigned int j = 0; j < field->names.size(); ++j)
+            fields.push_back(field->names[j]);
+        }
+      }
+      if (!fields.empty()) {
+        indent() << ": ";
+        StringVector fieldInits;
+        std::transform(fields.begin(), fields.end(),
+            std::back_inserter(fieldInits), boost::lambda::_1 + "()");
+        join(fieldInits, ", ");
+      }
+      out() << std::endl;
+      indent() << "{}" << std::endl;
+    }
     indent() << "};" << std::endl << std::endl;
+
+
+    {
+      ScopedNamespaceEscaper _e(out(), currentNs);
+      out() << "QI_TYPE_STRUCT(";
+      for (unsigned int i = 0; i < currentNs.size(); ++i) {
+        out() << "::" << currentNs.at(i);
+      }
+      out() << "::" << node->name;
+      StringVector fieldRegs;
+      std::transform(fields.begin(), fields.end(),
+          std::back_inserter(fieldRegs), ", " + boost::lambda::_1);
+      join(fieldRegs, "");
+      out() << ")" << std::endl;
+      out() << std::endl;
+    }
   }
 
   void visitDecl(ConstDeclNode* node) {
@@ -117,6 +183,14 @@ namespace qilang {
     indent() << "enum " << node->name << " {" << std::endl;
     scoped(node->fields);
     indent() << "};" << std::endl << std::endl;
+    {
+      ScopedNamespaceEscaper _e(out(), currentNs);
+      out() << "QI_TYPE_ENUM_REGISTER(";
+      for (unsigned int i = 0; i < currentNs.size(); ++i) {
+        out() << "::" << currentNs.at(i);
+      }
+      out() << "::" << node->name << ")" << std::endl << std::endl;
+    }
   }
   void visitDecl(EnumFieldDeclNode* node) {
     if (node->fieldType == EnumFieldType_Const) {
@@ -134,7 +208,8 @@ namespace qilang {
     out() << " " << node->name << ";" << std::endl;
   }
 
-  int toclose;     //number of } to close (namespace)
+  int toclose;
+  StringVector currentNs;
   PackageManagerPtr  _pm;
   const ParseResultPtr& _pr;
   StringVector       _includes;
@@ -155,7 +230,7 @@ namespace qilang {
   }
 
   void formatFooter() {
-    for (int i = 0; i < toclose; ++i) {
+    for (int i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
     out() << std::endl;
@@ -164,10 +239,9 @@ namespace qilang {
 
 protected:
   void visitStmt(PackageNode* node) {
-    std::vector<std::string> ns = splitPkgName(node->name);
-    for (unsigned int i = 0; i < ns.size(); ++i) {
-      toclose++;
-      indent() << "namespace " << ns.at(i) << " {" << std::endl;
+    currentNs = splitPkgName(node->name);
+    for (unsigned int i = 0; i < currentNs.size(); ++i) {
+      indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
     }
     out() << std::endl;
   }
@@ -192,9 +266,6 @@ protected:
       accept(node->data);
     }
     out() << ";" << std::endl;
-  }
-  void visitStmt(CommentNode* node) {
-    formatBlock(out(), node->comments, "// ", _indent);
   }
 
 };

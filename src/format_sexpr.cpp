@@ -163,7 +163,7 @@ namespace qilang {
     void visitDecl(FnDeclNode* node) {
       declParamList("fn", node->name, node->args, node->ret);
     }
-    void visitDecl(EmitDeclNode* node) {
+    void visitDecl(SigDeclNode* node) {
       declParamList("emit", node->name, node->args);
     }
     void visitDecl(PropDeclNode* node) {
@@ -259,9 +259,6 @@ namespace qilang {
         accept(node->data);
       }
       out() << ")" << std::endl;
-    }
-    void visitStmt(CommentNode* node) {
-      formatBlock(out(), node->comments, ";; ", _indent);
     }
 
   };
