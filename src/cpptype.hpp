@@ -4,6 +4,8 @@
 **
 ** Copyright (C) 2014 Cedric GESTES
 */
+#ifndef CPPTYPE_HPP
+#define CPPTYPE_HPP
 
 #include <string>
 #include <vector>
@@ -21,13 +23,15 @@ namespace qilang {
    *  noconst increment noconstref to avoid constref even when they are asked.
    *  Think string in a vector.
    */
-  class CppTypeFormatter: public NodeFormatter {
+  template <typename T = NodeFormatter<> >
+  class CppTypeFormatter: public T {
   public:
     //should we add const if possible? (for function params)
     //contextual disable const ref.  (const std::vector<std::string>&)
     FormatAttr constattr;
 
     explicit CppTypeFormatter();
+    explicit CppTypeFormatter(std::stringstream& ss, int indent = 0);
 
     virtual void doAccept(Node* node) { node->accept(this); }
 
@@ -82,6 +86,11 @@ namespace qilang {
     CppParamsFormat_TypeOnly,
     CppParamsFormat_NameOnly,
   };
-  void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector node, CppParamsFormat cfpt = CppParamsFormat_Normal);
+  template <typename T>
+  void cppParamsFormat(CppTypeFormatter<T>* typeformat, ParamFieldDeclNodePtrVector node, CppParamsFormat cfpt = CppParamsFormat_Normal);
 
 }
+
+#include <cpptype.hxx>
+
+#endif

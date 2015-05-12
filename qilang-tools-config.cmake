@@ -20,13 +20,12 @@ message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 # \arg:pkg     the package path (qi/foo/bar)
 # \arg:dir     the directory where the files will be generated
 # \flag:NOINTERFACE do not generate interface file
-# \flag:NOBIND      do not generate bind file
 # \flag:NOLOCAL     do not generate local file
 # \flag:NOREMOTE    do not generate remote file
 # \group:FLAGS      flags to pass to qicc
 function(qi_gen_idl OUT lang pkg dir)
   cmake_parse_arguments(ARG
-    "NOINTERFACE;NOBIND;NOLOCAL;NOREMOTE"
+    "NOINTERFACE;NOLOCAL;NOREMOTE"
     ""
     "FLAGS"
     ${ARGN})
@@ -44,16 +43,6 @@ function(qi_gen_idl OUT lang pkg dir)
         COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${absname}" -o "${absdir}/${pkg}/${fout}.hpp")
       list(APPEND _out "${absdir}/${pkg}/${fout}.hpp")
       set(${OUT}_INTERFACE "${absdir}/${pkg}/${fout}.hpp" PARENT_SCOPE)
-    endif()
-
-    if(NOT ARG_NOBIND)
-      qi_generate_src("${absdir}/src/${fout}.cpp"
-        SRC "${absname}"
-        COMMENT "Generating bind src/${fout}.cpp"
-        DEPENDS "${QICC_EXECUTABLE}" "${absname}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_bind "${absname}" -o "${absdir}/src/${fout}.cpp")
-      list(APPEND _out "${absdir}/src/${fout}.cpp")
-      set(${OUT}_BIND "${absdir}/src/${fout}.cpp" PARENT_SCOPE)
     endif()
 
     if(NOT ARG_NOLOCAL)

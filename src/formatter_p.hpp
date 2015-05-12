@@ -86,12 +86,20 @@ namespace qilang {
 
   class BasicNodeFormatter {
   public:
+    BasicNodeFormatter()
+      : _ss(_ssi)
+    {}
+    explicit BasicNodeFormatter(std::stringstream& ss)
+      : _ss(ss)
+    {}
+
     std::stringstream &out() {
       return _ss;
     }
 
   private:
-    std::stringstream _ss;
+    std::stringstream& _ss;
+    std::stringstream _ssi;
   };
 
   /**
@@ -102,11 +110,15 @@ namespace qilang {
    * use out() for expressions
    * use indent() for statements
    */
-  class IndentNodeFormatter : virtual public BasicNodeFormatter {
+  class IndentNodeFormatter : public BasicNodeFormatter {
   public:
 
     IndentNodeFormatter()
       : _indent(0)
+    {}
+    explicit IndentNodeFormatter(std::stringstream& ss, int _indent)
+      : BasicNodeFormatter(ss)
+      , _indent(_indent)
     {}
 
     class ScopedIndent {
@@ -143,23 +155,30 @@ namespace qilang {
     int               _indent;
   };
 
-  class NodeFormatter : public IndentNodeFormatter, public NodeVisitor {
+  template <typename B = NodeVisitor>
+  class NodeFormatter : public IndentNodeFormatter, public B {
   public:
+    explicit NodeFormatter(std::stringstream& ss, int indent)
+      : IndentNodeFormatter(ss, indent)
+    {}
+    NodeFormatter()
+    {}
+
     template <typename T>
     void join(const std::vector< boost::shared_ptr<T> >& vec, const std::string& sep) {
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        accept(vec.at(i));
+        this->accept(vec.at(i));
         if (i + 1 < vec.size())
-          out() << sep;
+          this->out() << sep;
       }
     }
 
     template <typename T>
     void join(const std::vector<T>& vals, const std::string& sep) {
       for (unsigned i = 0; i < vals.size(); ++i) {
-        out() << vals.at(i);
+        this->out() << vals.at(i);
         if (i + 1 < vals.size())
-          out() << sep;
+          this->out() << sep;
       }
     }
 
@@ -168,7 +187,7 @@ namespace qilang {
     void scoped(const std::vector< boost::shared_ptr<T> >& vec) {
       ScopedIndent _(_indent);
       for (unsigned int i = 0; i < vec.size(); ++i) {
-        accept(vec.at(i));
+        this->accept(vec.at(i));
       }
     }
 
@@ -180,19 +199,19 @@ namespace qilang {
       for (unsigned int i = 0; i < node.size(); ++i) {
         if (!node.at(i))
           throw std::runtime_error("Invalid Node");
-        accept(node.at(i));
+        this->accept(node.at(i));
       }
       formatFooter();
-      return out().str();
+      return this->out().str();
     }
 
     virtual std::string format(const NodePtr& node) {
       if (!node)
         throw std::runtime_error("Invalid Node");
       formatHeader();
-      accept(node);
+      this->accept(node);
       formatFooter();
-      return out().str();
+      return this->out().str();
     }
   };
 

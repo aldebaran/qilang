@@ -25,7 +25,6 @@ set(C src/codegen.cpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
       src/format_cpp_interface.cpp
-      src/format_cpp_bind.cpp
       src/format_cpp_local.cpp
       src/format_cpp_remote.cpp
       src/format_anyvalue.cpp

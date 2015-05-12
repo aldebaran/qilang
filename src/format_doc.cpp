@@ -68,7 +68,7 @@ static std::string builtinTypeToString(BuiltinType type) {
   throw std::runtime_error("unreachable code");
 }
 
-class QiLangGenDoc: public NodeFormatter
+class QiLangGenDoc: public NodeFormatter<>
 {
 public:
   QiLangGenDoc() {

@@ -9,6 +9,7 @@
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/visitor.hpp>
 #include <qilang/packagemanager.hpp>
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
@@ -49,7 +50,124 @@ public:
   StringVector currentNs;
 };
 
-class QiLangGenObjectDef: public CppTypeFormatter
+class QiLangGenAsyncIface: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+{
+public:
+  QiLangGenAsyncIface(std::stringstream& ss, std::string api)
+    : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss)
+    , apiExport(api)
+  {}
+
+  void visitDecl(InterfaceDeclNode* node) {
+    ScopedFormatAttrActivate _(virtualAttr);
+    ScopedFormatAttrBlock    _2(apiAttr);
+
+    this->indent() << "class " << node->name << "Async";
+    if (node->inherits.size() > 0) {
+      out() << ": ";
+      for (unsigned int i = 0; i < node->inherits.size(); ++i) {
+        out() << "virtual public " << node->inherits.at(i) << "Async";
+        if (i + 1 != node->inherits.size())
+          out() << ", ";
+      }
+    }
+    out() << " {" << std::endl;
+    indent() << "public:" << std::endl;
+    //add a virtual destructor
+    indent() << "  virtual ~" << node->name << "Async() {}" << std::endl;
+    scoped(node->values);
+    indent() << "};" << std::endl << std::endl;
+  }
+
+  void visitDecl(ParamFieldDeclNode* node) {
+    //useless
+  }
+
+  void visitDecl(FnDeclNode* node) {
+    indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
+    out() << "qi::Future< ";
+    NodeFormatter::accept(node->effectiveRet());
+    out() << " > " << node->name << "(";
+    cppParamsFormat(this, node->args);
+    out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
+  }
+
+  void visitDecl(SigDeclNode* node) {
+  }
+  void visitDecl(PropDeclNode* node) {
+  }
+
+  FormatAttr  virtualAttr;
+  FormatAttr  apiAttr;
+  std::string apiExport;
+};
+
+class QiLangGenIface: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+{
+public:
+  QiLangGenIface(std::stringstream& ss, std::string api)
+    : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss)
+    , apiExport(api)
+  {}
+
+  void visitDecl(InterfaceDeclNode* node) {
+    ScopedFormatAttrActivate _(virtualAttr);
+    ScopedFormatAttrBlock    _2(apiAttr);
+
+    indent() << "class " << node->name;
+    if (node->inherits.size() > 0) {
+      out() << ": ";
+      for (unsigned int i = 0; i < node->inherits.size(); ++i) {
+        out() << "virtual public " << node->inherits.at(i);
+        if (i + 1 != node->inherits.size())
+          out() << ", ";
+      }
+    }
+    out() << " {" << std::endl;
+    indent() << "public:" << std::endl;
+    {
+      ScopedIndent _i(_indent);
+      //add a virtual destructor
+      indent() << "virtual ~" << node->name << "() {}" << std::endl;
+      indent() << "virtual " << node->name << "Async& async() = 0;" << std::endl;
+    }
+    scoped(node->values);
+
+    indent() << "};" << std::endl << std::endl;
+    indent() << "typedef qi::Object<" << node->name << "> " << node->name << "Ptr;" << std::endl;
+  }
+
+  void visitDecl(ParamFieldDeclNode* node) {
+    //useless
+  }
+
+  void visitDecl(FnDeclNode* node) {
+    indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
+    NodeFormatter::accept(node->effectiveRet());
+    out() << " " << node->name << "(";
+    cppParamsFormat(this, node->args);
+    out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
+  }
+
+  void visitDecl(SigDeclNode* node) {
+    indent() << virtualAttr("virtual ") << "qi::Signal< ";
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& " << node->name << "()" << virtualAttr(" = 0") << ";" << std::endl;
+  }
+  void visitDecl(PropDeclNode* node) {
+    indent() << virtualAttr("virtual ") << "qi::Property< ";
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& " << node->name << "()" << virtualAttr(" = 0") << ";" << std::endl;
+  }
+
+  FormatAttr  virtualAttr;
+  FormatAttr  apiAttr;
+  std::string apiExport;
+};
+
+class QiLangGenObjectDef: public CppTypeFormatter<>
 {
 public:
   QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
@@ -69,50 +187,21 @@ public:
   virtual void doAccept(Node* node) { node->accept(this); }
 
   void visitDecl(InterfaceDeclNode* node) {
-    ScopedFormatAttrActivate _(virtualAttr);
-    ScopedFormatAttrBlock    _2(apiAttr);
-
-    indent() << "class " << apiExport << " " << node->name;
-    if (node->inherits.size() > 0) {
-      out() << ": ";
-      for (unsigned int i = 0; i < node->inherits.size(); ++i) {
-        out() << "virtual public " << node->inherits.at(i);
-        if (i + 1 != node->inherits.size())
-          out() << ", ";
-      }
-    }
-    out() << " {" << std::endl;
-    indent() << "public:" << std::endl;
-    //add a virtual destructor
-    indent() << "  virtual ~" << node->name << "() {}" << std::endl;
-    scoped(node->values);
-    indent() << "};" << std::endl << std::endl;
-    indent() << "typedef qi::Object<" << node->name << "> " << node->name << "Ptr;" << std::endl;
+    QiLangGenAsyncIface ai(out(), apiExport);
+    node->accept(&ai);
+    QiLangGenIface si(out(), apiExport);
+    node->accept(&si);
   }
 
   void visitDecl(ParamFieldDeclNode* node) {
-    //useless
   }
 
   void visitDecl(FnDeclNode* node) {
-    indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
-    accept(node->effectiveRet());
-    out() << " " << node->name << "(";
-    cppParamsFormat(this, node->args);
-    out() << ")" << virtualAttr(" = 0") << ";" << std::endl;
   }
 
   void visitDecl(SigDeclNode* node) {
-    indent() << "qi::Signal< ";
-    ScopedFormatAttrBlock _(constattr);
-    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-    out() << " > " << node->name << ";" << std::endl;
   }
   void visitDecl(PropDeclNode* node) {
-    indent() << "qi::Property< ";
-    ScopedFormatAttrBlock _(constattr);
-    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-    out() << " > " << node->name << ";" << std::endl;
   }
 
   void visitDecl(StructDeclNode* node) {

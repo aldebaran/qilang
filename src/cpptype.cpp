@@ -5,15 +5,14 @@
 ** Copyright (C) 2014 Cedric GESTES
 */
 #include <sstream>
-#include "cpptype.hpp"
 #include "formatter_p.hpp"
 #include <boost/algorithm/string.hpp>
 #include <qilang/visitor.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
+#include <qilang/packagemanager.hpp>
 
 qiLogCategory("qilang.cpp");
-
 
 namespace qilang {
 
@@ -23,7 +22,9 @@ static std::string constRefYourSelf(const std::string& type, bool constref) {
   return "const " + type + "&";
 }
 
-static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
+namespace detail {
+
+std::string builtinTypeToCpp(BuiltinType type, bool constref) {
   switch (type) {
     case BuiltinType_Nothing:
       return "void";
@@ -67,8 +68,7 @@ static std::string builtinTypeToCpp(BuiltinType type, bool constref) {
   throw std::runtime_error("unreachable code");
 }
 
-
-static std::string toName(const std::string& name, int counter) {
+std::string toName(const std::string& name, int counter) {
   if (name != "_")
    return name;
   std::stringstream ss;
@@ -77,162 +77,6 @@ static std::string toName(const std::string& name, int counter) {
   return ss.str();
 }
 
-static void cppFormatParam(CppTypeFormatter* fmt, ParamFieldDeclNodePtr node, CppParamsFormat cfpt, int counter) {
-  for (unsigned i = 0; i < node->names.size(); ++i) {
-    switch(node->paramType) {
-      case ParamFieldType_Normal: {
-        if (cfpt != CppParamsFormat_NameOnly) {
-          fmt->constify(node->effectiveType());
-          fmt->out() << " ";
-        }
-        if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << toName(node->names.at(i), counter);
-        break;
-      }
-      case ParamFieldType_VarArgs: {
-        if (cfpt != CppParamsFormat_NameOnly) {
-          ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->accept(node->effectiveType());
-        }
-        if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << toName(node->names.at(i), counter);
-        break;
-      }
-      case ParamFieldType_KeywordArgs: {
-        if (cfpt != CppParamsFormat_NameOnly) {
-          ScopedFormatAttrActivate _(fmt->constattr);
-          fmt->accept(node->effectiveType());
-        }
-        if (cfpt != CppParamsFormat_TypeOnly)
-          fmt->out() << toName(node->names.at(i), counter);
-        break;
-      }
-    }
-  }
-}
-
-void cppParamsFormat(CppTypeFormatter* typeformat, ParamFieldDeclNodePtrVector params, CppParamsFormat cfpt) {
-  for (unsigned i = 0; i < params.size(); ++i) {
-    cppFormatParam(typeformat, params.at(i), cfpt, i);
-    if (i + 1 < params.size())
-      typeformat->out() << ", ";
-  }
-}
-
-
-
-CppTypeFormatter::CppTypeFormatter()
-{
-}
-
-void CppTypeFormatter::unconstify(TypeExprNodePtr node) {
-  ScopedFormatAttrBlock _(constattr);
-  accept(node);
-}
-
-void CppTypeFormatter::constify(const TypeExprNodePtr& node) {
-  ScopedFormatAttrActivate _(constattr);
-  accept(node);
-}
-
-void CppTypeFormatter::visitTypeExpr(BuiltinTypeExprNode* node) {
-  out() << builtinTypeToCpp(node->builtinType, constattr.isActive());
-}
-void CppTypeFormatter::visitTypeExpr(CustomTypeExprNode* node) {
-
-  std::string ns = formatNs(node->resolved_package);
-
-  out() << constattr("const ");
-  if (!ns.empty())
-    // only for objects for the moment
-    out() << ns << "::";
-  out() << node->resolved_value;
-  if (node->resolved_kind == TypeKind_Interface)
-    out() << "Ptr";
-  out() << constattr("&");
-}
-void CppTypeFormatter::visitTypeExpr(ListTypeExprNode* node) {
-  out() << constattr("const ") << "std::vector< ";
-  unconstify(node->element);
-  out() << " >" << constattr("&");
-}
-void CppTypeFormatter::visitTypeExpr(MapTypeExprNode* node) {
-  out() << constattr("const ") << "std::map< ";
-  unconstify(node->key);
-  out() << ", ";
-  unconstify(node->value);
-  out() << " >" << constattr("&");
-}
-void CppTypeFormatter::visitTypeExpr(TupleTypeExprNode* node) {
-  if (node->elements.size() == 2) {
-    out() << constattr("const ") << "std::pair< ";
-    unconstify(node->elements.at(0));
-    out() << ", ";
-    unconstify(node->elements.at(1));
-    out() << " >" << constattr("&");
-  }
-  else
-    out() << "TUPLENOTIMPL";
-}
-
-void CppTypeFormatter::visitTypeExpr(VarArgTypeExprNode* node) {
-  out() << constattr("const ") << "qi::VarArguments< ";
-  unconstify(node->element);
-  out() << " >" << constattr("&");
-}
-
-void CppTypeFormatter::visitTypeExpr(KeywordArgTypeExprNode* node) {
-  out() << constattr("const ") << "qi::KeywordArguments< ";
-  unconstify(node->value);
-  out() << " >" << constattr("&");
-}
-
-void CppTypeFormatter::visitData(BoolLiteralNode *node) {
-  if (node->value)
-    out() << "true";
-  else
-    out() << "false";
-}
-void CppTypeFormatter::visitData(IntLiteralNode *node) {
-  out() << node->value;
-}
-void CppTypeFormatter::visitData(FloatLiteralNode *node) {
-  out() << node->value;
-}
-void CppTypeFormatter::visitData(StringLiteralNode *node) {
-  out() << node->value;
-}
-void CppTypeFormatter::visitData(TupleLiteralNode* node) {
-  out() << "(" << "FAIL" << ")";
-}
-void CppTypeFormatter::visitData(ListLiteralNode* node) {
-  out() << "[" << "FAIL" << "]";
-}
-void CppTypeFormatter::visitData(DictLiteralNode* node) {
-  out() << "{" << "FAIL" << "}";
-}
-
-void CppTypeFormatter::visitExpr(BinaryOpExprNode *node) {
-  throw std::runtime_error("unimplemented");
-}
-void CppTypeFormatter::visitExpr(UnaryOpExprNode *node) {
-  throw std::runtime_error("unimplemented");
-}
-void CppTypeFormatter::visitExpr(VarExprNode *node) {
-  //throw std::runtime_error("unimplemented");
-}
-void CppTypeFormatter::visitExpr(LiteralExprNode* node) {
-  throw std::runtime_error("unimplemented");
-}
-
-void CppTypeFormatter::visitExpr(CallExprNode* node) {
-  out() << node->name << "(";
-  for (unsigned i = 0; i < node->args.size(); ++i) {
-    accept(node->args.at(i));
-    if (i + 1 != node->args.size())
-      out() << ", ";
-  }
-  out() << ")";
 }
 
 static std::string stripQiLangExtension(const std::string& name)
@@ -350,7 +194,6 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
   NodePtrVector typeExprs;
   NodePtrVector decls;
 
-  pushIfNot(includes, qiLangToCppInclude(pm->package(pr->package), "api"));
   if (self) {
     pushIfNot(includes, qiLangToCppInclude(pm->package(pr->package), pr->filename) + " //self");
   }
@@ -424,9 +267,11 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
     switch (node->type()) {
       case NodeType_SigDecl:
         pushIfNot(includes, "<qi/signal.hpp>");
+        pushIfNot(includes, "<qi/type/proxysignal.hpp>");
         break;
       case NodeType_PropDecl:
         pushIfNot(includes, "<qi/property.hpp>");
+        pushIfNot(includes, "<qi/type/proxyproperty.hpp>");
         break;
       case NodeType_InterfaceDecl:
         pushIfNot(includes, "<qi/anyobject.hpp>");

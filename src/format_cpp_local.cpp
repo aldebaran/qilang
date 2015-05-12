@@ -6,9 +6,13 @@
 */
 
 #include <iostream>
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
+#include <qilang/visitor.hpp>
+#include <qilang/docparser.hpp>
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
 #include "cpptype.hpp"
@@ -17,129 +21,491 @@ qiLogCategory("qigen.cpplocal");
 
 namespace qilang {
 
-  //Generate Type Registration Information
-  class QiLangGenObjectLocal: public CppTypeFormatter
+  class QiLangGenObjectLocal: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
   {
   public:
-    QiLangGenObjectLocal(const PackageManagerPtr& pm, const StringVector& includes)
-      : toclose(0)
-      , _includes(includes)
+    QiLangGenObjectLocal(std::stringstream& ss, int indent)
+      : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss, indent)
     {}
 
-    int toclose;
-    StringVector _includes;
-    FormatAttr methodAttr;
-
-    virtual void doAccept(Node* node) { node->accept(this); }
-
     void visitDecl(InterfaceDeclNode* node) {
-      indent() << "template<class T>" << std::endl;
-      indent() << "class " << node->name + "Local" << ": public " << node->name + ", public T {" << std::endl;
+      indent() << "template <typename T>" << std::endl;
+      indent() << "class " << node->name << "Local {" << std::endl;
+
       indent() << "public:" << std::endl;
       {
         ScopedIndent _(_indent);
-        ScopedFormatAttrActivate _2(methodAttr);
+
+        out() << "#define genCall(n, ATYPEDECL, ATYPES, ADECL, AUSE, comma) \\" << std::endl;
+        out() << "  QI_GEN_MAYBE_TEMPLATE_OPEN(comma) ATYPEDECL QI_GEN_MAYBE_TEMPLATE_CLOSE(comma) \\" << std::endl;
+        out() << "  explicit " << node->name << "Local(ADECL) \\" << std::endl;
+        out() << "    : _p(AUSE) \\" << std::endl;
+        out() << "  {}" << std::endl;
+
+        indent() << "QI_GEN(genCall)" << std::endl;
+
+        out() << "#undef genCall" << std::endl << std::endl;
+
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           accept(node->values.at(i));
         }
       }
+
       out() << std::endl;
+      indent() << "private:" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "T _p;" << std::endl;
+      }
+
       indent() << "};" << std::endl;
       indent() << std::endl;
     }
 
-    void visitDecl(ParamFieldDeclNode* node) {
+    void visitDecl(FnDeclNode* node) {
+      indent() << "qi::Future< ";
+      accept(node->effectiveRet());
+      out() << " > " << node->name << "(";
+      cppParamsFormat(this, node->args);
+      out() << ") {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "try {" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "qi::detail::FutureWrapper< ";
+          accept(node->effectiveRet());
+          out() << " > wrap;" << std::endl;
+          indent() << "wrap(), _p." << node->name << "(";
+          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          out() << ");" << std::endl;
+          indent() << "return wrap.future;" << std::endl;
+        }
+        indent() << "} catch (std::exception& e) {" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "return qi::makeFutureError< ";
+          accept(node->effectiveRet());
+          out() << " >(e.what());" << std::endl;
+        }
+        indent() << "} catch (...) {" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "return qi::makeFutureError< ";
+          accept(node->effectiveRet());
+          out() << " >(\"Unknown error\");" << std::endl;
+        }
+        indent() << "}" << std::endl;
+      }
+      indent() << "}" << std::endl;
+    }
 
+    void visitDecl(SigDeclNode* node) {
+      indent() << "qi::Signal< ";
+      ScopedFormatAttrBlock _(constattr);
+      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+      out() << " >& " << node->name << "() {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "return _p." << node->name << ";" << std::endl;
+      }
+      indent() << "}" << std::endl;
+    }
+    void visitDecl(PropDeclNode* node) {
+      indent() << "qi::Property< ";
+      ScopedFormatAttrBlock _(constattr);
+      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+      out() << " >& " << node->name << "() {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "return _p." << node->name << ";" << std::endl;
+      }
+      indent() << "}" << std::endl;
+    }
+  };
+
+  class QiLangGenObjectLocalAsync: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+  {
+  public:
+    QiLangGenObjectLocalAsync(std::stringstream& ss, int indent)
+      : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss, indent)
+    {}
+
+    std::string selfName;
+    bool impl;
+
+    void visitDecl(InterfaceDeclNode* node) {
+      selfName = node->name;
+      indent() << "template <typename T>" << std::endl;
+      indent() << "class " << node->name << "LocalAsync : public " << node->name << "Async {" << std::endl;
+
+      indent() << "public:" << std::endl;
+      {
+        ScopedIndent _(_indent);
+
+        indent() << node->name << "LocalAsync(T& p, const boost::weak_ptr< "
+          << node->name << "LocalSync<T> >& parent)" << std::endl;
+        indent() << "  : _p(p)" << std::endl;
+        indent() << "  , _parent(parent)" << std::endl;
+        indent() << "{}" << std::endl;
+
+        impl = false;
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          accept(node->values.at(i));
+        }
+      }
+
+      out() << std::endl;
+      indent() << "private:" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "T& _p;" << std::endl;
+        indent() << "boost::weak_ptr< " << node->name << "LocalSync<T> > _parent;"
+          << std::endl;
+
+        impl = true;
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          accept(node->values.at(i));
+        }
+      }
+
+      indent() << "};" << std::endl;
+      indent() << std::endl;
+      selfName.clear();
     }
 
     void visitDecl(FnDeclNode* node) {
-      indent() << "";
+      indent() << "qi::Future< ";
+      accept(node->effectiveRet());
+      out() << " > " << (impl ? "_do" : "") << node->name << "(";
+      cppParamsFormat(this, node->args);
+      out() << ") {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+
+        if (!impl) {
+          indent() << "return qi::getEventLoop()"
+            << "->async< qi::Future< ";
+          accept(node->effectiveRet());
+          out() << " > >(qi::trackWithFallback< qi::Future< ";
+          accept(node->effectiveRet());
+          out() << " >() >(boost::function<void()>(), boost::bind(static_cast<qi::Future< ";
+          accept(node->effectiveRet());
+          out() << " >(" << selfName << "LocalAsync::*)(";
+          cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+          out() << ")>(&" << selfName << "LocalAsync::_do" << node->name
+            << "), this";
+          if (!node->args.empty()) {
+            out() << ", ";
+            cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          }
+          out() << "), _parent)).unwrap();" << std::endl;
+        }
+        else {
+          indent() << "return _p." << node->name << "(";
+          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          out() << ");" << std::endl;
+        }
+      }
+      indent() << "}" << std::endl;
+    }
+    void visitDecl(SigDeclNode* node) {
+    }
+    void visitDecl(PropDeclNode* node) {
+    }
+  };
+
+  class QiLangGenObjectLocalSync: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+  {
+  public:
+    QiLangGenObjectLocalSync(std::stringstream& ss, int indent)
+      : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss, indent)
+    {}
+
+    void visitDecl(InterfaceDeclNode* node) {
+      indent() << "template <typename T>" << std::endl;
+      indent() << "class " << node->name << "LocalSync : public " << node->name << ", public qi::Proxy, public boost::enable_shared_from_raw {" << std::endl;
+
+      indent() << "public:" << std::endl;
+      {
+        ScopedIndent _(_indent);
+
+        out() << "#define genCall(n, ATYPEDECL, ATYPES, ADECL, AUSE, comma) \\" << std::endl;
+        out() << "  QI_GEN_MAYBE_TEMPLATE_OPEN(comma) ATYPEDECL QI_GEN_MAYBE_TEMPLATE_CLOSE(comma) \\" << std::endl;
+        out() << "  explicit " << node->name << "LocalSync(ADECL) \\" << std::endl;
+        out() << "    : _p(AUSE) \\" << std::endl;
+        out() << "    , _async(_p, boost::shared_from_raw(this)) \\" << std::endl;
+        out() << "  {}" << std::endl;
+
+        indent() << "QI_GEN(genCall)" << std::endl;
+
+        out() << "#undef genCall" << std::endl << std::endl;
+
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          accept(node->values.at(i));
+        }
+
+        out() << std::endl;
+
+        indent() << node->name << "Async& async() {" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "return _async;" << std::endl;
+        }
+        indent() << "}" << std::endl;
+        indent() << "T& _backend() {" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "return _p;" << std::endl;
+        }
+        indent() << "}" << std::endl;
+      }
+
+      out() << std::endl;
+      indent() << "private:" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "T _p;" << std::endl;
+        indent() << node->name << "LocalAsync<T> _async;" << std::endl;
+      }
+
+      indent() << "};" << std::endl;
+      indent() << std::endl;
+    }
+
+    void visitDecl(FnDeclNode* node) {
+      indent();
       accept(node->effectiveRet());
       out() << " " << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
-        indent() << "return qi::wrapFuture(), T::" << node->name << "(";
+        if (node->ret) {
+          indent() << "return ";
+        }
+        else {
+          indent();
+        }
+        out() << "_p." << node->name << "(";
         cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
-        out() << ");" << std::endl;
+        out() << ").value();" << std::endl;
       }
       indent() << "}" << std::endl;
     }
 
     void visitDecl(SigDeclNode* node) {
-      qiLogError() << "SigDeclNode not implemented";
+      indent() << "qi::Signal< ";
+      ScopedFormatAttrBlock _(constattr);
+      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+      out() << " >& " << node->name << "() {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "return _p." << node->name << "();" << std::endl;
+      }
+      indent() << "}" << std::endl;
     }
     void visitDecl(PropDeclNode* node) {
-      qiLogError() << "PropDeclNode not implemented";
+      indent() << "qi::Property< ";
+      ScopedFormatAttrBlock _(constattr);
+      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+      out() << " >& " << node->name << "() {" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "return _p." << node->name << "();" << std::endl;
+      }
+      indent() << "}" << std::endl;
     }
-    void visitDecl(StructDeclNode* node) {
-      qiLogError() << "StructDeclNode not implemented";
-    }
-    void visitDecl(StructFieldDeclNode* node) {
-      qiLogError() << "FieldDeclNode not implemented";
-    }
-    void visitDecl(ConstDeclNode* node) {
-      qiLogError() << "FieldDeclNode not implemented";
-    }
-    void visitDecl(EnumDeclNode* node) {
-      qiLogError() << "EnumDeclNode not implemented";
-    }
-    void visitDecl(EnumFieldDeclNode* node) {
-      qiLogError() << "EnumFieldDeclNode not implemented";
-    }
-    void visitDecl(TypeDefDeclNode* node) {
-      qiLogError() << "TypeDefDeclNode not implemented";
+  };
+
+  class QiLangGenObjectBind: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+  {
+  public:
+    QiLangGenObjectBind(std::stringstream& ss, const StringVector& ns)
+      : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss)
+      , id(0)
+    {
+      BOOST_FOREACH(const std::string& nspart, ns) {
+        _ns += "::" + nspart;
+      }
     }
 
-  void formatHeader() {
-    indent() << "/*" << std::endl;
-    indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
-    indent() << "*/" << std::endl;
-    indent() << "#include <qi/future.hpp>" << std::endl;
-    for (unsigned i = 0; i < _includes.size(); ++i) {
-      indent() << "#include " << _includes.at(i) << std::endl;
+    int id;
+    std::string _ns;
+    std::string _curName;
+    std::string _fullName;
+    FormatAttr _methodBounceAttr;
+
+    void visitDecl(InterfaceDeclNode* node) {
+      int current = id;
+      id++;
+      _fullName = _ns + "::" + node->name;
+      _curName = node->name;
+
+      indent() << "#define REGISTER_" << boost::to_upper_copy<std::string>(node->name) << "(impl) \\" << std::endl;
+      indent() << "QI_REGISTER_IMPLEMENTATION_H(" << _fullName << ", impl) \\" << std::endl;
+      indent() << "QI_REGISTER_IMPLEMENTATION(" << _fullName << ", qi::detail::InterfaceImplTraits< " << _fullName
+        << " >::SyncType) \\" << std::endl;
+      {
+        ScopedFormatAttrActivate _2(_methodBounceAttr);
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          accept(node->values.at(i));
+        }
+      }
+      indent() << "static int initType" << current << "() { \\" << std::endl;
+      {
+        ScopedIndent _(_indent);
+        indent() << "qi::ObjectTypeBuilder< " << _fullName << " > builder; \\" << std::endl;
+        for (unsigned int i = 0; i < node->inherits.size(); ++i) {
+          indent() << "builder.inherits< " << node->inherits.at(i) << " >(); \\" << std::endl;
+        }
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          accept(node->values.at(i));
+        }
+        indent() << "builder.registerType(); \\" << std::endl;
+        indent() << "return 42; \\" << std::endl;
+      }
+      indent() << "} \\" << std::endl;
+      indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
+      indent() << std::endl;
+
+      _fullName.clear();
+      _curName.clear();
     }
-    indent() << std::endl;
-  }
 
-  void formatFooter() {
-    for (int i = 0; i < toclose; ++i) {
-      out() << "}" << std::endl;
+    void visitDecl(FnDeclNode* node) {
+      if (_methodBounceAttr.isActive()) {
+        indent() << "static qi::Future< ";
+        accept(node->effectiveRet());
+        out() << " > " << _curName << node->name << "(" << _fullName << "* obj";
+        if (!node->args.empty()) {
+          out() << ", ";
+          cppParamsFormat(this, node->args);
+        }
+        out() << ") { \\" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          indent() << "return static_cast<qi::detail::InterfaceImplTraits< " << _fullName
+            << " >::SyncType*>(obj)->_backend()." << node->name << "(";
+          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          out() << "); \\" << std::endl;
+        }
+        indent() << "} \\" << std::endl;
+      }
+      else {
+        indent() << "{ \\" << std::endl;
+        {
+          ScopedIndent _(_indent);
+          Doc doc = parseDoc(node->comment());
+          indent() << "qi::MetaMethodBuilder mmb; \\" << std::endl;
+          indent() << "mmb.setName(\"" << node->name << "\"); \\" << std::endl;
+          BOOST_FOREACH(Doc::Parameters::value_type it, doc.parameters) {
+            indent() << "mmb.appendParameter(\"" << it.first << "\", \"" << it.second << "\"); \\" << std::endl;
+          }
+          if (doc.return_)
+            indent() << "mmb.setReturnDescription(\"" << *doc.return_ << "\"); \\" << std::endl;
+          if (doc.description)
+            indent() << "mmb.setDescription(\"" << *doc.description << "\"); \\" << std::endl;
+          indent() << "builder.advertiseMethod(mmb, static_cast<qi::Future< ";
+          accept(node->effectiveRet());
+          out() << " > (*)(" << _fullName << "*";
+          if (!node->args.empty())
+          {
+            out() << ", ";
+            cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+          }
+          out() << ")>(&" << _curName << node->name;
+          out() << ")); \\" << std::endl;
+        }
+        indent() << "} \\" << std::endl;
+      }
     }
-  }
 
-protected:
-  void visitStmt(PackageNode* node) {
-    std::vector<std::string> ns = splitPkgName(node->name);
-    for (unsigned int i = 0; i < ns.size(); ++i) {
-      toclose++;
-      indent() << "namespace " << ns.at(i) << " {" << std::endl;
+    void visitDecl(SigDeclNode* node) {
+      if (!_methodBounceAttr.isActive()) {
+        indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << _fullName << "::" << node->name
+          << "); \\" << std::endl;
+      }
     }
-    out() << std::endl;
-  }
 
-  void visitStmt(ImportNode* node) {
-  }
+    void visitDecl(PropDeclNode* node) {
+      if (!_methodBounceAttr.isActive()) {
+        indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << _fullName << "::" << node->name
+          << "); \\" << std::endl;
+      }
+    }
+  };
 
-  void visitStmt(ObjectDefNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(PropertyDefNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(AtNode* node) {
-    throw std::runtime_error("unimplemented");
-  }
-  void visitStmt(VarDefNode* node) {
-    throw std::runtime_error("unimplemented");
-  }
+  class QiLangGenObjects: public NodeFormatter<DefaultNodeVisitor>
+  {
+  public:
+    int toclose;
+    StringVector _includes;
+    StringVector _ns;
 
-};
+    QiLangGenObjects(StringVector includes)
+      : toclose(0)
+      , _includes(includes)
+    {
+      _includes.push_back("<boost/smart_ptr/enable_shared_from_raw.hpp>");
+    }
+
+    void visitDecl(InterfaceDeclNode* node) {
+      QiLangGenObjectLocal loc(out(), _indent);
+      node->accept(&loc);
+      indent() << "template <typename T>" << std::endl;
+      indent() << "class " << node->name << "LocalSync;" << std::endl << std::endl;
+      QiLangGenObjectLocalAsync locasync(out(), _indent);
+      node->accept(&locasync);
+      QiLangGenObjectLocalSync locsync(out(), _indent);
+      node->accept(&locsync);
+
+      closeNamespace();
+
+      QiLangGenObjectBind bind(out(), _ns);
+      node->accept(&bind);
+
+      openNamespace();
+    }
+
+    void visitStmt(PackageNode* node) {
+      _ns = splitPkgName(node->name);
+      openNamespace();
+    }
+
+    void openNamespace() {
+      for (unsigned int i = 0; i < _ns.size(); ++i) {
+        toclose++;
+        indent() << "namespace " << _ns.at(i) << " {" << std::endl;
+      }
+      out() << std::endl;
+    }
+
+    void closeNamespace() {
+      for (int i = 0; i < _ns.size(); ++i) {
+        out() << "}" << std::endl;
+      }
+    }
+
+    void formatHeader() {
+      indent() << "/*" << std::endl;
+      indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
+      indent() << "*/" << std::endl;
+      indent() << "#include <qi/future.hpp>" << std::endl;
+      for (unsigned i = 0; i < _includes.size(); ++i) {
+        indent() << "#include " << _includes.at(i) << std::endl;
+      }
+      indent() << std::endl;
+    }
+
+    void formatFooter() {
+      closeNamespace();
+    }
+  };
 
 std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
   StringVector sv = extractCppIncludeDir(pm, pr, true);
-  return QiLangGenObjectLocal(pm, sv).format(pr->ast);
+  return QiLangGenObjects(sv).format(pr->ast);
 }
 
 
