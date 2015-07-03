@@ -52,7 +52,6 @@ namespace qilang {
       }
 
       out() << std::endl;
-      indent() << "private:" << std::endl;
       {
         ScopedIndent _(_indent);
         indent() << "T _p;" << std::endl;
@@ -99,29 +98,8 @@ namespace qilang {
       }
       indent() << "}" << std::endl;
     }
-
-    void visitDecl(SigDeclNode* node) {
-      indent() << "qi::Signal< ";
-      ScopedFormatAttrBlock _(constattr);
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << " >& " << node->name << "() {" << std::endl;
-      {
-        ScopedIndent _(_indent);
-        indent() << "return _p." << node->name << ";" << std::endl;
-      }
-      indent() << "}" << std::endl;
-    }
-    void visitDecl(PropDeclNode* node) {
-      indent() << "qi::Property< ";
-      ScopedFormatAttrBlock _(constattr);
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << " >& " << node->name << "() {" << std::endl;
-      {
-        ScopedIndent _(_indent);
-        indent() << "return _p." << node->name << ";" << std::endl;
-      }
-      indent() << "}" << std::endl;
-    }
+    void visitDecl(SigDeclNode* node) {}
+    void visitDecl(PropDeclNode* node) {}
   };
 
   class QiLangGenObjectLocalAsync: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
@@ -233,7 +211,28 @@ namespace qilang {
         out() << "#define genCall(n, ATYPEDECL, ATYPES, ADECL, AUSE, comma) \\" << std::endl;
         out() << "  QI_GEN_MAYBE_TEMPLATE_OPEN(comma) ATYPEDECL QI_GEN_MAYBE_TEMPLATE_CLOSE(comma) \\" << std::endl;
         out() << "  explicit " << node->name << "LocalSync(ADECL) \\" << std::endl;
-        out() << "    : _p(AUSE) \\" << std::endl;
+        out() << "    : " << node->name << "(";
+        {
+          bool first = true;
+          for (unsigned int i = 0; i < node->values.size(); ++i) {
+            if (node->values.at(i)->type() == NodeType_SigDecl) {
+              if (first)
+                first = false;
+              else
+                out() << ", ";
+              out() << "_p._p." << boost::static_pointer_cast<SigDeclNode>(node->values.at(i))->name;
+            }
+            if (node->values.at(i)->type() == NodeType_PropDecl) {
+              if (first)
+                first = false;
+              else
+                out() << ", ";
+              out() << "_p._p." << boost::static_pointer_cast<PropDeclNode>(node->values.at(i))->name;
+            }
+          }
+        }
+        out() << ") \\" << std::endl;
+        out() << "    , _p(AUSE) \\" << std::endl;
         out() << "    , _async(_p, boost::shared_from_raw(this)) \\" << std::endl;
         out() << "  {}" << std::endl;
 
@@ -293,29 +292,8 @@ namespace qilang {
       }
       indent() << "}" << std::endl;
     }
-
-    void visitDecl(SigDeclNode* node) {
-      indent() << "qi::Signal< ";
-      ScopedFormatAttrBlock _(constattr);
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << " >& " << node->name << "() {" << std::endl;
-      {
-        ScopedIndent _(_indent);
-        indent() << "return _p." << node->name << "();" << std::endl;
-      }
-      indent() << "}" << std::endl;
-    }
-    void visitDecl(PropDeclNode* node) {
-      indent() << "qi::Property< ";
-      ScopedFormatAttrBlock _(constattr);
-      cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-      out() << " >& " << node->name << "() {" << std::endl;
-      {
-        ScopedIndent _(_indent);
-        indent() << "return _p." << node->name << "();" << std::endl;
-      }
-      indent() << "}" << std::endl;
-    }
+    void visitDecl(SigDeclNode* node) {}
+    void visitDecl(PropDeclNode* node) {}
   };
 
   class QiLangGenObjectBind: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
@@ -423,14 +401,14 @@ namespace qilang {
 
     void visitDecl(SigDeclNode* node) {
       if (!_methodBounceAttr.isActive()) {
-        indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << _fullName << "::" << node->name
+        indent() << "builder.advertiseSignal(\"" << node->name << "\", &" << _fullName << "::_" << node->name
           << "); \\" << std::endl;
       }
     }
 
     void visitDecl(PropDeclNode* node) {
       if (!_methodBounceAttr.isActive()) {
-        indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << _fullName << "::" << node->name
+        indent() << "builder.advertiseProperty(\"" << node->name << "\", &" << _fullName << "::_" << node->name
           << "); \\" << std::endl;
       }
     }

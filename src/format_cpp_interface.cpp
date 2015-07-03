@@ -102,6 +102,75 @@ public:
   std::string apiExport;
 };
 
+class QiLangGenIfaceSigPropParam: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+{
+  bool first;
+
+public:
+  QiLangGenIfaceSigPropParam(std::stringstream& ss)
+    : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss)
+    , first(true)
+  {}
+
+  void visitDecl(FnDeclNode* node) {}
+  void visitDecl(SigDeclNode* node) {
+    if (first)
+      first = false;
+    else
+      out() << ", ";
+    out() << "qi::Signal< ";
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& " << node->name;
+  }
+  void visitDecl(PropDeclNode* node) {
+    if (first)
+      first = false;
+    else
+      out() << ", ";
+    out() << "qi::Property< ";
+    ScopedFormatAttrBlock _(constattr);
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& " << node->name;
+  }
+};
+
+class QiLangGenIfaceSigPropParamInit: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
+{
+  bool first;
+
+public:
+  QiLangGenIfaceSigPropParamInit(std::stringstream& ss, int indent)
+    : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss, indent)
+    , first(true)
+  {}
+
+  void visitDecl(FnDeclNode* node) {}
+  void visitDecl(SigDeclNode* node) {
+    if (first)
+    {
+      first = false;
+      indent() << ": ";
+    }
+    else
+      indent() << ", ";
+    out() << node->name << "(" << node->name << ")" << std::endl;
+  }
+  void visitDecl(PropDeclNode* node) {
+    if (first)
+    {
+      first = false;
+      indent() << ": ";
+    }
+    else
+      out() << ", ";
+    out() << node->name << "(" << node->name << ")" << std::endl;
+  }
+  void visitDecl(ParamFieldDeclNode* node) {
+    //useless
+  }
+};
+
 class QiLangGenIface: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
 {
 public:
@@ -127,7 +196,19 @@ public:
     indent() << "public:" << std::endl;
     {
       ScopedIndent _i(_indent);
-      //add a virtual destructor
+      indent() << node->name << "(";
+      {
+        QiLangGenIfaceSigPropParam sigprop(out());
+        for (unsigned int i = 0; i < node->values.size(); ++i) {
+          sigprop.accept(node->values.at(i));
+        }
+      }
+      out() << ")" << std::endl;
+      {
+        QiLangGenIfaceSigPropParamInit sigpropinit(out(), _indent);
+        sigpropinit.scoped(node->values);
+      }
+      indent() << "{}" << std::endl;
       indent() << "virtual ~" << node->name << "() {}" << std::endl;
       indent() << "virtual " << node->name << "Async& async() = 0;" << std::endl;
     }
@@ -150,16 +231,32 @@ public:
   }
 
   void visitDecl(SigDeclNode* node) {
-    indent() << virtualAttr("virtual ") << "qi::Signal< ";
     ScopedFormatAttrBlock _(constattr);
+    indent() << "qi::Signal< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-    out() << " >& " << node->name << "()" << virtualAttr(" = 0") << ";" << std::endl;
+    out() << " >& " << node->name << ";" << std::endl;
+    indent() << "qi::Signal< ";
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& _" << node->name << "() {" << std::endl;
+    {
+      ScopedIndent _i(_indent);
+      indent() << "return " << node->name << ";" << std::endl;
+    }
+    indent() << "}" << std::endl;
   }
   void visitDecl(PropDeclNode* node) {
-    indent() << virtualAttr("virtual ") << "qi::Property< ";
     ScopedFormatAttrBlock _(constattr);
+    indent() << "qi::Property< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-    out() << " >& " << node->name << "()" << virtualAttr(" = 0") << ";" << std::endl;
+    out() << " >& " << node->name << ";" << std::endl;
+    indent() << "qi::Property< ";
+    cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+    out() << " >& _" << node->name << "() {" << std::endl;
+    {
+      ScopedIndent _i(_indent);
+      indent() << "return " << node->name << ";" << std::endl;
+    }
+    indent() << "}" << std::endl;
   }
 
   FormatAttr  virtualAttr;

@@ -163,7 +163,28 @@ namespace qilang {
             indent() << ", ";
           }
 
-          out() << "qi::Proxy(ao)" << std::endl;
+          out() << node->name << "(" << std::endl;
+          {
+            bool first = true;
+            for (unsigned int i = 0; i < node->values.size(); ++i) {
+              if (node->values.at(i)->type() == NodeType_SigDecl) {
+                if (first)
+                  first = false;
+                else
+                  out() << ", ";
+                out() << "_" << boost::static_pointer_cast<SigDeclNode>(node->values.at(i))->name;
+              }
+              if (node->values.at(i)->type() == NodeType_PropDecl) {
+                if (first)
+                  first = false;
+                else
+                  out() << ", ";
+                out() << "_" << boost::static_pointer_cast<PropDeclNode>(node->values.at(i))->name;
+              }
+            }
+          }
+          out() << ")" << std::endl;
+          indent() << ", qi::Proxy(ao)" << std::endl;
           indent() << ", _async(ao)" << std::endl;
         }
         indent() << "{" << std::endl;
