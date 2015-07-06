@@ -22,34 +22,6 @@ qiLogCategory("qigen.hppinterface");
 
 namespace qilang {
 
-class ScopedNamespaceEscaper {
-public:
-  ScopedNamespaceEscaper(std::ostream& out, const StringVector& ns)
-    : out(out)
-    , currentNs(ns)
-  {
-    for (int i = 0; i < currentNs.size(); ++i) {
-      out << "}" << std::endl;
-    }
-    out << std::endl;
-  }
-
-  ~ScopedNamespaceEscaper() {
-    unsigned int indent = 0;
-    for (unsigned int i = 0; i < currentNs.size(); ++i) {
-      for (unsigned int j = 0; j < indent; ++j) {
-        out << "  ";
-      }
-      out << "namespace " << currentNs.at(i) << " {" << std::endl;
-      indent += 1;
-    }
-    out << std::endl;
-  }
-
-  std::ostream& out;
-  StringVector currentNs;
-};
-
 class QiLangGenAsyncIface: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
 {
 public:
@@ -272,6 +244,8 @@ public:
     , _pr(pr)
     , _includes(includes)
   {
+    _includes.push_back(qiLangToCppInclude(pm->package(pr->package), "api"));
+
     apiExport = pkgNameToAPI(pr->package);
     //force api export activation by default
     apiAttr.activate();
@@ -288,6 +262,22 @@ public:
     node->accept(&ai);
     QiLangGenIface si(out(), apiExport);
     node->accept(&si);
+
+    {
+      ScopedNamespaceEscaper _e(out(), currentNs);
+      out() << "namespace qi {" << std::endl;
+      out() << "namespace detail {" << std::endl;
+      out() << "  template <>" << std::endl;
+      out() << "  struct " << apiExport << " ForceProxyInclusion< ";
+      for (unsigned int i = 0; i < currentNs.size(); ++i) {
+        out() << "::" << currentNs.at(i);
+      }
+      out() << "::" << node->name << " > {" << std::endl;
+      out() << "    bool dummyCall();" << std::endl;
+      out() << "  };" << std::endl;
+      out() << "}" << std::endl;
+      out() << "}" << std::endl;
+    }
   }
 
   void visitDecl(ParamFieldDeclNode* node) {

@@ -9,6 +9,7 @@
 # define   	FORMATTER_P_HPP_
 
 #include <qilang/node.hpp>
+#include <qilang/packagemanager.hpp>
 
 namespace std {
   //only to avoid mistake... (shared_ptr are displayed as pointer by default...)
@@ -214,6 +215,36 @@ namespace qilang {
       return this->out().str();
     }
   };
+
+  class ScopedNamespaceEscaper {
+  public:
+    ScopedNamespaceEscaper(std::ostream& out, const StringVector& ns)
+      : out(out)
+      , currentNs(ns)
+    {
+      for (int i = 0; i < currentNs.size(); ++i) {
+        out << "}" << std::endl;
+      }
+      out << std::endl;
+    }
+
+    ~ScopedNamespaceEscaper() {
+      unsigned int indent = 0;
+      for (unsigned int i = 0; i < currentNs.size(); ++i) {
+        for (unsigned int j = 0; j < indent; ++j) {
+          out << "  ";
+        }
+        out << "namespace " << currentNs.at(i) << " {" << std::endl;
+        indent += 1;
+      }
+      out << std::endl;
+    }
+
+    std::ostream& out;
+    StringVector currentNs;
+  };
+
+  std::string qiLangToCppInclude(const PackagePtr& pkg, const std::string& filename);
 
 }
 

@@ -278,13 +278,12 @@ namespace qilang {
   {
   public:
     CppRemoteQiLangGen(const PackageManagerPtr& pm, const StringVector& includes)
-      : toclose(0)
-      , _includes(includes)
+      : _includes(includes)
     {}
 
     void doAccept(Node* node) { node->accept(this); }
 
-    int          toclose;
+    StringVector currentNs;
     StringVector _includes;
 
     void visitDecl(InterfaceDeclNode* node) {
@@ -292,6 +291,16 @@ namespace qilang {
       node->accept(&ar);
       CppSyncRemoteQiLangGen ir(out(), _indent);
       node->accept(&ir);
+      {
+        ScopedNamespaceEscaper _e(out(), currentNs);
+        out() << "bool qi::detail::ForceProxyInclusion< ";
+        for (unsigned int i = 0; i < currentNs.size(); ++i) {
+          out() << "::" << currentNs.at(i);
+        }
+        out() << "::" << node->name << " >::dummyCall() {" << std::endl;
+        out() << "  return true;" << std::endl;
+        out() << "}" << std::endl;
+      }
     }
 
     void visitDecl(ParamFieldDeclNode* node) {
@@ -344,16 +353,15 @@ namespace qilang {
   }
 
   void formatFooter() {
-    for (int i = 0; i < toclose; ++i) {
+    for (int i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
   }
 
   void visitStmt(PackageNode* node) {
-    std::vector<std::string> ns = splitPkgName(node->name);
-    for (unsigned int i = 0; i < ns.size(); ++i) {
-      toclose++;
-      indent() << "namespace " << ns.at(i) << " {" << std::endl;
+    currentNs = splitPkgName(node->name);
+    for (unsigned int i = 0; i < currentNs.size(); ++i) {
+      indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
     }
     out() << std::endl;
   }

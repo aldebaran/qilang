@@ -171,7 +171,7 @@ static StringVector filenameFromImport(const PackagePtr& pkg, ImportNode* tnode)
 }
 
 
-static std::string qiLangToCppInclude(const PackagePtr& pkg, const std::string& filename) {
+std::string qiLangToCppInclude(const PackagePtr& pkg, const std::string& filename) {
   qi::Path pkgpath(pkgNameToDir(pkg->_name));
   qi::Path fpath(stripQiLangExtension(filename));
   return "<" + (std::string)(pkgpath / fpath.filename()) + ".hpp>";
