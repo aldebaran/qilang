@@ -162,12 +162,8 @@ namespace qilang {
         ScopedIndent _(_indent);
 
         if (!impl) {
-          indent() << "return qi::getEventLoop()"
-            << "->async< qi::Future< ";
-          accept(node->effectiveRet());
-          out() << " > >(qi::trackWithFallback< qi::Future< ";
-          accept(node->effectiveRet());
-          out() << " >() >(boost::function<void()>(), boost::bind(static_cast<qi::Future< ";
+          indent() << "return qi::getEventLoop()->async("
+            "qi::trackSilent(boost::bind(static_cast<qi::Future< ";
           accept(node->effectiveRet());
           out() << " >(" << selfName << "LocalAsync::*)(";
           cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
