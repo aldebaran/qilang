@@ -36,15 +36,10 @@ namespace qilang {
       {
         ScopedIndent _(_indent);
 
-        out() << "#define genCall(n, ATYPEDECL, ATYPES, ADECL, AUSE, comma) \\" << std::endl;
-        out() << "  QI_GEN_MAYBE_TEMPLATE_OPEN(comma) ATYPEDECL QI_GEN_MAYBE_TEMPLATE_CLOSE(comma) \\" << std::endl;
-        out() << "  explicit " << node->name << "Local(ADECL) \\" << std::endl;
-        out() << "    : _p(AUSE) \\" << std::endl;
-        out() << "  {}" << std::endl;
-
-        indent() << "QI_GEN(genCall)" << std::endl;
-
-        out() << "#undef genCall" << std::endl << std::endl;
+        indent() << "template <typename... Args>" << std::endl;
+        indent() << "explicit " << node->name << "Local(Args&&... args)" << std::endl;
+        indent() << "  : _p(std::forward<Args>(args)...)" << std::endl;
+        indent() << "{}" << std::endl;
 
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           accept(node->values.at(i));
@@ -204,10 +199,9 @@ namespace qilang {
       {
         ScopedIndent _(_indent);
 
-        out() << "#define genCall(n, ATYPEDECL, ATYPES, ADECL, AUSE, comma) \\" << std::endl;
-        out() << "  QI_GEN_MAYBE_TEMPLATE_OPEN(comma) ATYPEDECL QI_GEN_MAYBE_TEMPLATE_CLOSE(comma) \\" << std::endl;
-        out() << "  explicit " << node->name << "LocalSync(ADECL) \\" << std::endl;
-        out() << "    : " << node->name << "(";
+        indent() << "template <typename... Args>" << std::endl;
+        indent() << "explicit " << node->name << "LocalSync(Args&&... args) \\" << std::endl;
+        indent() << "  : " << node->name << "(";
         {
           bool first = true;
           for (unsigned int i = 0; i < node->values.size(); ++i) {
@@ -227,14 +221,10 @@ namespace qilang {
             }
           }
         }
-        out() << ") \\" << std::endl;
-        out() << "    , _p(AUSE) \\" << std::endl;
-        out() << "    , _async(_p, boost::shared_from_raw(this)) \\" << std::endl;
-        out() << "  {}" << std::endl;
-
-        indent() << "QI_GEN(genCall)" << std::endl;
-
-        out() << "#undef genCall" << std::endl << std::endl;
+        out() << ")" << std::endl;
+        indent() << "  , _p(std::forward<Args>(args)...)" << std::endl;
+        indent() << "  , _async(_p, boost::shared_from_raw(this))" << std::endl;
+        indent() << "{}" << std::endl;
 
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           accept(node->values.at(i));
