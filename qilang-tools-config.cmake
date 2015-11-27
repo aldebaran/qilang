@@ -16,13 +16,21 @@ message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 #! Generate qicc cpp files.
 #
 # \arg:OUT     an OUTPUT variable with a list of all generated files
-# \arg:lang    the language to generate code to
+# \arg:lang    the language to generate code to (only CPP is supported for the
+#   moment)
 # \arg:pkg     the package path (qi/foo/bar)
 # \arg:dir     the directory where the files will be generated
 # \flag:NOINTERFACE do not generate interface file
 # \flag:NOLOCAL     do not generate local file
 # \flag:NOREMOTE    do not generate remote file
 # \group:FLAGS      flags to pass to qicc
+#
+# This function will set three variables:
+# - ${OUT}_INTERFACE which contains the interfaces of your classes
+# - ${OUT}_LOCAL which is the implementation of the interfaces as local
+#   wrappers over your classes
+# - ${OUT}_REMOTE which is the implementation of the interfaces as remote
+#   proxies
 function(qi_gen_idl OUT lang pkg dir)
   cmake_parse_arguments(ARG
     "NOINTERFACE;NOLOCAL;NOREMOTE"
