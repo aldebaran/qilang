@@ -70,8 +70,12 @@ namespace qilang {
           indent() << "qi::detail::FutureWrapper< ";
           accept(node->effectiveRet());
           out() << " > wrap;" << std::endl;
-          indent() << "wrap(), _p." << node->name << "(";
-          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          indent() << "wrap(), qi::detail::invokeMaybeActor(&T::" << node->name << ", &_p";
+          if (!node->args.empty())
+          {
+            out() << ", ";
+            cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+          }
           out() << ");" << std::endl;
           indent() << "return wrap.future;" << std::endl;
         }
@@ -370,6 +374,8 @@ namespace qilang {
             indent() << "mmb.setReturnDescription(\"" << *doc.return_ << "\"); \\" << std::endl;
           if (doc.description)
             indent() << "mmb.setDescription(\"" << *doc.description << "\"); \\" << std::endl;
+          indent() << "const auto callType = std::is_base_of<qi::Actor, impl >::value ?"
+            " qi::MetaCallType_Direct : qi::MetaCallType_Auto; \\" << std::endl;
           indent() << "builder.advertiseMethod(mmb, static_cast<qi::Future< ";
           accept(node->effectiveRet());
           out() << " > (*)(" << _fullName << "*";
@@ -379,7 +385,7 @@ namespace qilang {
             cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
           }
           out() << ")>(&" << _curName << node->name;
-          out() << ")); \\" << std::endl;
+          out() << "), callType); \\" << std::endl;
         }
         indent() << "} \\" << std::endl;
       }
