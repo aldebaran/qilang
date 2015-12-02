@@ -361,7 +361,7 @@ public:
     indent() << "};" << std::endl << std::endl;
     {
       ScopedNamespaceEscaper _e(out(), currentNs);
-      out() << "QI_TYPE_ENUM_REGISTER(";
+      out() << "QI_TYPE_ENUM(";
       for (unsigned int i = 0; i < currentNs.size(); ++i) {
         out() << "::" << currentNs.at(i);
       }
