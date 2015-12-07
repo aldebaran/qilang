@@ -11,8 +11,10 @@
 #include <qilang/visitor.hpp>
 #include "cpptype.hpp"
 #include <boost/make_shared.hpp>
+#include <boost/filesystem/path.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
+
 qiLogCategory("qilang.pm");
 
 namespace qilang {
@@ -174,7 +176,7 @@ namespace qilang {
       qi::Path& p = pv.at(i);
       if (p.isRegularFile()) {
         if (p.extension() == ".qi") {
-          resultfile->push_back(p);
+          resultfile->push_back(p.bfsPath().generic_string());
           ret = true;
         }
       }
