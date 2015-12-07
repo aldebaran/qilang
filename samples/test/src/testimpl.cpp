@@ -14,7 +14,7 @@ public:
   // Add your public methods implementation
   // Yan can add everything you want in public here since only
   // methods comming from the interface will be export to user API
-  TestImpl(qi::SessionPtr& s);
+  TestImpl(const qi::SessionPtr& s);
 
   void say(const std::string& mess);
   qi::Future<void> saySlowerButBetter(const std::string& mess);
@@ -34,7 +34,7 @@ private:
   qi::Atomic<bool> _boole;
 };
 
-TestImpl::TestImpl(qi::SessionPtr& s)
+TestImpl::TestImpl(const qi::SessionPtr& s)
   : _session(s)
   , _numberOfSay(0)
 {
