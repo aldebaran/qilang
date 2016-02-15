@@ -135,7 +135,7 @@ namespace qilang {
       p = p.parent();
     }
 
-    std::string pkgpath = p.absolute();
+    std::string pkgpath = p.absolute().str();
 
     addInclude(pkgpath);
     addPackage(pkgname);
@@ -147,7 +147,7 @@ namespace qilang {
   ParseResultPtr PackageManager::parseFile(const FileReaderPtr& file)
   {
     qi::Path fsfname = qi::Path(file->filename());
-    std::string filename = fsfname.absolute();
+    std::string filename = fsfname.absolute().str();
     if (!fsfname.isRegularFile())
       throw std::runtime_error(file->filename() + " is not a regular file");
     qiLogVerbose() << "Parsing file: " << filename;
@@ -168,7 +168,7 @@ namespace qilang {
     bool ret = false;
     for (unsigned i = 0; i < pv.size(); ++i) {
       qi::Path& p = pv.at(i);
-      resultdir->push_back(p);
+      resultdir->push_back(p.str());
     }
 
     pv = qi::Path(path).files();
@@ -205,7 +205,7 @@ namespace qilang {
       {
         StringVector retfile;
         StringVector retdir;
-        bool b = locateFileInDir(p, &retfile, &retdir);
+        bool b = locateFileInDir(p.str(), &retfile, &retdir);
         if (b) {
           qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
           return retfile;

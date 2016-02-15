@@ -128,7 +128,7 @@ std::string filenameToCppHeaderGuard(const std::string &pkgName, const std::stri
 
   std::string ret(pkgName);
   boost::replace_all(ret, ".", "_");
-  ret += "_" + stripQiLangExtension(p);
+  ret += "_" + stripQiLangExtension(p.str());
   boost::to_upper(ret);
   ret = "_QILANG_GEN_" + ret + "_";
   return ret;
