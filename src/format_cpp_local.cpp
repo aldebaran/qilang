@@ -21,6 +21,8 @@ qiLogCategory("qigen.cpplocal");
 
 namespace qilang {
 
+  static const char* ImplTypeName = "impl__";
+
   class QiLangGenObjectLocal: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >
   {
   public:
@@ -109,7 +111,7 @@ namespace qilang {
     {}
 
     std::string selfName;
-    bool impl;
+    bool isImpl;
 
     void visitDecl(InterfaceDeclNode* node) {
       selfName = node->name;
@@ -126,7 +128,7 @@ namespace qilang {
         indent() << "  , _parent(parent)" << std::endl;
         indent() << "{}" << std::endl;
 
-        impl = false;
+        isImpl = false;
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           accept(node->values.at(i));
         }
@@ -140,7 +142,7 @@ namespace qilang {
         indent() << "boost::weak_ptr< " << node->name << "LocalSync<T> > _parent;"
           << std::endl;
 
-        impl = true;
+        isImpl = true;
         for (unsigned int i = 0; i < node->values.size(); ++i) {
           accept(node->values.at(i));
         }
@@ -154,13 +156,13 @@ namespace qilang {
     void visitDecl(FnDeclNode* node) {
       indent() << "qi::Future< ";
       accept(node->effectiveRet());
-      out() << " > " << (impl ? "_do" : "") << node->name << "(";
+      out() << " > " << (isImpl ? "_do" : "") << node->name << "(";
       cppParamsFormat(this, node->args);
       out() << ") {" << std::endl;
       {
         ScopedIndent _(_indent);
 
-        if (!impl) {
+        if (!isImpl) {
           indent() << "return qi::getEventLoop()->async("
             "qi::trackSilent(boost::bind(static_cast<qi::Future< ";
           accept(node->effectiveRet());
@@ -291,27 +293,31 @@ namespace qilang {
   public:
     QiLangGenObjectBind(std::stringstream& ss, const StringVector& ns)
       : CppTypeFormatter<NodeFormatter<DefaultNodeVisitor> >(ss)
-      , id(0)
     {
       BOOST_FOREACH(const std::string& nspart, ns) {
         _ns += "::" + nspart;
       }
     }
 
-    int id;
     std::string _ns;
     std::string _curName;
     std::string _fullName;
     FormatAttr _methodBounceAttr;
 
+    static int nextId()
+    {
+      static int _next_id = 0;
+      return _next_id++;
+    }
+
     void visitDecl(InterfaceDeclNode* node) {
-      int current = id;
-      id++;
+      const int current = nextId();
       _fullName = _ns + "::" + node->name;
       _curName = node->name;
 
-      indent() << "#define REGISTER_" << boost::to_upper_copy<std::string>(node->name) << "(impl) \\" << std::endl;
-      indent() << "QI_REGISTER_IMPLEMENTATION_H(" << _fullName << ", impl) \\" << std::endl;
+
+      indent() << "#define REGISTER_" << boost::to_upper_copy<std::string>(node->name) << "(" << ImplTypeName << ") \\" << std::endl;
+      indent() << "QI_REGISTER_IMPLEMENTATION_H(" << _fullName << ", " << ImplTypeName << ") \\" << std::endl;
       indent() << "QI_REGISTER_IMPLEMENTATION(" << _fullName << ", qi::detail::InterfaceImplTraits< " << _fullName
         << " >::SyncType) \\" << std::endl;
       {
@@ -374,7 +380,7 @@ namespace qilang {
             indent() << "mmb.setReturnDescription(\"" << *doc.return_ << "\"); \\" << std::endl;
           if (doc.description)
             indent() << "mmb.setDescription(\"" << *doc.description << "\"); \\" << std::endl;
-          indent() << "const auto callType = std::is_base_of<qi::Actor, impl >::value ?"
+          indent() << "const auto callType = std::is_base_of<qi::Actor, " << ImplTypeName << " >::value ?"
             " qi::MetaCallType_Direct : qi::MetaCallType_Auto; \\" << std::endl;
           indent() << "builder.advertiseMethod(mmb, static_cast<qi::Future< ";
           accept(node->effectiveRet());
@@ -405,6 +411,7 @@ namespace qilang {
       }
     }
   };
+
 
   class QiLangGenObjects: public NodeFormatter<DefaultNodeVisitor>
   {
