@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   pm->setIncludes(includes);
 
   if (mode == "service") {
-    app.start();
+    app.startSession();
     return codegen_service(codegen, out, pm, app.session(), inputs[0]);
   } else if (mode == "file") {
     return codegen_file(codegen, out, pm, inputs[0]);
