@@ -1,0 +1,14 @@
+package testqilang
+
+# comment comment
+interface KindaManager
+  //! set the default device
+  //! \param a name of the device
+  //! \param b value
+  //! \return true on success
+  fn setDefaultDevice(a: str, b: str) -> int
+
+  sig test(s: float)
+
+  prop current(s: Vec<float>)
+end
