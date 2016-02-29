@@ -1,0 +1,15 @@
+package testqilang
+
+# comment comment
+interface KindaManager
+  fn findTruth() -> int
+  sig test(s: float)
+  prop current(s: Vec<float>)
+end
+
+# try harder
+interface AnotherInterface
+  fn makeSomething() -> KindaManager
+  sig blop(blop: bool)
+  prop crap(ette: Vec<str>)
+end
