@@ -235,6 +235,28 @@ public:
   std::string apiExport;
 };
 
+/// Used for the first pass, to forward-declare interfaces.
+class QiLangGenObjectDefFirstPass: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor>>
+{
+  void visitStmt(PackageNode* node) {
+    currentNs = splitPkgName(node->name);
+    for (unsigned int i = 0; i < currentNs.size(); ++i) {
+      indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
+    }
+  }
+
+  void visitDecl(InterfaceDeclNode* node) override
+  {
+    indent() << "class " << node->name << ";" << std::endl;
+    indent() << "using " << node->name << "Ptr = qi::Object<" << node->name << ">;" << std::endl;
+    out() << std::endl;
+  }
+
+public:
+  StringVector currentNs;
+};
+
+/// Used for the second pass, to generate the actual code.
 class QiLangGenObjectDef: public CppTypeFormatter<>
 {
 public:
@@ -254,12 +276,35 @@ public:
   FormatAttr  apiAttr;
   std::string apiExport;
 
+  std::string format(const NodePtrVector &nodes) override
+  {
+    formatHeader();
+
+    // First pass, includes the namespace declaration on the top of the file
+    QiLangGenObjectDefFirstPass firstPassFormatter;
+    for (const auto& node: nodes) {
+      if (!node)
+        throw std::runtime_error("Invalid Node");
+      firstPassFormatter.accept(node);
+    }
+    out() << firstPassFormatter.out().str();
+
+    // Share the namespace information
+    currentNs = firstPassFormatter.currentNs;
+
+    // Second pass
+    for (const auto& node: nodes) {
+      assert(node);
+      accept(node);
+    }
+
+    formatFooter();
+    return this->out().str();
+  }
+
   virtual void doAccept(Node* node) { node->accept(this); }
 
   void visitDecl(InterfaceDeclNode* node) {
-    indent() << "class " << node->name << ";" << std::endl;
-    indent() << "using " << node->name << "Ptr = qi::Object<" << node->name << ">;" << std::endl;
-    out() << std::endl;
     QiLangGenAsyncIface ai(out(), apiExport);
     node->accept(&ai);
     QiLangGenIface si(out(), apiExport);
@@ -416,13 +461,7 @@ public:
   }
 
 protected:
-  void visitStmt(PackageNode* node) {
-    currentNs = splitPkgName(node->name);
-    for (unsigned int i = 0; i < currentNs.size(); ++i) {
-      indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
-    }
-    out() << std::endl;
-  }
+  void visitStmt(PackageNode*) override {}
 
   void visitStmt(ImportNode* node) {
   }

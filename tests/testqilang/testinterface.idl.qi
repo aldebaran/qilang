@@ -18,3 +18,12 @@ end
 interface Ouroboros
   fn eatMyself(o: Ouroboros)
 end
+
+# Interfaces that refer to each other
+interface Ping
+  fn pong() -> Pong
+end
+
+interface Pong
+  fn ping() -> Ping
+end

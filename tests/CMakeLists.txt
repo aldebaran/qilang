@@ -41,6 +41,7 @@ if(QI_WITH_TESTS)
     "src/kindamanagerimpl.hpp"
     "src/anotherinterfaceimpl.hpp"
     "src/ouroboros.hpp"
+    "src/pingpong.hpp"
     "src/registration.cpp"
 
     DEPENDS

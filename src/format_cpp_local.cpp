@@ -199,6 +199,13 @@ namespace qilang {
 
 
       indent() << "#define REGISTER_" << boost::to_upper_copy<std::string>(node->name) << "(" << ImplTypeName << ") \\" << std::endl;
+      indent() << "static_assert(\\" << std::endl;
+      {
+        ScopedIndent moreIndent(_indent, 4);
+        indent() << "qi::detail::InterfaceImplTraits<" << _fullName << ">::Defined::value,\\" << std::endl;
+        indent() << "\"Missing QI_REGISTER_IMPLEMENTATION_H(" << _fullName
+                 << ", \" #impl__ \") in the header of the implementation\");\\" << std::endl;
+      }
       indent() << "QI_REGISTER_IMPLEMENTATION(" << _fullName << ", qi::detail::InterfaceImplTraits< " << _fullName
         << " >::SyncType) \\" << std::endl;
       {
