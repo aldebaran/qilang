@@ -187,7 +187,6 @@ public:
     scoped(node->values);
 
     indent() << "};" << std::endl << std::endl;
-    indent() << "typedef qi::Object<" << node->name << "> " << node->name << "Ptr;" << std::endl;
   }
 
   void visitDecl(ParamFieldDeclNode* node) {
@@ -258,6 +257,9 @@ public:
   virtual void doAccept(Node* node) { node->accept(this); }
 
   void visitDecl(InterfaceDeclNode* node) {
+    indent() << "class " << node->name << ";" << std::endl;
+    indent() << "using " << node->name << "Ptr = qi::Object<" << node->name << ">;" << std::endl;
+    out() << std::endl;
     QiLangGenAsyncIface ai(out(), apiExport);
     node->accept(&ai);
     QiLangGenIface si(out(), apiExport);

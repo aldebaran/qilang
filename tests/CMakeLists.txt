@@ -40,6 +40,7 @@ if(QI_WITH_TESTS)
     SRC
     "src/kindamanagerimpl.hpp"
     "src/anotherinterfaceimpl.hpp"
+    "src/ouroboros.hpp"
     "src/registration.cpp"
 
     DEPENDS

@@ -13,3 +13,8 @@ interface AnotherInterface
   sig blop(blop: bool)
   prop crap(ette: Vec<str>)
 end
+
+# An interface that refers to itself
+interface Ouroboros
+  fn eatMyself(o: Ouroboros)
+end
