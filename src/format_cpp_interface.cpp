@@ -245,6 +245,8 @@ class QiLangGenObjectDefFirstPass: public CppTypeFormatter<NodeFormatter<Default
     }
   }
 
+  void visitDecl(StructFieldDeclNode* /*node*/) override {}
+
   void visitDecl(InterfaceDeclNode* node) override
   {
     indent() << "class " << node->name << ";" << std::endl;

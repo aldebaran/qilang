@@ -50,3 +50,12 @@ TEST_F(QiLangTypeRegistration, CallChildObject)
   auto childObj = obj->makeSomething();
   ASSERT_EQ(42, childObj->findTruth());
 }
+
+TEST_F(QiLangTypeRegistration, MakeStruct)
+{
+  auto code = 42;
+  std::string message = "oh miiiiince";
+  auto error = _testqilang.call<Error>("Error", code, message);
+  EXPECT_EQ(code, error.code);
+  EXPECT_EQ(message, error.message);
+}
