@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <qi/anymodule.hpp>
-#include <testqilang/testinterface.hpp>
+#include <testqilang/somemix.hpp>
+#include <testqilang/somestructs.hpp>
 
 class QiLangTypeRegistration: public ::testing::Test
 {
@@ -58,4 +59,13 @@ TEST_F(QiLangTypeRegistration, MakeStruct)
   auto error = _testqilang.call<Error>("Error", code, message);
   EXPECT_EQ(code, error.code);
   EXPECT_EQ(message, error.message);
+}
+
+TEST_F(QiLangTypeRegistration, StructOnlyFile)
+{
+  auto score = 666;
+  std::string name = "da beast";
+  auto scoreStruct = _testqilang.call<Score>("Score", score, name);
+  EXPECT_EQ(score, scoreStruct.score);
+  EXPECT_EQ(name, scoreStruct.name);
 }

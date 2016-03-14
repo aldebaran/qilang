@@ -37,6 +37,7 @@ function(qi_gen_idl OUT lang pkg dir)
     ""
     "FLAGS"
     ${ARGN})
+
   foreach(arg ${ARG_UNPARSED_ARGUMENTS})
     get_filename_component(absname "${arg}" ABSOLUTE)
     get_filename_component(absdir "${dir}" ABSOLUTE)
@@ -50,7 +51,7 @@ function(qi_gen_idl OUT lang pkg dir)
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${absname}" -o "${absdir}/${pkg}/${fout}.hpp")
       list(APPEND _out "${absdir}/${pkg}/${fout}.hpp")
-      set(${OUT}_INTERFACE "${absdir}/${pkg}/${fout}.hpp" PARENT_SCOPE)
+      list(APPEND _${OUT}_INTERFACE "${absdir}/${pkg}/${fout}.hpp")
     endif()
 
     if(NOT ARG_NOLOCAL)
@@ -60,7 +61,7 @@ function(qi_gen_idl OUT lang pkg dir)
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${absname}" -o "${absdir}/src/${fout}_p.hpp")
       list(APPEND _out "${absdir}/src/${fout}_p.hpp")
-      set(${OUT}_LOCAL "${absdir}/src/${fout}_p.hpp" PARENT_SCOPE)
+      list(APPEND _${OUT}_LOCAL "${absdir}/src/${fout}_p.hpp")
     endif()
 
     if(NOT ARG_NOREMOTE)
@@ -70,10 +71,23 @@ function(qi_gen_idl OUT lang pkg dir)
         DEPENDS "${QICC_EXECUTABLE}" "${absname}"
         COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${absname}" -o "${absdir}/src/${fout}remote.cpp")
       list(APPEND _out "${absdir}/src/${fout}remote.cpp")
-      set(${OUT}_REMOTE "${absdir}/src/${fout}remote.cpp" PARENT_SCOPE)
+      list(APPEND _${OUT}_REMOTE "${absdir}/src/${fout}remote.cpp")
     endif()
   endforeach()
+
   #this custom target ensure that all idl file are generated before building
   add_custom_target(qi_idl_${pkg} DEPENDS ${_out})
+
+  # Bounce out variables
   set(${OUT} ${_out} PARENT_SCOPE)
+  if(NOT ARG_NOINTERFACE)
+    set(${OUT}_INTERFACE ${_${OUT}_INTERFACE} PARENT_SCOPE)
+  endif()
+  if(NOT ARG_NOLOCAL)
+    set(${OUT}_LOCAL ${_${OUT}_LOCAL} PARENT_SCOPE)
+  endif()
+  if(NOT ARG_NOREMOTE)
+    set(${OUT}_REMOTE ${_${OUT}_REMOTE} PARENT_SCOPE)
+  endif()
+
 endfunction()

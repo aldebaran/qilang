@@ -208,7 +208,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
     }
   }
 
-  //for each TypeExpr generate include as appropriated  (for builtin types)
+  //for each TypeExpr generate include as appropriate (for built-in types)
   typeExprs = findNode(pr->ast, NodeKind_TypeExpr);
   for (unsigned i = 0; i < typeExprs.size(); ++i) {
     NodePtr& node = typeExprs.at(i);
@@ -242,6 +242,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         }
         break;
       }
+
       case NodeType_KeywordArgTypeExpr:
       case NodeType_VarArgTypeExpr: {
         pushIfNot(includes, "<qi/anyfunction.hpp>");
@@ -273,6 +274,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         pushIfNot(includes, "<qi/property.hpp>");
         pushIfNot(includes, "<qi/type/proxyproperty.hpp>");
         break;
+      case NodeType_StructDecl:
       case NodeType_InterfaceDecl:
         pushIfNot(includes, "<qi/anyobject.hpp>");
         break;

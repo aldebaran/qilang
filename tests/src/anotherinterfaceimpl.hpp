@@ -1,4 +1,4 @@
-#include <src/testinterface_p.hpp>
+#include <src/somemix_p.hpp>
 #include "kindamanagerimpl.hpp"
 
 namespace testqilang

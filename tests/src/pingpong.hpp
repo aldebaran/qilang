@@ -1,7 +1,7 @@
 #ifndef TESTQILANG_PINGPONG_HPP
 #define TESTQILANG_PINGPONG_HPP
 
-#include <src/testinterface_p.hpp>
+#include <src/somemix_p.hpp>
 
 namespace testqilang
 {

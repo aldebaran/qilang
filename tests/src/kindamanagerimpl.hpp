@@ -1,7 +1,7 @@
 #ifndef TESTQILANG_KINDAMANAGERIMPL_HPP
 #define TESTQILANG_KINDAMANAGERIMPL_HPP
 
-#include <src/testinterface_p.hpp>
+#include <src/somemix_p.hpp>
 
 namespace testqilang
 {
