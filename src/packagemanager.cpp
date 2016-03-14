@@ -323,10 +323,12 @@ namespace qilang {
   //throw on error
   ResolutionResult PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
   {
-    std::string type = tnode->value;
-    qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
-    std::string pkgName = type.substr(0, type.find_last_of('.'));
-    std::string value = type.substr(pkgName.size(), type.size());
+    const std::string type = tnode->value;
+    qiLogVerbose() << "Resolving: " << type << " from package: " << pkg->_name;
+    const auto lastDot = type.find_last_of('.');
+    const std::string pkgName = (lastDot == std::string::npos) ? "" : type.substr(0, lastDot);
+    const auto valueBegins = pkgName.empty() ? 0 : (pkgName.size() + 1);
+    std::string value = type.substr(valueBegins);
 
     //package name provided
     if (!pkgName.empty() && pkgName != type)

@@ -1,0 +1,7 @@
+import testqilang
+
+package testsubpackage.othersubpackage
+
+struct CustomStruct
+  toto: testqilang.Score
+end
