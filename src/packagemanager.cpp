@@ -198,21 +198,35 @@ namespace qilang {
 
     qi::Path pkgPath(pkgNameToDir(pkgName));
 
+    StringVector packageFiles;
     for (unsigned i = 0; i < _includes.size(); ++i) {
       qi::Path p(_includes.at(i));
       p /= pkgPath;
+
       if (p.isDir())
       {
-        StringVector retfile;
         StringVector retdir;
-        bool b = locateFileInDir(p.str(), &retfile, &retdir);
+        bool b = locateFileInDir(p.str(), &packageFiles, &retdir);
         if (b) {
           qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
-          return retfile;
         }
       }
     }
-    return StringVector();
+    if (packageFiles.empty()) // fallback: search in the sdk data
+    {
+      const std::string prefix("qi/idl/");
+      const std::string dir(prefix + pkgPath.str());
+      auto results = qi::path::listData(dir, "*.idl.qi");
+      for (const auto& path : results)
+      {
+        if (qi::Path(path).isRegularFile())
+        {
+          packageFiles.push_back(path);
+          qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
+        }
+      }
+    }
+    return packageFiles;
   }
 
   bool PackageManager::hasError() const

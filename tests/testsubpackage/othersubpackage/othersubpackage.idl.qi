@@ -5,3 +5,7 @@ package testsubpackage.othersubpackage
 struct CustomStruct
   toto: testqilang.Score
 end
+
+interface LetMeSee
+  fn ping() -> bool
+end

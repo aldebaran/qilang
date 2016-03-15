@@ -354,12 +354,14 @@ namespace qilang {
       indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
       indent() << "*/" << std::endl;
 
+      std::string pkgName(_packageName);
+      boost::replace_all(pkgName, ".", "_");
       indent() << "#ifndef QILANG_GENERATED_"
-               << boost::to_upper_copy<std::string>(_packageName)
+               << boost::to_upper_copy<std::string>(pkgName)
                << "_HPP" << std::endl;
 
       indent() << "#define QILANG_GENERATED_"
-               << boost::to_upper_copy<std::string>(_packageName)
+               << boost::to_upper_copy<std::string>(pkgName)
                << "_HPP" << std::endl;
 
       indent() << "#include <qi/future.hpp>" << std::endl;
@@ -371,9 +373,7 @@ namespace qilang {
 
     void formatFooter() {
       closeNamespace();
-      indent() << "#endif // QILANG_GENERATED_"
-               << boost::to_upper_copy<std::string>(_packageName)
-               << "_HPP" << std::endl;
+      indent() << "#endif" << std::endl;
     }
 
   private:

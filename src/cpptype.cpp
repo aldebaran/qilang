@@ -204,7 +204,7 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
     PackagePtr pkg = pm->package(tnode->name);
     StringVector sv = cppFilenameFromImport(pkg, tnode);
     for (unsigned j = 0; j < sv.size(); ++j) {
-      pushIfNot(includes, sv.at(i));
+      pushIfNot(includes, sv.at(j));
     }
   }
 

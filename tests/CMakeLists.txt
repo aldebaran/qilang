@@ -55,7 +55,7 @@ if(QI_WITH_TESTS)
     testsubpackage_generated
     CPP # Output language
     "othersubpackage" # Package name
-    "${CMAKE_CURRENT_BINARY_DIR}/testsubpackage" # Destination
+    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
     ${testsubpackage_idl} # IDL files
   )
 
@@ -68,6 +68,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     qi
+    testqilang
   )
 
   qi_stage_lib(testsubpackage)
