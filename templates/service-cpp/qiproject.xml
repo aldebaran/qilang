@@ -4,6 +4,6 @@
   -->
   <qibuild name="@projectname@">
     <depends buildtime="true" runtime="true" names="libqi" />
-    <depends buildtime="true" runtime="false" names="libqilang" />
+    <depends host="true" names="libqilang" />
   </qibuild>
 </project>
