@@ -238,7 +238,7 @@ public:
 /// Used for the first pass, to forward-declare interfaces.
 class QiLangGenObjectDefFirstPass: public CppTypeFormatter<NodeFormatter<DefaultNodeVisitor>>
 {
-  void visitStmt(PackageNode* node) {
+  void visitStmt(PackageNode* node) override {
     currentNs = splitPkgName(node->name);
     for (unsigned int i = 0; i < currentNs.size(); ++i) {
       indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
@@ -306,9 +306,9 @@ public:
     return this->out().str();
   }
 
-  virtual void doAccept(Node* node) { node->accept(this); }
+  virtual void doAccept(Node* node) override { node->accept(this); }
 
-  void visitDecl(InterfaceDeclNode* node) {
+  void visitDecl(InterfaceDeclNode* node) override {
     QiLangGenAsyncIface ai(out(), apiExport);
     node->accept(&ai);
     QiLangGenIface si(out(), apiExport);
@@ -331,18 +331,18 @@ public:
     }
   }
 
-  void visitDecl(ParamFieldDeclNode* node) {
+  void visitDecl(ParamFieldDeclNode* node) override {
   }
 
-  void visitDecl(FnDeclNode* node) {
+  void visitDecl(FnDeclNode* node) override {
   }
 
-  void visitDecl(SigDeclNode* node) {
+  void visitDecl(SigDeclNode* node) override {
   }
-  void visitDecl(PropDeclNode* node) {
+  void visitDecl(PropDeclNode* node) override {
   }
 
-  void visitDecl(StructDeclNode* node) {
+  void visitDecl(StructDeclNode* node) override {
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
     scoped(node->decls);
@@ -387,7 +387,7 @@ public:
     }
   }
 
-  void visitDecl(ConstDeclNode* node) {
+  void visitDecl(ConstDeclNode* node) override {
     indent() << "const ";
     accept(node->effectiveType());
     out() << " " << node->name;
@@ -398,7 +398,7 @@ public:
     out() << ";" << std::endl;
   }
 
-  void visitDecl(StructFieldDeclNode* node) {
+  void visitDecl(StructFieldDeclNode* node) override {
     for (unsigned i = 0; i < node->names.size(); ++i) {
       indent();
       accept(node->effectiveType());
@@ -406,7 +406,7 @@ public:
       out() << ";" << std::endl;
     }
   }
-  void visitDecl(EnumDeclNode* node) {
+  void visitDecl(EnumDeclNode* node) override {
     indent() << "enum " << node->name << " {" << std::endl;
     scoped(node->fields);
     indent() << "};" << std::endl << std::endl;
@@ -419,7 +419,7 @@ public:
       out() << "::" << node->name << ")" << std::endl << std::endl;
     }
   }
-  void visitDecl(EnumFieldDeclNode* node) {
+  void visitDecl(EnumFieldDeclNode* node) override {
     if (node->fieldType == EnumFieldType_Const) {
       ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node->node.get());
       indent() << tnode->name << " = ";
@@ -429,7 +429,7 @@ public:
     }
     throw std::runtime_error("type in enum not supported in cppi atm");
   }
-  void visitDecl(TypeDefDeclNode* node) {
+  void visitDecl(TypeDefDeclNode* node) override {
     indent() << "typedef ";
     accept(node->type);
     out() << " " << node->name << ";" << std::endl;
@@ -441,7 +441,7 @@ public:
   const ParseResultPtr& _pr;
   StringVector       _includes;
 
-  void formatHeader() {
+  void formatHeader() override {
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
@@ -456,7 +456,7 @@ public:
     indent() << std::endl;
   }
 
-  void formatFooter() {
+  void formatFooter() override {
     for (int i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
@@ -467,18 +467,18 @@ public:
 protected:
   void visitStmt(PackageNode*) override {}
 
-  void visitStmt(ImportNode* node) {
+  void visitStmt(ImportNode*) override {
   }
-  void visitStmt(ObjectDefNode *node) {
+  void visitStmt(ObjectDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(PropertyDefNode *node) {
+  void visitStmt(PropertyDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode* node) {
+  void visitStmt(AtNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(VarDefNode* node) {
+  void visitStmt(VarDefNode* node) override {
     indent();
     accept(node->effectiveType());
     out() << " " << node->name;

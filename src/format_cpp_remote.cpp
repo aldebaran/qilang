@@ -281,28 +281,22 @@ namespace qilang {
       : _includes(includes)
     {}
 
-    void doAccept(Node* node) { node->accept(this); }
+    void doAccept(Node* node) override { node->accept(this); }
 
     StringVector currentNs;
     StringVector _includes;
 
-    void visitDecl(InterfaceDeclNode* node) {
+    void visitDecl(InterfaceDeclNode* node) override {
       CppAsyncRemoteQiLangGen ar(out(), _indent);
       node->accept(&ar);
       CppSyncRemoteQiLangGen ir(out(), _indent);
       node->accept(&ir);
     }
 
-    void visitDecl(ParamFieldDeclNode* node) {
-    }
-
-    void visitDecl(FnDeclNode* node) {
-    }
-
-    void visitDecl(SigDeclNode* node) {
-    }
-    void visitDecl(PropDeclNode* node) {
-    }
+    void visitDecl(ParamFieldDeclNode*) override { }
+    void visitDecl(FnDeclNode*) override { }
+    void visitDecl(SigDeclNode*) override { }
+    void visitDecl(PropDeclNode*) override { }
 
     void walkParams(const ParamFieldDeclNodePtrVector& params) {
       for (unsigned i = 0; i < params.size(); ++i) {
@@ -312,26 +306,14 @@ namespace qilang {
       }
     }
 
-    void visitDecl(StructDeclNode* node) {
-      qiLogError() << "StructDeclNode not implemented";
-    }
-    void visitDecl(ConstDeclNode* node) {
-      qiLogError() << "FieldDeclNode not implemented";
-    }
-    void visitDecl(StructFieldDeclNode* node) {
-      qiLogError() << "FieldDeclNode not implemented";
-    }
-    void visitDecl(EnumDeclNode* node) {
-      qiLogError() << "EnumDeclNode not implemented";
-    }
-    void visitDecl(EnumFieldDeclNode* node) {
-      qiLogError() << "EnumFieldDeclNode not implemented";
-    }
-    void visitDecl(TypeDefDeclNode* node) {
-      qiLogError() << "TypeDefDeclNode not implemented";
-    }
+    void visitDecl(StructDeclNode*) override { }
+    void visitDecl(ConstDeclNode*) override { }
+    void visitDecl(StructFieldDeclNode*) override { }
+    void visitDecl(EnumDeclNode*) override { }
+    void visitDecl(EnumFieldDeclNode*) override { }
+    void visitDecl(TypeDefDeclNode*) override { }
 
-  void formatHeader() {
+  void formatHeader() override {
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
@@ -342,13 +324,13 @@ namespace qilang {
     indent() << std::endl;
   }
 
-  void formatFooter() {
+  void formatFooter() override {
     for (int i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
   }
 
-  void visitStmt(PackageNode* node) {
+  void visitStmt(PackageNode* node) override {
     currentNs = splitPkgName(node->name);
     for (unsigned int i = 0; i < currentNs.size(); ++i) {
       indent() << "namespace " << currentNs.at(i) << " {" << std::endl;
@@ -356,19 +338,19 @@ namespace qilang {
     out() << std::endl;
   }
 
-  void visitStmt(ImportNode* node) {
+  void visitStmt(ImportNode* node) override {
   }
 
-  void visitStmt(ObjectDefNode *node) {
+  void visitStmt(ObjectDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(PropertyDefNode *node) {
+  void visitStmt(PropertyDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode* node) {
+  void visitStmt(AtNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(VarDefNode* node) {
+  void visitStmt(VarDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
 
