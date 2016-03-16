@@ -8,6 +8,7 @@ end
 # comment comment
 interface KindaManager
   fn findTruth() -> int
+  fn whatsTheTime() -> systemtimepoint
   sig test(s: float)
   prop current(s: Vec<float>)
 end
@@ -15,7 +16,7 @@ end
 # try harder
 interface AnotherInterface
   fn makeSomething() -> KindaManager
-  sig blop(blop: bool)
+  sig blop(blop: qitimepoint)
   prop crap(ette: Vec<str>)
 end
 

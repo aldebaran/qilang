@@ -2,6 +2,7 @@
 #define TESTQILANG_KINDAMANAGERIMPL_HPP
 
 #include <src/somemix_p.hpp>
+#include <qi/clock.hpp>
 
 namespace testqilang
 {
@@ -11,6 +12,11 @@ public:
   qi::Future<int> findTruth()
   {
     return qi::Future<int>(42);
+  }
+
+  qi::Future<qi::SystemClockTimePoint> whatsTheTime()
+  {
+    return qi::Future<qi::SystemClockTimePoint>(qi::SystemClock::now());
   }
 
   qi::Signal<float> test;

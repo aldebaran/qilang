@@ -58,6 +58,12 @@ static std::string builtinTypeToString(BuiltinType type) {
     return "float32";
   case BuiltinType_Float64:
     return "float64";
+  case BuiltinType_QiTimePoint:
+    return "qitimepoint";
+  case BuiltinType_SteadyTimePoint:
+    return "steadytimepoint";
+  case BuiltinType_SystemTimePoint:
+    return "systemtimepoint";
   case BuiltinType_String:
     return "str";
   case BuiltinType_Value:

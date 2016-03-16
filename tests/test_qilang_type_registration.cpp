@@ -52,6 +52,19 @@ TEST_F(QiLangTypeRegistration, CallChildObject)
   ASSERT_EQ(42, childObj->findTruth());
 }
 
+TEST_F(QiLangTypeRegistration, CallChildObjectWithTime)
+{
+  auto obj = _testqilang.call<qi::Object<AnotherInterface>>("AnotherInterface");
+  auto childObj = obj->makeSomething();
+  childObj->whatsTheTime();
+}
+
+TEST_F(QiLangTypeRegistration, EmitWithTime)
+{
+  auto obj = _testqilang.call<qi::Object<AnotherInterface>>("AnotherInterface");
+  obj->blop(qi::Clock::now());
+}
+
 TEST_F(QiLangTypeRegistration, MakeStruct)
 {
   auto code = 42;

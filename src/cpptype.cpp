@@ -58,6 +58,12 @@ std::string builtinTypeToCpp(BuiltinType type, bool constref) {
       return "float";
     case BuiltinType_Float64:
       return "double";
+    case BuiltinType_QiTimePoint:
+      return "qi::ClockTimePoint";
+    case BuiltinType_SteadyTimePoint:
+      return "qi::SteadyClockTimePoint";
+    case BuiltinType_SystemTimePoint:
+      return "qi::SystemClockTimePoint";
     case BuiltinType_String:
       return constRefYourSelf("std::string", constref);
     case BuiltinType_Value:
@@ -237,6 +243,10 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
           pushIfNot(includes, "<qi/anyvalue.hpp>");
         } else if (tnode->value == "obj") {
           pushIfNot(includes, "<qi/anyobject.hpp>");
+        } else if (tnode->value == "qitimepoint"
+                || tnode->value == "steadytimepoint"
+                || tnode->value == "systemtimepoint") {
+          pushIfNot(includes, "<qi/clock.hpp>");
         } else {
           pushIfNot(includes, "<qi/types.hpp>");
         }

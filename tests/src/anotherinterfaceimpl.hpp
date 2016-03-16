@@ -1,4 +1,5 @@
 #include <src/somemix_p.hpp>
+#include <qi/clock.hpp>
 #include "kindamanagerimpl.hpp"
 
 namespace testqilang
@@ -11,7 +12,7 @@ public:
     return boost::make_shared<KindaManagerImpl>();
   }
 
-  qi::Signal<bool> blop;
+  qi::Signal<qi::ClockTimePoint> blop;
   qi::Property<std::vector<std::string>> crap;
 };
 } // testqilang
