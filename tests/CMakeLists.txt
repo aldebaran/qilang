@@ -98,24 +98,26 @@ if(QI_WITH_TESTS)
 
   qi_stage_lib(testimportpackage)
 
+  # The actual entry point of the test
+  qi_create_gtest(
+    test_qilang
+
+    SRC
+    "test_qilang.cpp"
+    "test_qilang_signature.cpp"
+    "test_qilang_type_registration.cpp"
+    "test_qilang_package.cpp"
+    "test_qilang_struct_include.cpp"
+
+    DEPENDS
+    qi
+    qilang
+    testqilang
+    testsubpackage
+    testimportpackage
+
+    TIMEOUT 10
+  )
+
+
 endif(QI_WITH_TESTS)
-
-qi_create_gtest(
-  test_qilang
-
-  SRC
-  "test_qilang.cpp"
-  "test_qilang_signature.cpp"
-  "test_qilang_type_registration.cpp"
-  "test_qilang_package.cpp"
-  "test_qilang_struct_include.cpp"
-
-  DEPENDS
-  qi
-  qilang
-  testqilang
-  testsubpackage
-  testimportpackage
-
-  TIMEOUT 10
-)
