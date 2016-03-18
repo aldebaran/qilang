@@ -220,14 +220,7 @@ namespace qilang {
     std::string _fullName;
     FormatAttr _methodBounceAttr;
 
-    static int nextId()
-    {
-      static int _next_id = 0;
-      return _next_id++;
-    }
-
     void visitDecl(InterfaceDeclNode* node) {
-      const int current = nextId();
       _fullName = _ns + "::" + node->name;
       _curName = node->name;
 
@@ -248,7 +241,7 @@ namespace qilang {
           accept(node->values.at(i));
         }
       }
-      indent() << "static int initType" << current << "() { \\" << std::endl;
+      indent() << "static int initType" << node->name << "() { \\" << std::endl;
       {
         ScopedIndent _(_indent);
         indent() << "qi::ObjectTypeBuilder< " << _fullName << " > builder; \\" << std::endl;
@@ -262,7 +255,7 @@ namespace qilang {
         indent() << "return 42; \\" << std::endl;
       }
       indent() << "} \\" << std::endl;
-      indent() << "static int myinittype" << current << " = initType" << current << "();" << std::endl;
+      indent() << "static int myinittype" << node->name << " = initType" << node->name << "();" << std::endl;
       indent() << std::endl;
 
       _fullName.clear();
