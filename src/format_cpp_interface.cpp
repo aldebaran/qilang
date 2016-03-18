@@ -407,7 +407,7 @@ public:
     }
   }
   void visitDecl(EnumDeclNode* node) override {
-    indent() << "enum " << node->name << " {" << std::endl;
+    indent() << "enum class " << node->name << " {" << std::endl;
     scoped(node->fields);
     indent() << "};" << std::endl << std::endl;
     {
@@ -427,7 +427,6 @@ public:
       out() << "," << std::endl;
       return;
     }
-    throw std::runtime_error("type in enum not supported in cppi atm");
   }
   void visitDecl(TypeDefDeclNode* node) override {
     indent() << "typedef ";

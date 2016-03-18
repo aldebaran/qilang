@@ -59,6 +59,13 @@ TEST_F(QiLangTypeRegistration, CallChildObjectWithTime)
   childObj->whatsTheTime();
 }
 
+TEST_F(QiLangTypeRegistration, CallChildObjectWithEnum)
+{
+  auto obj = _testqilang.call<qi::Object<AnotherInterface>>("AnotherInterface");
+  auto childObj = obj->makeSomething();
+  ASSERT_EQ(Option::First, childObj->setOption(Option::First));
+}
+
 TEST_F(QiLangTypeRegistration, EmitWithTime)
 {
   auto obj = _testqilang.call<qi::Object<AnotherInterface>>("AnotherInterface");

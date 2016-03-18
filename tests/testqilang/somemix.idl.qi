@@ -5,10 +5,16 @@ struct Error
   message: str
 end
 
+enum Option
+  const First = 0
+  const Second = 1
+end
+
 # comment comment
 interface KindaManager
   fn findTruth() -> int
   fn whatsTheTime() -> systemtimepoint
+  fn setOption(opt: Option) -> Option
   sig test(s: float)
   prop current(s: Vec<float>)
 end

@@ -19,6 +19,11 @@ public:
     return qi::Future<qi::SystemClockTimePoint>(qi::SystemClock::now());
   }
 
+  Option setOption(Option opt)
+  {
+    return opt;
+  }
+
   qi::Signal<float> test;
   qi::Property<std::vector<float>> current;
 };
