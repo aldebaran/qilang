@@ -1,6 +1,6 @@
 if(QI_WITH_TESTS)
   find_package(qimodule)
-
+  qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
   include_directories(".")
 
@@ -54,7 +54,7 @@ if(QI_WITH_TESTS)
   qi_gen_idl(
     testsubpackage_generated
     CPP # Output language
-    "othersubpackage" # Package name
+    "testsubpackage" # Package name
     "${CMAKE_CURRENT_BINARY_DIR}" # Destination
     ${testsubpackage_idl} # IDL files
   )
@@ -93,6 +93,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     qi
+    testsubpackage
   )
 
   qi_stage_lib(testimportpackage)

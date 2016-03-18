@@ -54,7 +54,7 @@ namespace qilang {
       {
         ScopedIndent _(_indent);
         indent() << "ImplPtr _p;" << std::endl;
-        indent() << "using ImplType = typename std::decay<decltype(*_p)>::type;" << std::endl;
+        indent() << "using ImplType = typename ImplPtr::element_type;" << std::endl;
       }
 
       indent() << "};" << std::endl;

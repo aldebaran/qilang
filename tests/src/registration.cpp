@@ -28,12 +28,12 @@ testqilang::Score makeScore(int score, std::string name)
   return entry;
 }
 
-QI_REGISTER_MODULE(
-    "testqilang_module",
-    [](qi::ModuleBuilder* mb)
+void registerTestQiLang(qi::ModuleBuilder* mb)
 {
   mb->advertiseFactory<testqilang::AnotherInterface>("AnotherInterface");
   mb->advertiseMethod("Error", makeError);
   mb->advertiseMethod("Score", makeScore);
-})
+}
+
+QI_REGISTER_MODULE("testqilang_module", registerTestQiLang)
 

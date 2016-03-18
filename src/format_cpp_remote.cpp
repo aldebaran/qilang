@@ -291,16 +291,6 @@ namespace qilang {
       node->accept(&ar);
       CppSyncRemoteQiLangGen ir(out(), _indent);
       node->accept(&ir);
-      {
-        ScopedNamespaceEscaper _e(out(), currentNs);
-        out() << "bool qi::detail::ForceProxyInclusion< ";
-        for (unsigned int i = 0; i < currentNs.size(); ++i) {
-          out() << "::" << currentNs.at(i);
-        }
-        out() << "::" << node->name << " >::dummyCall() {" << std::endl;
-        out() << "  return true;" << std::endl;
-        out() << "}" << std::endl;
-      }
     }
 
     void visitDecl(ParamFieldDeclNode* node) {

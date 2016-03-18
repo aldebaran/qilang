@@ -322,7 +322,7 @@ public:
         out() << "::" << currentNs.at(i);
       }
       out() << "::" << node->name << " > {" << std::endl;
-      out() << "    bool dummyCall();" << std::endl;
+      out() << "    bool dummyCall() { return true; }" << std::endl;
       out() << "  };" << std::endl;
       out() << "}" << std::endl;
       out() << "}" << std::endl;

@@ -51,7 +51,7 @@ function(qi_gen_idl OUT lang pkg dir)
     get_filename_component(abs_idl_path "${rel_idl_path}" ABSOLUTE)
     get_filename_component(abs_dest_dir "${dir}" ABSOLUTE)
     get_filename_component(dest_filename "${rel_idl_path}" NAME_WE)
-    file(MAKE_DIRECTORY ${abs_dest_dir}/${pkg})
+    file(MAKE_DIRECTORY ${abs_dest_dir}/${package_and_subpackage})
 
     if(NOT ARG_NOINTERFACE)
       set(generated_path "${abs_dest_dir}/${package_and_subpackage}/${dest_filename}.hpp")
