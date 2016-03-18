@@ -263,7 +263,9 @@ class QiLangGenObjectDef: public CppTypeFormatter<>
 {
 public:
   QiLangGenObjectDef(const PackageManagerPtr& pm, const ParseResultPtr& pr, const StringVector& includes)
-    : _pm(pm)
+    : toclose(0)
+    , currentNs()
+    , _pm(pm)
     , _pr(pr)
     , _includes(includes)
   {
