@@ -21,7 +21,7 @@ if(QI_WITH_TESTS)
   )
 
   qi_create_lib(
-    testqilang
+    testqilang SHARED
 
     "testqilang/api.hpp"
     ${testqilang_generated}
@@ -61,7 +61,7 @@ if(QI_WITH_TESTS)
   )
 
   qi_create_lib(
-    testsubpackage
+    testsubpackage SHARED
 
     "testsubpackage/othersubpackage/api.hpp"
     ${testsubpackage_generated}
@@ -86,7 +86,7 @@ if(QI_WITH_TESTS)
   )
 
   qi_create_lib(
-    testimportpackage
+    testimportpackage SHARED
 
     "testimportpackage/api.hpp"
     ${testimportpackage_generated}

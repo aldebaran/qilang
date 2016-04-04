@@ -6,6 +6,7 @@
 */
 
 #include <iostream>
+#include <boost/predef/compiler.h>
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
@@ -291,6 +292,16 @@ namespace qilang {
       node->accept(&ar);
       CppSyncRemoteQiLangGen ir(out(), _indent);
       node->accept(&ir);
+      {
+        ScopedNamespaceEscaper _e(out(), currentNs);
+        out() << "bool qi::detail::ForceProxyInclusion< ";
+        for (unsigned int i = 0; i < currentNs.size(); ++i) {
+          out() << "::" << currentNs.at(i);
+        }
+        out() << "::" << node->name << " >::dummyCall() {" << std::endl;
+        out() << "  return true;" << std::endl;
+        out() << "}" << std::endl;
+      }
     }
 
     void visitDecl(ParamFieldDeclNode*) override { }
@@ -313,6 +324,21 @@ namespace qilang {
     void visitDecl(EnumFieldDeclNode*) override { }
     void visitDecl(TypeDefDeclNode*) override { }
 
+    /* This function will generate a no-op function exported but only with Visual Studio.
+       The generated code is supposed to be used in a shared library interface,
+       but if we generate no exported/imported symbols then Visual Studio will not generate
+       a .lib file and linking to this library will fail.
+       Therefore, on Visual Studio we want to force the compiler to generate the .lib file,
+       which is why we need to export at least one symbol.
+    */
+    void forceGenerateLib()
+    {
+      if (BOOST_COMP_MSVC)
+      {
+        indent() << "namespace { __declspec(dllexport) void forceGenerateLib(){} }" << std::endl;
+      }
+    }
+
   void formatHeader() override {
     indent() << "/*" << std::endl;
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
@@ -325,6 +351,7 @@ namespace qilang {
   }
 
   void formatFooter() override {
+    forceGenerateLib();
     for (int i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
@@ -360,8 +387,6 @@ std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResultPtr
   StringVector sv = extractCppIncludeDir(pm, pr, true);
   return CppRemoteQiLangGen(pm, sv).format(pr->ast);
 }
-
-
 
 }
 
