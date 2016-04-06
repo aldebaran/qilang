@@ -24,6 +24,16 @@ public:
     return opt;
   }
 
+  void overlord(const std::string& whatever = std::string{})
+  {
+    QI_UNUSED(whatever);
+  }
+
+  void overlord(int)
+  {
+
+  }
+
   qi::Signal<float> test;
   qi::Property<std::vector<float>> current;
 };

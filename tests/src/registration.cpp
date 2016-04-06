@@ -3,11 +3,13 @@
 #include <testqilang/somestructs.hpp>
 #include "kindamanagerimpl.hpp"
 #include "anotherinterfaceimpl.hpp"
+#include "bradpitt.hpp"
 #include "ouroboros.hpp"
 #include "pingpong.hpp"
 
 REGISTER_KINDAMANAGER(testqilang::KindaManagerImpl)
 REGISTER_ANOTHERINTERFACE(testqilang::AnotherInterfaceImpl)
+REGISTER_BRADPITT(testqilang::BradPittImpl)
 REGISTER_OUROBOROS(testqilang::OuroborosImpl)
 REGISTER_PING(testqilang::PingImpl)
 REGISTER_PONG(testqilang::PongImpl)
@@ -30,7 +32,9 @@ testqilang::Score makeScore(int score, std::string name)
 
 void registerTestQiLang(qi::ModuleBuilder* mb)
 {
+  mb->advertiseFactory<testqilang::KindaManager>("KindaManager");
   mb->advertiseFactory<testqilang::AnotherInterface>("AnotherInterface");
+  mb->advertiseFactory<testqilang::BradPitt>("BradPitt");
   mb->advertiseMethod("Error", makeError);
   mb->advertiseMethod("Score", makeScore);
 }

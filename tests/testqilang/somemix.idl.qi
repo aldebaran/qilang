@@ -15,6 +15,12 @@ interface KindaManager
   fn findTruth() -> int
   fn whatsTheTime() -> systemtimepoint
   fn setOption(opt: Option) -> Option
+
+  //! Overloaded functions
+  fn overlord()
+  fn overlord(arg: str)
+  fn overlord(arg: int)
+
   sig test(s: float)
   prop current(s: Vec<float>)
 end
@@ -24,6 +30,11 @@ interface AnotherInterface
   fn makeSomething() -> KindaManager
   sig blop(blop: qitimepoint)
   prop crap(ette: Vec<str>)
+end
+
+//! An actor. A famous one indeed.
+interface BradPitt
+  fn act()
 end
 
 # An interface that refers to itself

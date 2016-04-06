@@ -39,6 +39,7 @@ if(QI_WITH_TESTS)
     SRC
     "src/kindamanagerimpl.hpp"
     "src/anotherinterfaceimpl.hpp"
+    "src/bradpitt.hpp"
     "src/ouroboros.hpp"
     "src/pingpong.hpp"
     "src/registration.cpp"
@@ -104,6 +105,7 @@ if(QI_WITH_TESTS)
 
     SRC
     "test_qilang.cpp"
+    "test_qilang_function.cpp"
     "test_qilang_signature.cpp"
     "test_qilang_type_registration.cpp"
     "test_qilang_package.cpp"

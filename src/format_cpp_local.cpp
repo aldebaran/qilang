@@ -71,15 +71,49 @@ namespace qilang {
       indent() << "{" << std::endl;
       {
         ScopedIndent _(_indent);
-        indent() << "return qi::detail::tryUnwrap(qi::async(qi::bind(&ImplType::" << node->name << ", _p.get()";
+
+        // Use a lambda for easier type deduction.
+        // Note the need of repeating "this" for qi::bind.
+        // Consequently nothing needs to be captured, so the lambda can be static.
+        indent() << "static auto f = [](ImplType* self";
+        if (!node->args.empty()) {
+          out() << ", ";
+          cppParamsFormat(this, node->args, CppParamsFormat_Normal);
+        }
+        out() << "){ return self->" << node->name << "(";
+        if (!node->args.empty()) {
+          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+        }
+        out() << "); };" << std::endl;
+
+        // Deduce the return type of the implementation
+        indent() << "using ReturnType = decltype(f(_p.get()";
+        if (!node->args.empty()) {
+          out() << ", ";
+          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+        }
+        out() << "));" << std::endl;
+
+        // Use an std::function to explicit types (qi::bind does not always support it).
+        // As long as the lambda is static, this function can be static too.
+        indent() << "static std::function<ReturnType(ImplType*";
+        if (!node->args.empty()) {
+          out() << ", ";
+          cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
+        }
+        out() << ")> sf{f};" << std::endl;
+
+        // Use qi::bind for proper scheduling, async for asynchronicity, tryUnwrap to fallback on a simple future
+        indent() << "return qi::detail::tryUnwrap(qi::async(qi::bind(sf, _p.get()";
         if (!node->args.empty()) {
           out() << ", ";
           cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
         }
         out() << ")), 0);" << std::endl;
       }
-      indent() << "}" << std::endl;
+      indent() << "}" << std::endl << std::endl; // let an empty line after function definition
     }
+
     void visitDecl(SigDeclNode*) {}
     void visitDecl(PropDeclNode*) {}
   };
