@@ -59,7 +59,7 @@ function(qi_gen_idl OUT lang pkg dir)
         SRC "${abs_idl_path}"
         COMMENT "Generating interface ${generated_path}"
         DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${abs_idl_path}" -o "${generated_path}")
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_INTERFACE "${generated_path}")
       message(STATUS "Generated C++ interface header: ${generated_path}")
@@ -71,7 +71,7 @@ function(qi_gen_idl OUT lang pkg dir)
         SRC "${abs_idl_path}"
         COMMENT "Generating local ${generated_path}"
         DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${abs_idl_path}" -o "${generated_path}")
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_LOCAL "${generated_path}")
       message(STATUS "Generated C++ private header: ${generated_path}")
@@ -83,7 +83,7 @@ function(qi_gen_idl OUT lang pkg dir)
         SRC "${abs_idl_path}"
         COMMENT "Generating remote ${generated_path}"
         DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${abs_idl_path}" -o "${generated_path}")
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_REMOTE "${generated_path}")
     endif()

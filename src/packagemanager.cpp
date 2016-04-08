@@ -11,7 +11,8 @@
 #include <qilang/visitor.hpp>
 #include "cpptype.hpp"
 #include <boost/make_shared.hpp>
-#include <boost/filesystem/path.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
 
@@ -214,15 +215,21 @@ namespace qilang {
     }
     if (packageFiles.empty()) // fallback: search in the sdk data
     {
-      const std::string prefix("qi/idl/");
-      const std::string dir(prefix + pkgPath.str());
-      auto results = qi::path::listData(dir, "*.idl.qi");
-      for (const auto& path : results)
-      {
-        if (qi::Path(path).isRegularFile())
-        {
-          packageFiles.push_back(path);
-          qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
+      using boost::filesystem::recursive_directory_iterator;
+      recursive_directory_iterator itPath, itEnd;
+      for (qi::Path lookupPath : _lookupPaths) {
+        lookupPath /= "share/qi/idl";
+        lookupPath /= pkgPath;
+        if (!lookupPath.exists()) {
+          continue;
+        }
+        for (itPath = recursive_directory_iterator(lookupPath.bfsPath());
+             itPath != itEnd; ++itPath) {
+          auto path = itPath->path();
+          if (boost::algorithm::ends_with(path.string(), ".idl.qi")) {
+            packageFiles.push_back(path.string(qi::unicodeFacet()));
+            qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
+          }
         }
       }
     }
@@ -420,6 +427,13 @@ namespace qilang {
         tnode->resolved_value   = sp.type;
         tnode->resolved_kind    = sp.kind;
       }
+    }
+  }
+
+  void PackageManager::addLookupPaths(const StringVector& lookupPaths) {
+    _lookupPaths.reserve(_lookupPaths.size() + lookupPaths.size());
+    for (const auto& path : lookupPaths) {
+      _lookupPaths.push_back(path);
     }
   }
 
