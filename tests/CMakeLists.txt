@@ -31,6 +31,9 @@ if(QI_WITH_TESTS)
     qi
   )
 
+  # Needed to ensure the build order
+  add_dependencies(qi_gen_idl_testqilang qicc)
+
   qi_stage_lib(testqilang)
 
   qi_create_module(
@@ -72,6 +75,9 @@ if(QI_WITH_TESTS)
     testqilang
   )
 
+  # Needed to ensure the build order
+  add_dependencies(qi_gen_idl_testsubpackage qicc)
+
   qi_stage_lib(testsubpackage)
 
   # Test qilang package import feature
@@ -99,6 +105,9 @@ if(QI_WITH_TESTS)
 
   qi_stage_lib(testimportpackage)
 
+  # Needed to ensure the build order
+  add_dependencies(qi_gen_idl_testimportpackage qicc)
+
   # The actual entry point of the test
   qi_create_gtest(
     test_qilang
@@ -120,6 +129,5 @@ if(QI_WITH_TESTS)
 
     TIMEOUT 10
   )
-
 
 endif(QI_WITH_TESTS)

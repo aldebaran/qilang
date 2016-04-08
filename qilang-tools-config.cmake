@@ -11,7 +11,7 @@ else()
   find_package(qicc REQUIRED)
 endif()
 
-message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
+message(STATUS "Using qicc: ${QICC_EXECUTABLE} SEE ME")
 
 #! Generate qicc cpp files.
 #
@@ -98,11 +98,7 @@ function(qi_gen_idl OUT lang pkg dir)
     )
     # each idl file shall be installed in the sdk
     qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
-
   endforeach()
-
-  #this custom target ensure that all idl file are generated before building
-  add_custom_target(qi_idl_${pkg} ${_out} DEPENDS ${_out})
 
   # Bounce out variables
   set(${OUT} ${_out} PARENT_SCOPE)
@@ -116,4 +112,7 @@ function(qi_gen_idl OUT lang pkg dir)
     set(${OUT}_REMOTE ${_${OUT}_REMOTE} PARENT_SCOPE)
   endif()
 
+  # This target is only useful for qilang unit tests.
+  # It makes possible to add dependencies to qicc target.
+  add_custom_target(qi_gen_idl_${pkg})
 endfunction()
