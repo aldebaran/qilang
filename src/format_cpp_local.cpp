@@ -109,7 +109,7 @@ namespace qilang {
           out() << ", ";
           cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
         }
-        out() << ")), 0);" << std::endl;
+        out() << ")));" << std::endl;
       }
       indent() << "}" << std::endl << std::endl; // let an empty line after function definition
     }
