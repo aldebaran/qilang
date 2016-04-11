@@ -117,3 +117,47 @@ function(qi_gen_idl OUT lang pkg dir)
   # It makes possible to add dependencies to qicc target.
   add_custom_target(qi_gen_idl_${pkg})
 endfunction()
+
+#! Generate C++ files and create a shared library out of them.
+#
+# \arg:package The package name, also the name of the resulting target
+# \arg:dir The directory where the files will be generated
+# \arg:depends The list of dependencies required by the generated library
+#
+# This function forwards the extra arguments to qi_gen_idl.
+# \ref:qi_gen_idl
+#
+function(qi_gen_lib package destination)
+  cmake_parse_arguments(ARG
+    ""
+    ""
+    "DEPENDS;API_HEADER;IDL"
+    ${ARGN})
+
+  set(generated_file_list ${package}_generated)
+
+  qi_gen_idl(
+    ${generated_file_list}
+    CPP
+    ${package}
+    ${destination}
+    ${ARG_IDL}
+    ${ARG_UNPARSED_ARGUMENTS}
+  )
+
+  if(NOT ARG_API_HEADER)
+    set(ARG_API_HEADER "${package}/api.hpp")
+  endif()
+
+  qi_create_lib(
+    ${package} SHARED
+
+    ${ARG_API_HEADER}
+    ${${generated_file_list}}
+    ${ARG_IDL}
+
+    DEPENDS
+    qi
+    ${ARG_DEPENDS}
+  )
+endfunction()

@@ -55,23 +55,17 @@ if(QI_WITH_TESTS)
   # Test qilang subpackages management
   set(testsubpackage_idl "testsubpackage/othersubpackage/othersubpackage.idl.qi")
 
-  qi_gen_idl(
-    testsubpackage_generated
-    CPP # Output language
-    "testsubpackage" # Package name
+  qi_gen_lib(
+    testsubpackage
     "${CMAKE_CURRENT_BINARY_DIR}" # Destination
-    ${testsubpackage_idl} # IDL files
-  )
 
-  qi_create_lib(
-    testsubpackage SHARED
-
-    "testsubpackage/othersubpackage/api.hpp"
-    ${testsubpackage_generated}
+    IDL
     ${testsubpackage_idl}
 
+    API_HEADER
+    "testsubpackage/othersubpackage/api.hpp"
+
     DEPENDS
-    qi
     testqilang
   )
 
@@ -83,23 +77,14 @@ if(QI_WITH_TESTS)
   # Test qilang package import feature
   set(testimportpackage_idl "testimportpackage/testimportpackage.idl.qi")
 
-  qi_gen_idl(
-    testimportpackage_generated
-    CPP # Output language
-    "testimportpackage" # Package name
+  qi_gen_lib(
+    testimportpackage
     "${CMAKE_CURRENT_BINARY_DIR}" # Destination
-    ${testimportpackage_idl} # IDL files
-  )
 
-  qi_create_lib(
-    testimportpackage SHARED
-
-    "testimportpackage/api.hpp"
-    ${testimportpackage_generated}
+    IDL
     ${testimportpackage_idl}
 
     DEPENDS
-    qi
     testsubpackage
   )
 
@@ -129,5 +114,4 @@ if(QI_WITH_TESTS)
 
     TIMEOUT 10
   )
-
 endif(QI_WITH_TESTS)
