@@ -11,7 +11,7 @@ else()
   find_package(qicc REQUIRED)
 endif()
 
-message(STATUS "Using qicc: ${QICC_EXECUTABLE} SEE ME")
+message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 
 #! Generate qicc cpp files.
 #
