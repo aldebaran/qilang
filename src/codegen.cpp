@@ -19,7 +19,6 @@ namespace qilang {
                const qilang::ParseResultPtr&    pr)
   {
     static const char* vals[] = { "cpp_interface", "cppi",
-                                  "cpp_bind", "cppb",
                                   "cpp_local", "cppl",
                                   "cpp_remote", "cppr",
                                   "sexpr", "qilang", "doc", 0 };
@@ -55,8 +54,6 @@ namespace qilang {
     }
     if      (codegen == "cpp_interface" || codegen == "cppi")
       out->out() << qilang::genCppObjectInterface(pm, pr);
-    else if (codegen == "cpp_bind"      || codegen == "cppb")
-      out->out() << qilang::genCppObjectRegistration(pm, pr);
     else if (codegen == "cpp_local"     || codegen == "cppl")
       out->out() << qilang::genCppObjectLocal(pm, pr);
     else if (codegen == "cpp_remote"    || codegen == "cppr")

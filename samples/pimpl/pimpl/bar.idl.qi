@@ -2,6 +2,6 @@
 package pimpl
 
 interface Bar
-  fn foo(arg str)
+  fn foo(arg: str)
 end
 fn newBar() -> Bar

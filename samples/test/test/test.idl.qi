@@ -1,0 +1,11 @@
+package test
+
+interface Test
+  fn say(mess: str)
+  fn saySlowerButBetter(mess: str)
+  fn numberSay() -> int
+
+  prop message(content: str)
+
+  sig onSayMessage(nb: int)
+end

@@ -25,7 +25,6 @@ set(C src/codegen.cpp
       src/format_qilang.cpp
       src/format_sexpr.cpp
       src/format_cpp_interface.cpp
-      src/format_cpp_bind.cpp
       src/format_cpp_local.cpp
       src/format_cpp_remote.cpp
       src/format_anyvalue.cpp
@@ -75,6 +74,7 @@ qi_create_bin(qicc src/qic_main.cpp DEPENDS qi qilang)
 qi_stage_bin(qicc)
 
 qi_stage_cmake(qilang-tools-config.cmake)
-include(qilang-tools-config.cmake)
 
+# include it go for testing!
+include(${CMAKE_CURRENT_SOURCE_DIR}/qilang-tools-config.cmake)
 add_subdirectory("tests")

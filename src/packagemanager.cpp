@@ -11,8 +11,11 @@
 #include <qilang/visitor.hpp>
 #include "cpptype.hpp"
 #include <boost/make_shared.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
+
 qiLogCategory("qilang.pm");
 
 namespace qilang {
@@ -133,7 +136,7 @@ namespace qilang {
       p = p.parent();
     }
 
-    std::string pkgpath = p.absolute();
+    std::string pkgpath = p.absolute().str();
 
     addInclude(pkgpath);
     addPackage(pkgname);
@@ -145,7 +148,7 @@ namespace qilang {
   ParseResultPtr PackageManager::parseFile(const FileReaderPtr& file)
   {
     qi::Path fsfname = qi::Path(file->filename());
-    std::string filename = fsfname.absolute();
+    std::string filename = fsfname.absolute().str();
     if (!fsfname.isRegularFile())
       throw std::runtime_error(file->filename() + " is not a regular file");
     qiLogVerbose() << "Parsing file: " << filename;
@@ -166,7 +169,7 @@ namespace qilang {
     bool ret = false;
     for (unsigned i = 0; i < pv.size(); ++i) {
       qi::Path& p = pv.at(i);
-      resultdir->push_back(p);
+      resultdir->push_back(p.str());
     }
 
     pv = qi::Path(path).files();
@@ -174,7 +177,7 @@ namespace qilang {
       qi::Path& p = pv.at(i);
       if (p.isRegularFile()) {
         if (p.extension() == ".qi") {
-          resultfile->push_back(p);
+          resultfile->push_back(p.bfsPath().generic_string());
           ret = true;
         }
       }
@@ -196,21 +199,41 @@ namespace qilang {
 
     qi::Path pkgPath(pkgNameToDir(pkgName));
 
+    StringVector packageFiles;
     for (unsigned i = 0; i < _includes.size(); ++i) {
       qi::Path p(_includes.at(i));
       p /= pkgPath;
+
       if (p.isDir())
       {
-        StringVector retfile;
         StringVector retdir;
-        bool b = locateFileInDir(p, &retfile, &retdir);
+        bool b = locateFileInDir(p.str(), &packageFiles, &retdir);
         if (b) {
           qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
-          return retfile;
         }
       }
     }
-    return StringVector();
+    if (packageFiles.empty()) // fallback: search in the sdk data
+    {
+      using boost::filesystem::recursive_directory_iterator;
+      recursive_directory_iterator itPath, itEnd;
+      for (qi::Path lookupPath : _lookupPaths) {
+        lookupPath /= "share/qi/idl";
+        lookupPath /= pkgPath;
+        if (!lookupPath.exists()) {
+          continue;
+        }
+        for (itPath = recursive_directory_iterator(lookupPath.bfsPath());
+             itPath != itEnd; ++itPath) {
+          auto path = itPath->path();
+          if (boost::algorithm::ends_with(path.string(), ".idl.qi")) {
+            packageFiles.push_back(path.string(qi::unicodeFacet()));
+            qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
+          }
+        }
+      }
+    }
+    return packageFiles;
   }
 
   bool PackageManager::hasError() const
@@ -321,10 +344,12 @@ namespace qilang {
   //throw on error
   ResolutionResult PackageManager::resolveImport(const ParseResultPtr& pr, const PackagePtr& pkg, const CustomTypeExprNode* tnode)
   {
-    std::string type = tnode->value;
-    qiLogVerbose() << "Resolving: " << type << " from pkg " << pkg->_name;
-    std::string pkgName = type.substr(0, type.find_last_of('.'));
-    std::string value = type.substr(pkgName.size(), type.size());
+    const std::string type = tnode->value;
+    qiLogVerbose() << "Resolving: " << type << " from package: " << pkg->_name;
+    const auto lastDot = type.find_last_of('.');
+    const std::string pkgName = (lastDot == std::string::npos) ? "" : type.substr(0, lastDot);
+    const auto valueBegins = pkgName.empty() ? 0 : (pkgName.size() + 1);
+    std::string value = type.substr(valueBegins);
 
     //package name provided
     if (!pkgName.empty() && pkgName != type)
@@ -402,6 +427,13 @@ namespace qilang {
         tnode->resolved_value   = sp.type;
         tnode->resolved_kind    = sp.kind;
       }
+    }
+  }
+
+  void PackageManager::addLookupPaths(const StringVector& lookupPaths) {
+    _lookupPaths.reserve(_lookupPaths.size() + lookupPaths.size());
+    for (const auto& path : lookupPaths) {
+      _lookupPaths.push_back(path);
     }
   }
 

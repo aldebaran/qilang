@@ -1,0 +1,6 @@
+<project version="3">
+  <qibuild name="qilangtest">
+    <depends buildtime="true" runtime="true" names="libqi" />
+    <depends buildtime="true" runtime="false" names="libqilang" />
+  </qibuild>
+</project>

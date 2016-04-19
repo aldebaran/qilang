@@ -561,6 +561,9 @@ enum BuiltinType {
   BuiltinType_Float,
   BuiltinType_Float32,
   BuiltinType_Float64,
+  BuiltinType_QiTimePoint,
+  BuiltinType_SteadyTimePoint,
+  BuiltinType_SystemTimePoint,
   BuiltinType_String,
   BuiltinType_Value,
   BuiltinType_Object,
@@ -853,7 +856,7 @@ enum EnumFieldType {
 
 class QILANG_API EnumFieldDeclNode : public DeclNode {
 public:
-  //Node must be TypeExprNode or ConstDeclNode
+  /// @param node Must be a TypeExprNode or a ConstDeclNode
   EnumFieldDeclNode(EnumFieldType fieldType, const NodePtr& node, const Location& loc)
     : DeclNode(NodeType_EnumFieldDecl, loc)
     , fieldType(fieldType)

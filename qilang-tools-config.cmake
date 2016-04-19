@@ -16,67 +16,148 @@ message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 #! Generate qicc cpp files.
 #
 # \arg:OUT     an OUTPUT variable with a list of all generated files
-# \arg:lang    the language to generate code to
+# \arg:lang    the language to generate code to (only CPP is supported for the
+#   moment)
 # \arg:pkg     the package path (qi/foo/bar)
 # \arg:dir     the directory where the files will be generated
 # \flag:NOINTERFACE do not generate interface file
-# \flag:NOBIND      do not generate bind file
 # \flag:NOLOCAL     do not generate local file
 # \flag:NOREMOTE    do not generate remote file
 # \group:FLAGS      flags to pass to qicc
+#
+# This function will set three variables:
+# - ${OUT}_INTERFACE which contains the interfaces of your classes
+# - ${OUT}_LOCAL which is the implementation of the interfaces as local
+#   wrappers over your classes
+# - ${OUT}_REMOTE which is the implementation of the interfaces as remote
+#   proxies
 function(qi_gen_idl OUT lang pkg dir)
   cmake_parse_arguments(ARG
-    "NOINTERFACE;NOBIND;NOLOCAL;NOREMOTE"
+    "NOINTERFACE;NOLOCAL;NOREMOTE"
     ""
     "FLAGS"
     ${ARGN})
-  foreach(arg ${ARG_UNPARSED_ARGUMENTS})
-    get_filename_component(absname "${arg}" ABSOLUTE)
-    get_filename_component(absdir "${dir}" ABSOLUTE)
-    get_filename_component(fout "${arg}" NAME_WE)
-    file(MAKE_DIRECTORY ${absdir}/${pkg})
 
-    if(NOT ARG_NOINTERFACE)
-      qi_generate_src("${absdir}/${pkg}/${fout}.hpp"
-        SRC "${absname}"
-        COMMENT "Generating interface ${pkg}/${fout}.hpp"
-        DEPENDS "${QICC_EXECUTABLE}" "${absname}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${absname}" -o "${absdir}/${pkg}/${fout}.hpp")
-      list(APPEND _out "${absdir}/${pkg}/${fout}.hpp")
-      set(${OUT}_INTERFACE "${absdir}/${pkg}/${fout}.hpp" PARENT_SCOPE)
+  foreach(rel_idl_path ${ARG_UNPARSED_ARGUMENTS})
+    message(STATUS "Processing IDL file: ${rel_idl_path}")
+    get_filename_component(package_and_subpackage "${rel_idl_path}" DIRECTORY)
+    get_filename_component(subpackage "${package_and_subpackage}" NAME)
+    set(maybe_subpackage "${subpackage}/")
+    if("${subpackage}" STREQUAL "${package_and_subpackage}")
+      set(subpackage "")
+      set(maybe_subpackage "")
     endif()
 
-    if(NOT ARG_NOBIND)
-      qi_generate_src("${absdir}/src/${fout}.cpp"
-        SRC "${absname}"
-        COMMENT "Generating bind src/${fout}.cpp"
-        DEPENDS "${QICC_EXECUTABLE}" "${absname}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_bind "${absname}" -o "${absdir}/src/${fout}.cpp")
-      list(APPEND _out "${absdir}/src/${fout}.cpp")
-      set(${OUT}_BIND "${absdir}/src/${fout}.cpp" PARENT_SCOPE)
+    get_filename_component(abs_idl_path "${rel_idl_path}" ABSOLUTE)
+    get_filename_component(abs_dest_dir "${dir}" ABSOLUTE)
+    get_filename_component(dest_filename "${rel_idl_path}" NAME_WE)
+    file(MAKE_DIRECTORY ${abs_dest_dir}/${package_and_subpackage})
+
+    if(NOT ARG_NOINTERFACE)
+      set(generated_path "${abs_dest_dir}/${package_and_subpackage}/${dest_filename}.hpp")
+      qi_generate_src("${generated_path}"
+        SRC "${abs_idl_path}"
+        COMMENT "Generating interface ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+      list(APPEND _out "${generated_path}")
+      list(APPEND _${OUT}_INTERFACE "${generated_path}")
+      message(STATUS "Will generate C++ interface header: ${generated_path}")
     endif()
 
     if(NOT ARG_NOLOCAL)
-      qi_generate_src("${absdir}/src/${fout}_p.hpp"
-        SRC "${absname}"
-        COMMENT "Generating local src/${fout}_p.hpp"
-        DEPENDS "${QICC_EXECUTABLE}" "${absname}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${absname}" -o "${absdir}/src/${fout}_p.hpp")
-      list(APPEND _out "${absdir}/src/${fout}_p.hpp")
-      set(${OUT}_LOCAL "${absdir}/src/${fout}_p.hpp" PARENT_SCOPE)
+      set(generated_path "${abs_dest_dir}/src/${maybe_subpackage}${dest_filename}_p.hpp")
+      qi_generate_src(${generated_path}
+        SRC "${abs_idl_path}"
+        COMMENT "Generating local ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+      list(APPEND _out "${generated_path}")
+      list(APPEND _${OUT}_LOCAL "${generated_path}")
+      message(STATUS "Will generate C++ private header: ${generated_path}")
     endif()
 
     if(NOT ARG_NOREMOTE)
-      qi_generate_src("${absdir}/src/${fout}remote.cpp"
-        SRC "${absname}"
-        COMMENT "Generating remote src/${fout}remote.cpp"
-        DEPENDS "${QICC_EXECUTABLE}" "${absname}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${absname}" -o "${absdir}/src/${fout}remote.cpp")
-      list(APPEND _out "${absdir}/src/${fout}remote.cpp")
-      set(${OUT}_REMOTE "${absdir}/src/${fout}remote.cpp" PARENT_SCOPE)
+      set(generated_path "${abs_dest_dir}/src/${subpackage}/${dest_filename}remote.cpp")
+      qi_generate_src("${generated_path}"
+        SRC "${abs_idl_path}"
+        COMMENT "Generating remote ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+      list(APPEND _out "${generated_path}")
+      list(APPEND _${OUT}_REMOTE "${generated_path}")
+      message(STATUS "Will generate C++ proxy implementation: ${generated_path}")
     endif()
+
+    # each idl file shall be copied in the sdk folder
+    get_filename_component(name "${rel_idl_path}" NAME)
+    set(staged_idl_path "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
+    make_directory("${staged_idl_path}")
+    add_custom_target(
+      copy-idl-file-${dest_filename} ALL
+      COMMAND ${CMAKE_COMMAND} -E copy "${abs_idl_path}" "${staged_idl_path}"
+    )
+    # each idl file shall be installed in the sdk
+    qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
   endforeach()
-  #this custom target ensure that all idl file are generated before building
-  add_custom_target(qi_idl_${pkg} DEPENDS ${_out})
+
+  # Bounce out variables
   set(${OUT} ${_out} PARENT_SCOPE)
+  if(NOT ARG_NOINTERFACE)
+    set(${OUT}_INTERFACE ${_${OUT}_INTERFACE} PARENT_SCOPE)
+  endif()
+  if(NOT ARG_NOLOCAL)
+    set(${OUT}_LOCAL ${_${OUT}_LOCAL} PARENT_SCOPE)
+  endif()
+  if(NOT ARG_NOREMOTE)
+    set(${OUT}_REMOTE ${_${OUT}_REMOTE} PARENT_SCOPE)
+  endif()
+
+  # This target is only useful for qilang unit tests.
+  # It makes possible to add dependencies to qicc target.
+  add_custom_target(qi_gen_idl_${pkg})
+endfunction()
+
+#! Generate C++ files and create a shared library out of them.
+#
+# \arg:package The package name, also the name of the resulting target
+# \arg:dir The directory where the files will be generated
+# \arg:depends The list of dependencies required by the generated library
+#
+# This function forwards the extra arguments to qi_gen_idl.
+# \ref:qi_gen_idl
+#
+function(qi_gen_lib package destination)
+  cmake_parse_arguments(ARG
+    ""
+    ""
+    "DEPENDS;API_HEADER;IDL"
+    ${ARGN})
+
+  set(generated_file_list ${package}_generated)
+
+  qi_gen_idl(
+    ${generated_file_list}
+    CPP
+    ${package}
+    ${destination}
+    ${ARG_IDL}
+    ${ARG_UNPARSED_ARGUMENTS}
+  )
+
+  if(NOT ARG_API_HEADER)
+    set(ARG_API_HEADER "${package}/api.hpp")
+  endif()
+
+  qi_create_lib(
+    ${package} SHARED
+
+    ${ARG_API_HEADER}
+    ${${generated_file_list}}
+    ${ARG_IDL}
+
+    DEPENDS
+    qi
+    ${ARG_DEPENDS}
+  )
 endfunction()

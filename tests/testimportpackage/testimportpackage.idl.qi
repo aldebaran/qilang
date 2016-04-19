@@ -1,0 +1,7 @@
+import testsubpackage.othersubpackage
+
+package testimportpackage
+
+struct ImportedStuffWrapper
+  v: testsubpackage.othersubpackage.CustomStruct
+end
