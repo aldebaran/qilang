@@ -30,6 +30,14 @@ testqilang::Score makeScore(int score, std::string name)
   return entry;
 }
 
+int sumScores(std::vector<testqilang::Score> scores)
+{
+  int total = 0;
+  for (const auto& score: scores)
+    total += score.score;
+  return total;
+}
+
 void registerTestQiLang(qi::ModuleBuilder* mb)
 {
   mb->advertiseFactory<testqilang::KindaManager>("KindaManager");
@@ -37,6 +45,7 @@ void registerTestQiLang(qi::ModuleBuilder* mb)
   mb->advertiseFactory<testqilang::BradPitt>("BradPitt");
   mb->advertiseMethod("Error", makeError);
   mb->advertiseMethod("Score", makeScore);
+  mb->advertiseMethod("sumScores", sumScores);
 }
 
 QI_REGISTER_MODULE("testqilang_module", registerTestQiLang)
