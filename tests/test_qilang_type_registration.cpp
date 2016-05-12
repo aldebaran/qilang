@@ -89,3 +89,20 @@ TEST_F(QiLangTypeRegistration, StructOnlyFile)
   EXPECT_EQ(score, scoreStruct.score);
   EXPECT_EQ(name, scoreStruct.name);
 }
+
+TEST_F(QiLangTypeRegistration, sumScores)
+{
+  std::vector<testqilang::Score> scores;
+  int sum = 0;
+  for (int i = 0; i < 12; ++i)
+  {
+    testqilang::Score score;
+    score.score = i;
+    std::stringstream ss;
+    ss << i;
+    score.name = ss.str();
+    scores.push_back(score);
+    sum += i;
+  };
+  EXPECT_EQ(sum, _testqilang.call<int>("sumScores", scores));
+}

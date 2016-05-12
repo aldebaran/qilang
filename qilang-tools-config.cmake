@@ -149,6 +149,8 @@ function(qi_gen_lib package destination)
     set(ARG_API_HEADER "${package}/api.hpp")
   endif()
 
+  include_directories("${destination}")
+
   qi_create_lib(
     ${package} SHARED
 
@@ -160,4 +162,14 @@ function(qi_gen_lib package destination)
     qi
     ${ARG_DEPENDS}
   )
+
+  get_filename_component(header_dir "${ARG_API_HEADER}" DIRECTORY)
+
+  qi_install_header(
+    ${${package}_INTERFACE}
+    ${${package}_REMOTE}
+    SUBFOLDER
+    "${header_dir}"
+  )
+
 endfunction()
