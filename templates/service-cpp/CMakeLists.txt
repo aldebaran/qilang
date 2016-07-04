@@ -8,7 +8,7 @@ include_directories(".") # Exposes the headers locally
 # Generate the specialized proxies. You can put several IDL files if you want.
 find_package(qilang-tools) # Required for qi_gen_idl
 set(@projectname@_idl "@projectname@/@projectname@.idl.qi")
-qi_gen_idl(@projectname@_generated CPP "mylibrary" "${CMAKE_CURRENT_BINARY_DIR}" ${@projectname@_idl})
+qi_gen_idl(@projectname@_generated CPP "@projectname@" "${CMAKE_CURRENT_BINARY_DIR}" ${@projectname@_idl})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Exposes the generated headers locally
 
 # Install the headers so that people can use your proxies
