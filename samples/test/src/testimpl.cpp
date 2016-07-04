@@ -71,6 +71,10 @@ int TestImpl::numberSay()
 
 }
 
+
+QI_REGISTER_IMPLEMENTATION_H(test::Test, test::TestImpl)
+
+
 // Specifie to the type system that TestImpl is the implementation of the Test interface
 REGISTER_TEST(test::TestImpl)
 
