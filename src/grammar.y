@@ -85,6 +85,7 @@
       "int64", "uint64",
       "float",
       "float32", "float64",
+      "nsec", "usec", "msec", "sec", "min", "hour",
       "qitimepoint", "steadytimepoint", "systemtimepoint",
       "str", "any", "obj", 0 };
     int index = 0;

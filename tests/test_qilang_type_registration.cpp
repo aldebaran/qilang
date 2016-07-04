@@ -1,25 +1,9 @@
 #include <gtest/gtest.h>
-#include <qi/anymodule.hpp>
 #include <testqilang/somemix.hpp>
 #include <testqilang/somestructs.hpp>
+#include "test_qilang.hpp"
 
-class QiLangTypeRegistration: public ::testing::Test
-{
-protected:
-  static void SetUpTestCase()
-  {
-    _testqilang = qi::import("testqilang_module");
-  }
-
-  static void TearDownTestCase()
-  {
-    _testqilang.reset();
-  }
-
-  static qi::AnyModule _testqilang;
-};
-
-qi::AnyModule QiLangTypeRegistration::_testqilang{};
+using QiLangTypeRegistration = QiLangModule;
 
 using namespace testqilang;
 

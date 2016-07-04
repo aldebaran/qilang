@@ -58,6 +58,18 @@ std::string builtinTypeToCpp(BuiltinType type, bool constref) {
       return "float";
     case BuiltinType_Float64:
       return "double";
+    case BuiltinType_NanoSeconds:
+      return "qi::NanoSeconds";
+    case BuiltinType_MicroSeconds:
+      return "qi::MicroSeconds";
+    case BuiltinType_MilliSeconds:
+      return "qi::MilliSeconds";
+    case BuiltinType_Seconds:
+      return "qi::Seconds";
+    case BuiltinType_Minutes:
+      return "qi::Minutes";
+    case BuiltinType_Hours:
+      return "qi::Hours";
     case BuiltinType_QiTimePoint:
       return "qi::ClockTimePoint";
     case BuiltinType_SteadyTimePoint:
@@ -253,7 +265,13 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
           pushIfNot(includes, "<qi/anyvalue.hpp>");
         } else if (tnode->value == "obj") {
           pushIfNot(includes, "<qi/anyobject.hpp>");
-        } else if (tnode->value == "qitimepoint"
+        } else if (tnode->value == "nsec"
+                || tnode->value == "usec"
+                || tnode->value == "msec"
+                || tnode->value == "sec"
+                || tnode->value == "min"
+                || tnode->value == "hour"
+                || tnode->value == "qitimepoint"
                 || tnode->value == "steadytimepoint"
                 || tnode->value == "systemtimepoint") {
           pushIfNot(includes, "<qi/clock.hpp>");
