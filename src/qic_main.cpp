@@ -8,6 +8,7 @@
 #include <iostream>
 #include <qi/applicationsession.hpp>
 #include <qi/log.hpp>
+#include <qi/path_conf.hpp>
 #include <fstream>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
       ("inputs", po::value< std::vector< std::string> >(), "input files")
       ("include,I", po::value< std::vector< std::string> >(), "include directories for packages")
       ("output-file,o", po::value<std::string>(), "output file")
+      ("target-sdk-dir,t", po::value<std::string>(), "the SDK directory of the target platform")
       ;
 
   po::positional_options_description p;
@@ -86,6 +88,14 @@ int main(int argc, char *argv[])
   if (vm.count("help")) {
       std::cout << desc << std::endl;
       return 1;
+  }
+
+  if (vm.count("target-sdk-dir")) {
+    auto targetSdkDir =
+        qi::Path::fromNative(vm["target-sdk-dir"].as<std::string>());
+    if (!targetSdkDir.isEmpty()) {
+      pm->addLookupPaths(qi::path::parseQiPathConf(targetSdkDir.str()));
+    }
   }
 
   qilang::FileWriterPtr    out;
@@ -110,7 +120,7 @@ int main(int argc, char *argv[])
   pm->setIncludes(includes);
 
   if (mode == "service") {
-    app.start();
+    app.startSession();
     return codegen_service(codegen, out, pm, app.session(), inputs[0]);
   } else if (mode == "file") {
     return codegen_file(codegen, out, pm, inputs[0]);

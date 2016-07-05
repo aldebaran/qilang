@@ -1,0 +1,8 @@
+package @projectname@
+
+interface @ProjectName@
+  fn emitPing(value: int) // Function
+  fn workIt(name: str, value: int) -> Vec<int> // Function with return value
+  sig ping(value: int) // Signal
+  prop pingEnabled(value: bool) // Property
+end

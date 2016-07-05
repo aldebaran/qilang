@@ -40,8 +40,7 @@ namespace qilang {
     void visitData(StringLiteralNode *node) {
       av = qi::AnyValue::from(node->value);
     }
-    void visitData(TupleLiteralNode* node) {
-      std::cout << "TupleConstNode visitor" << std::endl;
+    void visitData(TupleLiteralNode*) {
       throw std::runtime_error("not implemented");
     }
 

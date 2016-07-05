@@ -1,0 +1,9 @@
+// This IDL is dedicated to test a package with struct declarations only.
+// It happened in the past that the necessary includes were not added,
+// which prevented the compilation on struct registration.
+package testqilang
+
+struct Score
+  score: int
+  name: str
+end

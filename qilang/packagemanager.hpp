@@ -13,6 +13,8 @@
 #include <qilang/parser.hpp>
 #include <qilang/formatter.hpp>
 #include <map>
+#include <string>
+#include <vector>
 #include <boost/make_shared.hpp>
 
 
@@ -156,7 +158,7 @@ namespace qilang {
 
     void parse(const std::string& fileOrPkg);
 
-
+    void addLookupPaths(const StringVector& lookupPaths);
     void anal(const std::string& package = std::string());
 
     NodePtrVector ast(const std::string& filename);
@@ -190,6 +192,7 @@ namespace qilang {
     PackagePtrMap        _packages; // packagename , packageptr
     FilenameToPackageMap _sources;  // abs filename , packagename
     StringVector         _includes;
+    StringVector _lookupPaths;
   };
   typedef boost::shared_ptr<PackageManager> PackageManagerPtr;
   inline PackageManagerPtr newPackageManager() { return boost::make_shared<PackageManager>(); }

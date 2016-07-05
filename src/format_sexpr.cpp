@@ -17,7 +17,7 @@ namespace qilang {
   // #############
   // CONST DATA
   // #############
-  class QiLangASTFormatter : public NodeFormatter
+  class QiLangASTFormatter : public NodeFormatter<>
   {
     virtual void doAccept(Node* node) { node->accept(this); }
 

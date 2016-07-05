@@ -1,6 +1,0 @@
-<project version="3" >
-  <qibuild name="pimpltest" >
-    <depends buildtime="true" runtime="true" names="boost libqi libqilang"/>
-    <depends buildtime="true" names="gtest pthread"/>
-  </qibuild>
-</project>

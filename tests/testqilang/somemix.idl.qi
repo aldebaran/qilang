@@ -1,0 +1,52 @@
+package testqilang
+
+struct Error
+  code: int
+  message: str
+end
+
+enum Option
+  const First = 0
+  const Second = 1
+end
+
+# comment comment
+interface KindaManager
+  fn findTruth() -> int
+  fn whatsTheTime() -> systemtimepoint
+  fn setOption(opt: Option) -> Option
+
+  //! Overloaded functions
+  fn overlord()
+  fn overlord(arg: str)
+  fn overlord(arg: int)
+
+  sig test(s: float)
+  prop current(s: Vec<float>)
+end
+
+# try harder
+interface AnotherInterface
+  fn makeSomething() -> KindaManager
+  sig blop(blop: qitimepoint)
+  prop crap(ette: Vec<str>)
+end
+
+//! An actor. A famous one indeed.
+interface BradPitt
+  fn act()
+end
+
+# An interface that refers to itself
+interface Ouroboros
+  fn eatMyself(o: Ouroboros)
+end
+
+# Interfaces that refer to each other
+interface Ping
+  fn pong() -> Pong
+end
+
+interface Pong
+  fn ping() -> Ping
+end
