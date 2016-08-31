@@ -1,6 +1,7 @@
 <project version="3" >
   <qibuild name="libqilang" >
     <depends buildtime="true" runtime="true" names="boost libqi"/>
-    <depends testtime="true" names="gtest"/>
+    <depends buildtime="true" names="gtest pthread"/>
+    <depends host="true" names="bison flex"/>
   </qibuild>
 </project>
