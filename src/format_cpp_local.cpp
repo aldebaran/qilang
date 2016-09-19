@@ -372,7 +372,7 @@ namespace qilang {
     }
 
     void closeNamespace() {
-      for (int i = 0; i < _ns.size(); ++i) {
+      for (size_t i = 0; i < _ns.size(); ++i) {
         out() << "}" << std::endl;
       }
     }

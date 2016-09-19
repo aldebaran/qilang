@@ -352,7 +352,7 @@ namespace qilang {
 
   void formatFooter() override {
     forceGenerateLib();
-    for (int i = 0; i < currentNs.size(); ++i) {
+    for (size_t i = 0; i < currentNs.size(); ++i) {
       out() << "}" << std::endl;
     }
   }
