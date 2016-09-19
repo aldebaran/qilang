@@ -335,10 +335,11 @@ namespace qilang {
     StringVector _includes;
     StringVector _ns;
 
-    QiLangGenObjects(StringVector includes, std::string packageName)
+    QiLangGenObjects(StringVector includes, std::string packageName, std::string fileName)
       : toclose(0)
       , _includes(includes)
       , _packageName(std::move(packageName))
+      , _fileName(fileName)
     {
       _includes.push_back("<boost/smart_ptr/enable_shared_from_raw.hpp>");
     }
@@ -380,16 +381,9 @@ namespace qilang {
       indent() << "/*" << std::endl;
       indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
       indent() << "*/" << std::endl;
-
-      std::string pkgName(_packageName);
-      boost::replace_all(pkgName, ".", "_");
-      indent() << "#ifndef QILANG_GENERATED_"
-               << boost::to_upper_copy<std::string>(pkgName)
-               << "_HPP" << std::endl;
-
-      indent() << "#define QILANG_GENERATED_"
-               << boost::to_upper_copy<std::string>(pkgName)
-               << "_HPP" << std::endl;
+      auto headerGuard = filenameToInterfaceHeaderGuard(_packageName, _fileName) + "_P";
+      indent() << "#ifndef " << headerGuard << std::endl;
+      indent() << "#define " << headerGuard << std::endl;
 
       indent() << "#include <qi/future.hpp>" << std::endl;
       for (unsigned i = 0; i < _includes.size(); ++i) {
@@ -400,15 +394,17 @@ namespace qilang {
 
     void formatFooter() {
       closeNamespace();
-      indent() << "#endif" << std::endl;
+      auto headerGuard = filenameToInterfaceHeaderGuard(_packageName, _fileName);
+      indent() << "#endif // " << headerGuard << std::endl;
     }
 
   private:
     const std::string _packageName;
+    const std::string _fileName;
   };
 
 std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResultPtr& pr) {
   StringVector sv = extractCppIncludeDir(pm, pr, true);
-  return QiLangGenObjects(sv, pr->package).format(pr->ast);
+  return QiLangGenObjects(sv, pr->package, pr->filename).format(pr->ast);
 }
 }

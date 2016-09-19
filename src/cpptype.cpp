@@ -127,7 +127,9 @@ std::string pkgNameToAPI(const std::string& name) {
   return ret;
 }
 
-std::string filenameToCppHeaderGuard(const std::string &pkgName, const std::string &filename)
+static std::string filenameToHeaderGuardBase(
+    const std::string& pkgName,
+    const std::string& filename)
 {
   qi::Path p(filename);
   p = p.filename();
@@ -136,10 +138,18 @@ std::string filenameToCppHeaderGuard(const std::string &pkgName, const std::stri
   boost::replace_all(ret, ".", "_");
   ret += "_" + stripQiLangExtension(p.str());
   boost::to_upper(ret);
-  ret = "_QILANG_GEN_" + ret + "_";
   return ret;
 }
 
+std::string filenameToInterfaceHeaderGuard(const std::string &pkgName, const std::string &filename)
+{
+  return "_QILANG_GEN_INTERFACE_" + filenameToHeaderGuardBase(pkgName, filename) + "_HPP";
+}
+
+std::string filenameToLocalHeaderGuard(const std::string &pkgName, const std::string &filename)
+{
+  return "_QILANG_GEN_LOCAL_" + filenameToHeaderGuardBase(pkgName, filename) + "_P_HPP";
+}
 
 std::string formatNs(const std::string& package) {
   std::string ret;

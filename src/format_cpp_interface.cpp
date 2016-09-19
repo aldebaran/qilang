@@ -445,7 +445,7 @@ public:
     indent() << "** qiLang generated file. DO NOT EDIT" << std::endl;
     indent() << "*/" << std::endl;
     indent() << "#pragma once" << std::endl;
-    std::string headGuard = filenameToCppHeaderGuard(_pr->package, _pr->filename);
+    std::string headGuard = filenameToInterfaceHeaderGuard(_pr->package, _pr->filename);
     indent() << "#ifndef " << headGuard << std::endl;
     indent() << "#define " << headGuard << std::endl;
     indent() << std::endl;

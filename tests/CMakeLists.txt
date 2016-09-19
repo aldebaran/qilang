@@ -10,6 +10,7 @@ if(QI_WITH_TESTS)
 
     "testqilang/somestructs.idl.qi"
     "testqilang/somemix.idl.qi"
+    "testqilang/someinterfaces.idl.qi"
   )
 
   qi_gen_idl(
@@ -46,6 +47,7 @@ if(QI_WITH_TESTS)
     "src/ouroboros.hpp"
     "src/pingpong.hpp"
     "src/registration.cpp"
+    "src/truthseeker.hpp"
 
     DEPENDS
     qi

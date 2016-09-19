@@ -1,0 +1,6 @@
+// This IDL is dedicated to test a package with interface declarations only.
+package testqilang
+
+interface TruthSeeker
+  fn answer() -> int
+end

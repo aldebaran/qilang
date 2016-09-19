@@ -6,6 +6,7 @@
 #include "bradpitt.hpp"
 #include "ouroboros.hpp"
 #include "pingpong.hpp"
+#include "truthseeker.hpp"
 
 REGISTER_KINDAMANAGER(testqilang::KindaManagerImpl)
 REGISTER_ANOTHERINTERFACE(testqilang::AnotherInterfaceImpl)
@@ -13,6 +14,7 @@ REGISTER_BRADPITT(testqilang::BradPittImpl)
 REGISTER_OUROBOROS(testqilang::OuroborosImpl)
 REGISTER_PING(testqilang::PingImpl)
 REGISTER_PONG(testqilang::PongImpl)
+REGISTER_TRUTHSEEKER(testqilang::TruthSeekerImpl)
 
 testqilang::Error makeError(int code, std::string message)
 {
