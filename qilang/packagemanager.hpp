@@ -8,6 +8,7 @@
 #ifndef   	PACKAGEMANAGER_HPP_
 # define   	PACKAGEMANAGER_HPP_
 
+#include <unordered_set>
 #include <qilang/api.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
@@ -169,7 +170,7 @@ namespace qilang {
     StringVector includes() const                          { return _includes; }
 
     //return all the files composing a package  (their may be false)
-    StringVector locatePackage(const std::string& pkgName);
+    std::unordered_set<std::string> locatePackage(const std::string& pkgName);
 
     bool hasError() const;
     void printMessage(std::ostream& os) const;

@@ -49,56 +49,62 @@ function(qi_gen_idl OUT lang pkg dir)
     endif()
 
     get_filename_component(abs_idl_path "${rel_idl_path}" ABSOLUTE)
-    get_filename_component(abs_dest_dir "${dir}" ABSOLUTE)
-    get_filename_component(dest_filename "${rel_idl_path}" NAME_WE)
-    file(MAKE_DIRECTORY ${abs_dest_dir}/${package_and_subpackage})
+    get_filename_component(abs_gen_dest_dir "${dir}" ABSOLUTE)
+    get_filename_component(dest_basename "${rel_idl_path}" NAME_WE)
+    get_filename_component(dest_filename "${rel_idl_path}" NAME)
+    file(MAKE_DIRECTORY ${abs_gen_dest_dir}/${package_and_subpackage})
+
+    # each idl file shall be copied in the sdk folder
+    get_filename_component(name "${rel_idl_path}" NAME)
+    set(staged_idl_dir "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
+    make_directory("${staged_idl_dir}")
+    message(STATUS "Copying IDL file: ${abs_idl_path} to ${staged_idl_dir}")
+    #file(COPY "${abs_idl_path}" DESTINATION "${staged_idl_dir}/")
+    set (copy_idl_file_target copy-idl-file-${dest_filename})
+    add_custom_target(
+      ${copy_idl_file_target} ALL
+      COMMAND ${CMAKE_COMMAND} -E copy "${abs_idl_path}" "${staged_idl_path}"
+    )
+    set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
+
+    # each idl file shall be installed in the sdk
+    qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
 
     if(NOT ARG_NOINTERFACE)
-      set(generated_path "${abs_dest_dir}/${package_and_subpackage}/${dest_filename}.hpp")
+      set(generated_path "${abs_gen_dest_dir}/${package_and_subpackage}/${dest_basename}.hpp")
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
         COMMENT "Generating interface ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_INTERFACE "${generated_path}")
       message(STATUS "Will generate C++ interface header: ${generated_path}")
     endif()
 
     if(NOT ARG_NOLOCAL)
-      set(generated_path "${abs_dest_dir}/src/${maybe_subpackage}${dest_filename}_p.hpp")
+      set(generated_path "${abs_gen_dest_dir}/src/${maybe_subpackage}${dest_basename}_p.hpp")
       qi_generate_src(${generated_path}
         SRC "${abs_idl_path}"
         COMMENT "Generating local ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_LOCAL "${generated_path}")
       message(STATUS "Will generate C++ private header: ${generated_path}")
     endif()
 
     if(NOT ARG_NOREMOTE)
-      set(generated_path "${abs_dest_dir}/src/${subpackage}/${dest_filename}remote.cpp")
+      set(generated_path "${abs_gen_dest_dir}/src/${subpackage}/${dest_basename}remote.cpp")
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
         COMMENT "Generating remote ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${abs_idl_path}"
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${abs_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_REMOTE "${generated_path}")
       message(STATUS "Will generate C++ proxy implementation: ${generated_path}")
     endif()
-
-    # each idl file shall be copied in the sdk folder
-    get_filename_component(name "${rel_idl_path}" NAME)
-    set(staged_idl_path "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
-    make_directory("${staged_idl_path}")
-    add_custom_target(
-      copy-idl-file-${dest_filename} ALL
-      COMMAND ${CMAKE_COMMAND} -E copy "${abs_idl_path}" "${staged_idl_path}"
-    )
-    # each idl file shall be installed in the sdk
-    qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
   endforeach()
 
   # Bounce out variables
