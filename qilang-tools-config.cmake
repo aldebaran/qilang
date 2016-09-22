@@ -58,14 +58,13 @@ function(qi_gen_idl OUT lang pkg dir)
     get_filename_component(name "${rel_idl_path}" NAME)
     set(staged_idl_dir "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
     make_directory("${staged_idl_dir}")
-    message(STATUS "Copying IDL file: ${abs_idl_path} to ${staged_idl_dir}")
-    #file(COPY "${abs_idl_path}" DESTINATION "${staged_idl_dir}/")
-    set (copy_idl_file_target copy-idl-file-${dest_filename})
+    message(STATUS "Will copy IDL file: ${abs_idl_path} to ${staged_idl_dir}")
+    set(copy_idl_file_target copy-idl-file-${dest_filename})
+    set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
     add_custom_target(
       ${copy_idl_file_target} ALL
-      COMMAND ${CMAKE_COMMAND} -E copy "${abs_idl_path}" "${staged_idl_path}"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${abs_idl_path}" "${staged_idl_path}"
     )
-    set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
 
     # each idl file shall be installed in the sdk
     qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
