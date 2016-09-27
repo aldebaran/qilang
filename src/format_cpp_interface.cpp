@@ -319,13 +319,28 @@ public:
       out() << "namespace qi {" << std::endl;
       out() << "namespace detail {" << std::endl;
       out() << "  template <>" << std::endl;
-      out() << "  struct " << apiExport << " ForceProxyInclusion< ";
-      for (unsigned int i = 0; i < currentNs.size(); ++i) {
-        out() << "::" << currentNs.at(i);
-      }
-      out() << "::" << node->name << " > {" << std::endl;
-      out() << "    bool dummyCall();" << std::endl;
+      std::string forceProxyInclusionTypeStr = [this, &node]
+      {
+        std::stringstream ssForceProxyInclusionType;
+        ssForceProxyInclusionType << " ForceProxyInclusion< ";
+        for (unsigned int i = 0; i < currentNs.size(); ++i) {
+          ssForceProxyInclusionType << "::" << currentNs.at(i);
+        }
+        ssForceProxyInclusionType << "::" << node->name << " >";
+        return ssForceProxyInclusionType.str();
+      }();
+      // define the dummyCall
+      out() << "  struct " << apiExport << forceProxyInclusionTypeStr;
+      out() << " {" << std::endl;
+      out() << "    static bool dummyCall();" << std::endl;
       out() << "  };" << std::endl;
+      // call the dummyCall (to force the link of this lib when we will do the #include)
+      out() << "  static bool ";
+      for (unsigned int i = 0; i < currentNs.size(); ++i) {
+        out() << currentNs.at(i);
+      }
+      out() << node->name << "QiLangDummyVar =" << forceProxyInclusionTypeStr;
+      out() << "::dummyCall();" << std::endl;
       out() << "}" << std::endl;
       out() << "}" << std::endl;
     }
