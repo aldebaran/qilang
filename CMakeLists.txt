@@ -14,6 +14,7 @@ set(H qilang/api.hpp
       qilang/formatter.hpp
       qilang/packagemanager.hpp
       qilang/docparser.hpp
+      qilang/pathformatter.hpp
    )
 
 set(C src/codegen.cpp
@@ -33,7 +34,8 @@ set(C src/codegen.cpp
       src/packagemanager.cpp
       src/qilang_signature.cpp
       src/qilang_metaobject.cpp
-      src/docparser.cpp)
+      src/docparser.cpp
+      src/pathformatter.cpp)
 
 find_package(FLEX NO_MODULE REQUIRED)
 find_package(BISON NO_MODULE REQUIRED)

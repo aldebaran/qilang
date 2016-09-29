@@ -15,6 +15,7 @@
 #include <boost/algorithm/string.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
+#include <qilang/pathformatter.hpp>
 
 qiLogCategory("qilang.pm");
 
@@ -211,9 +212,10 @@ namespace qilang {
       for (itPath = recursive_directory_iterator(lookupPath.bfsPath());
            itPath != itEnd; ++itPath) {
         auto path = itPath->path();
-        if (boost::algorithm::ends_with(path.string(), ".idl.qi")) {
-          packageFiles.insert(path.string(qi::unicodeFacet()));
-          qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
+        std::string pathStr = formatPath(path.string());
+        if (boost::algorithm::ends_with(pathStr, ".idl.qi")) {
+          packageFiles.insert(pathStr);
+          qiLogVerbose() << "Found package '" << pkgName << "' in " << pathStr;
         }
       }
     }
