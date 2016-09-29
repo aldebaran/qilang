@@ -285,20 +285,6 @@ namespace qilang {
       parseDir(dirname + "/" + resdir.at(i));
   }
 
-  void PackageManager::parse(const std::string &fileOrPkg)
-  {
-    qi::Path fsp(fileOrPkg);
-    if (fsp.isRegularFile()) {
-      parseFile(newFileReader(fileOrPkg));
-      return;
-    }
-    if (fsp.isDir()) {
-      parseDir(fileOrPkg);
-      return;
-    }
-    parsePackage(fileOrPkg);
-  }
-
   //throw on error
   static ResolutionResult checkImport(const PackageManager& pm, const ParseResultPtr& pr, const std::string& pkgName, const CustomTypeExprNode* tnode, const std::string& type)
   {

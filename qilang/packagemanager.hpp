@@ -157,8 +157,6 @@ namespace qilang {
     ParseResultPtr parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
-    void parse(const std::string& fileOrPkg);
-
     void addLookupPaths(const StringVector& lookupPaths);
     void anal(const std::string& package = std::string());
 
