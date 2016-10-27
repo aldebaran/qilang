@@ -52,7 +52,11 @@ namespace qilang {
       NodeMap::iterator it;
       for (it = _exports.begin(); it != _exports.end(); ++it) {
         if (it->first == member)
-          throw std::runtime_error("symbol already exported:" + member + " in package '" + _name + "'");
+          throw std::runtime_error("symbol " + _name + "." + member +
+                                   "\ndefined by\n" +
+                                   node->loc().filename +
+                                   "\nis already defined by\n" +
+                                   it->second->loc().filename);
       }
       qiLogVerbose() << "Added export '" << member << "' to package " << _name;
       //ok add the symbol
