@@ -222,7 +222,7 @@ namespace qilang {
       : out(out)
       , currentNs(ns)
     {
-      for (int i = 0; i < currentNs.size(); ++i) {
+      for (size_t i = 0; i < currentNs.size(); ++i) {
         out << "}" << std::endl;
       }
       out << std::endl;

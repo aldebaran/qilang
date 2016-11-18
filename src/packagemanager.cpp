@@ -15,6 +15,7 @@
 #include <boost/algorithm/string.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
+#include <qilang/pathformatter.hpp>
 
 qiLogCategory("qilang.pm");
 
@@ -164,7 +165,7 @@ namespace qilang {
   }
 
 
-  static bool locateFileInDir(const std::string& path, StringVector* resultfile, StringVector* resultdir) {
+  static bool locateFileInDir(const std::string& path, std::unordered_set<std::string>* resultfile, StringVector* resultdir) {
     qi::PathVector pv = qi::Path(path).dirs();
     bool ret = false;
     for (unsigned i = 0; i < pv.size(); ++i) {
@@ -177,7 +178,7 @@ namespace qilang {
       qi::Path& p = pv.at(i);
       if (p.isRegularFile()) {
         if (p.extension() == ".qi") {
-          resultfile->push_back(p.bfsPath().generic_string());
+          resultfile->insert(p.bfsPath().generic_string());
           ret = true;
         }
       }
@@ -192,44 +193,29 @@ namespace qilang {
     }
   }
 
-  StringVector PackageManager::locatePackage(const std::string& pkgName) {
+  std::unordered_set<std::string> PackageManager::locatePackage(const std::string& pkgName) {
 
     if (pkgName.empty())
       throw std::runtime_error("empty package name");
 
     qi::Path pkgPath(pkgNameToDir(pkgName));
 
-    StringVector packageFiles;
-    for (unsigned i = 0; i < _includes.size(); ++i) {
-      qi::Path p(_includes.at(i));
-      p /= pkgPath;
-
-      if (p.isDir())
-      {
-        StringVector retdir;
-        bool b = locateFileInDir(p.str(), &packageFiles, &retdir);
-        if (b) {
-          qiLogVerbose() << "Found pkg '" << pkgName << "' in " << p;
-        }
+    std::unordered_set<std::string> packageFiles;
+    using boost::filesystem::recursive_directory_iterator;
+    recursive_directory_iterator itPath, itEnd;
+    for (qi::Path lookupPath : _lookupPaths) {
+      lookupPath /= "share/qi/idl";
+      lookupPath /= pkgPath;
+      if (!lookupPath.exists()) {
+        continue;
       }
-    }
-    if (packageFiles.empty()) // fallback: search in the sdk data
-    {
-      using boost::filesystem::recursive_directory_iterator;
-      recursive_directory_iterator itPath, itEnd;
-      for (qi::Path lookupPath : _lookupPaths) {
-        lookupPath /= "share/qi/idl";
-        lookupPath /= pkgPath;
-        if (!lookupPath.exists()) {
-          continue;
-        }
-        for (itPath = recursive_directory_iterator(lookupPath.bfsPath());
-             itPath != itEnd; ++itPath) {
-          auto path = itPath->path();
-          if (boost::algorithm::ends_with(path.string(), ".idl.qi")) {
-            packageFiles.push_back(path.string(qi::unicodeFacet()));
-            qiLogVerbose() << "Found package '" << pkgName << "' in " << path;
-          }
+      for (itPath = recursive_directory_iterator(lookupPath.bfsPath());
+           itPath != itEnd; ++itPath) {
+        auto path = itPath->path();
+        std::string pathStr = formatPath(path.string());
+        if (boost::algorithm::ends_with(pathStr, ".idl.qi")) {
+          packageFiles.insert(pathStr);
+          qiLogVerbose() << "Found package '" << pkgName << "' in " << pathStr;
         }
       }
     }
@@ -267,10 +253,10 @@ namespace qilang {
       qiLogVerbose() << "skipping pkg '" << packageName << "': already parsed";
       return;
     }
-    StringVector sv = locatePackage(packageName);
+    auto sv = locatePackage(packageName);
 
-    for (unsigned i = 0; i < sv.size(); ++i) {
-      parseFile(newFileReader(sv.at(i)));
+    for (const auto& currSv : sv) {
+      parseFile(newFileReader(currSv));
     }
 
     // for each decl in the package. reference it into the package.
@@ -291,26 +277,12 @@ namespace qilang {
       throw std::runtime_error(dirname + " is not a directory");
 
     StringVector resdir;
-    StringVector resfile;
+    std::unordered_set<std::string> resfile;
     locateFileInDir(dirname, &resfile, &resdir);
-    for (unsigned i = 0; i < resfile.size(); ++i)
-      parseFile(newFileReader(resfile.at(i)));
+    for (const auto& currResfile : resfile)
+      parseFile(newFileReader(currResfile));
     for (unsigned i = 0; i < resdir.size(); ++i)
       parseDir(dirname + "/" + resdir.at(i));
-  }
-
-  void PackageManager::parse(const std::string &fileOrPkg)
-  {
-    qi::Path fsp(fileOrPkg);
-    if (fsp.isRegularFile()) {
-      parseFile(newFileReader(fileOrPkg));
-      return;
-    }
-    if (fsp.isDir()) {
-      parseDir(fileOrPkg);
-      return;
-    }
-    parsePackage(fileOrPkg);
   }
 
   //throw on error

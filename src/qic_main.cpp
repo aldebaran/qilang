@@ -16,6 +16,7 @@
 #include <qilang/packagemanager.hpp>
 #include <boost/program_options.hpp>
 #include <qi/session.hpp>
+#include <qilang/pathformatter.hpp>
 
 qiLogCategory("qic");
 namespace po = boost::program_options;
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 
   if (vm.count("target-sdk-dir")) {
     auto targetSdkDir =
-        qi::Path::fromNative(vm["target-sdk-dir"].as<std::string>());
+        qi::Path::fromNative(qilang::formatPath(vm["target-sdk-dir"].as<std::string>()));
     if (!targetSdkDir.isEmpty()) {
       pm->addLookupPaths(qi::path::parseQiPathConf(targetSdkDir.str()));
     }
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
     inputs = vm["inputs"].as<std::vector<std::string> >();
 
   if (vm.count("output-file")) {
-    std::string outf = vm["output-file"].as<std::string>();
+    std::string outf = qilang::formatPath(vm["output-file"].as<std::string>());
     out = qilang::newFileWriter(outf);
   } else {
     out = qilang::newFileWriter(&std::cout, "cout");
@@ -118,12 +119,13 @@ int main(int argc, char *argv[])
     includes = vm["include"].as< std::vector<std::string> >();
 
   pm->setIncludes(includes);
+  std::string idlFile = qilang::formatPath(inputs[0]);
 
   if (mode == "service") {
     app.startSession();
-    return codegen_service(codegen, out, pm, app.session(), inputs[0]);
+    return codegen_service(codegen, out, pm, app.session(), idlFile);
   } else if (mode == "file") {
-    return codegen_file(codegen, out, pm, inputs[0]);
+    return codegen_file(codegen, out, pm, idlFile);
   } else {
     throw std::runtime_error("bad input option value. must be service or file");
   }

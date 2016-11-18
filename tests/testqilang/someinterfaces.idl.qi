@@ -1,0 +1,9 @@
+// This IDL is dedicated to test a package with interface declarations only.
+package testqilang
+
+from testqilang import BradPitt
+
+interface TruthSeeker
+  fn answer() -> int
+  fn bradPittAnswer(bradPitt: testqilang.BradPitt) -> int
+end

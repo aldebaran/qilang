@@ -8,6 +8,7 @@
 #ifndef   	PACKAGEMANAGER_HPP_
 # define   	PACKAGEMANAGER_HPP_
 
+#include <unordered_set>
 #include <qilang/api.hpp>
 #include <qilang/node.hpp>
 #include <qilang/parser.hpp>
@@ -51,7 +52,11 @@ namespace qilang {
       NodeMap::iterator it;
       for (it = _exports.begin(); it != _exports.end(); ++it) {
         if (it->first == member)
-          throw std::runtime_error("symbol already exported:" + member + " in package '" + _name + "'");
+          throw std::runtime_error("symbol " + _name + "." + member +
+                                   "\ndefined by\n" +
+                                   node->loc().filename +
+                                   "\nis already defined by\n" +
+                                   it->second->loc().filename);
       }
       qiLogVerbose() << "Added export '" << member << "' to package " << _name;
       //ok add the symbol
@@ -156,8 +161,6 @@ namespace qilang {
     ParseResultPtr parseFile(const FileReaderPtr& file);
     void parsePackage(const std::string& packageName);
 
-    void parse(const std::string& fileOrPkg);
-
     void addLookupPaths(const StringVector& lookupPaths);
     void anal(const std::string& package = std::string());
 
@@ -169,7 +172,7 @@ namespace qilang {
     StringVector includes() const                          { return _includes; }
 
     //return all the files composing a package  (their may be false)
-    StringVector locatePackage(const std::string& pkgName);
+    std::unordered_set<std::string> locatePackage(const std::string& pkgName);
 
     bool hasError() const;
     void printMessage(std::ostream& os) const;
