@@ -14,7 +14,8 @@ std::string formatPath(const std::string& path)
 #ifdef _WIN32
     std::transform(res.begin(), res.end(), res.begin(), ::tolower);
 #endif
-  return boost::filesystem::path(res).make_preferred().string(qi::unicodeFacet());
+  // TODO: when boost will be upgraded, replace normalize() by lexically_normal()
+  return boost::filesystem::path(res, qi::unicodeFacet()).make_preferred().normalize().string(qi::unicodeFacet());
 }
 
 
