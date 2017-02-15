@@ -105,7 +105,7 @@ if(QI_WITH_TESTS)
     "test_qilang_signature.cpp"
     "test_qilang_type_registration.cpp"
     "test_qilang_package.cpp"
-    "test_qilang_struct_include.cpp"
+    "test_qilang_struct.cpp"
 
     DEPENDS
     qi

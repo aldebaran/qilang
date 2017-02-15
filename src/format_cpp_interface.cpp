@@ -361,30 +361,16 @@ public:
     indent() << "struct " << node->name << " {" << std::endl;
     ScopedFormatAttrBlock _(constattr);
     scoped(node->decls);
+
     StringVector fields;
-    {
-      ScopedIndent _i(_indent);
-      out() << std::endl;
-      indent() << node->name << "()" << std::endl;
-      for (unsigned int i = 0; i < node->decls.size(); ++i) {
-        if (StructFieldDeclNodePtr field =
-            boost::dynamic_pointer_cast<StructFieldDeclNode>(node->decls[i])) {
-          for (unsigned int j = 0; j < field->names.size(); ++j)
-            fields.push_back(field->names[j]);
-        }
+    for (unsigned int i = 0; i < node->decls.size(); ++i) {
+      if (StructFieldDeclNodePtr field =
+          boost::dynamic_pointer_cast<StructFieldDeclNode>(node->decls[i])) {
+        for (unsigned int j = 0; j < field->names.size(); ++j)
+          fields.push_back(field->names[j]);
       }
-      if (!fields.empty()) {
-        indent() << ": ";
-        StringVector fieldInits;
-        std::transform(fields.begin(), fields.end(),
-            std::back_inserter(fieldInits), boost::lambda::_1 + "()");
-        join(fieldInits, ", ");
-      }
-      out() << std::endl;
-      indent() << "{}" << std::endl;
     }
     indent() << "};" << std::endl << std::endl;
-
 
     {
       ScopedNamespaceEscaper _e(out(), currentNs);
