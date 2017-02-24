@@ -298,6 +298,9 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
       case NodeType_InterfaceDecl:
         pushIfNot(includes, "<qi/anyobject.hpp>");
         break;
+      case NodeType_EnumDecl:
+        pushIfNot(includes, "<qi/type/typeinterface.hpp>");
+        break;
       default:
         break;
     }
