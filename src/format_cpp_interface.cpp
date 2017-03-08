@@ -57,7 +57,7 @@ public:
 
   void visitDecl(FnDeclNode* node) {
     indent() << apiAttr(apiExport + " ") << virtualAttr("virtual ");
-    out() << "qi::Future< ";
+    out() << "::qi::Future< ";
     NodeFormatter::accept(node->effectiveRet());
     out() << " > " << node->name << "(";
     cppParamsFormat(this, node->args);
@@ -90,7 +90,7 @@ public:
       first = false;
     else
       out() << ", ";
-    out() << "qi::Signal< ";
+    out() << "::qi::Signal< ";
     ScopedFormatAttrBlock _(constattr);
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& " << node->name;
@@ -100,7 +100,7 @@ public:
       first = false;
     else
       out() << ", ";
-    out() << "qi::Property< ";
+    out() << "::qi::Property< ";
     ScopedFormatAttrBlock _(constattr);
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& " << node->name;
@@ -203,10 +203,10 @@ public:
 
   void visitDecl(SigDeclNode* node) {
     ScopedFormatAttrBlock _(constattr);
-    indent() << "qi::Signal< ";
+    indent() << "::qi::Signal< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& " << node->name << ";" << std::endl;
-    indent() << "qi::Signal< ";
+    indent() << "::qi::Signal< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& _" << node->name << "() {" << std::endl;
     {
@@ -217,10 +217,10 @@ public:
   }
   void visitDecl(PropDeclNode* node) {
     ScopedFormatAttrBlock _(constattr);
-    indent() << "qi::Property< ";
+    indent() << "::qi::Property< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& " << node->name << ";" << std::endl;
-    indent() << "qi::Property< ";
+    indent() << "::qi::Property< ";
     cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
     out() << " >& _" << node->name << "() {" << std::endl;
     {
