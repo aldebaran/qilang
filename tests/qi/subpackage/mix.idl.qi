@@ -1,0 +1,18 @@
+// This IDL is for a mix of various types, declared in a subpackage of "qi"
+package qi.subpackage
+
+enum Option
+  const First = 0
+  const Second = 1
+end
+
+struct Data
+  value: int
+  description: str
+end
+
+interface Entity
+  fn makeData(opt: Option) -> Data
+  sig dataProduced(data: Data)
+  prop currentOption(opt: Option)
+end

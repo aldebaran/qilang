@@ -102,6 +102,43 @@ if(QI_WITH_TESTS)
   # Needed to ensure the build order
   add_dependencies(qi_gen_idl_testimportpackage qicc)
 
+  # Test packages under "qi"
+  set(qisubpackage_idl "qi/subpackage/mix.idl.qi")
+
+  qi_gen_idl(
+    qisubpackage_generated
+    CPP # Output language
+    qi.subpackage # Package name
+    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
+    ${qisubpackage_idl} # IDL files
+  )
+
+  qi_create_lib(
+    qisubpackage SHARED
+
+    ${qisubpackage_generated}
+
+    DEPENDS
+    qi
+  )
+
+  qi_stage_lib(qisubpackage)
+
+  qi_create_lib(
+    qisubpackageimpl SHARED
+
+    "src/qi/subpackage/mix.hpp"
+    "src/qi/subpackage/mix.cpp"
+
+    DEPENDS
+    qisubpackage
+  )
+
+  qi_stage_lib(qisubpackageimpl)
+
+  # Needed to ensure the build order
+  add_dependencies(qi_gen_idl_testimportpackage qicc)
+
   # The actual entry point of the test
   qi_create_gtest(
     test_qilang
@@ -113,6 +150,7 @@ if(QI_WITH_TESTS)
     "test_qilang_function.cpp"
     "test_qilang_package.cpp"
     "test_qilang_property.cpp"
+    "test_qilang_qisubpackage.cpp"
     "test_qilang_signal.cpp"
     "test_qilang_signature.cpp"
     "test_qilang_struct.cpp"
@@ -122,9 +160,11 @@ if(QI_WITH_TESTS)
     DEPENDS
     qi
     qilang
+    qisubpackage
+    qisubpackageimpl
+    testimportpackage
     testqilang
     testsubpackage
-    testimportpackage
 
     TIMEOUT 10
   )
