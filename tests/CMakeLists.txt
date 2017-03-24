@@ -11,6 +11,7 @@ if(QI_WITH_TESTS)
     "testqilang/somestructs.idl.qi"
     "testqilang/somemix.idl.qi"
     "testqilang/someinterfaces.idl.qi"
+    "testqilang/time.idl.qi"
   )
 
   qi_gen_idl(
@@ -47,6 +48,7 @@ if(QI_WITH_TESTS)
     "src/ouroboros.hpp"
     "src/pingpong.hpp"
     "src/registration.cpp"
+    "src/time.hpp"
     "src/truthseeker.hpp"
 
     DEPENDS
@@ -100,9 +102,11 @@ if(QI_WITH_TESTS)
     test_qilang
 
     SRC
+    "test_qilang.hpp"
     "test_qilang.cpp"
     "test_qilang_function.cpp"
     "test_qilang_signature.cpp"
+    "test_qilang_time.cpp"
     "test_qilang_type_registration.cpp"
     "test_qilang_package.cpp"
     "test_qilang_struct_include.cpp"

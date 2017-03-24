@@ -1,0 +1,11 @@
+// This IDL is dedicated to test time-related types.
+package testqilang
+
+interface TimeLord
+  fn nsecIdentity(t: nsec) -> nsec
+  fn usecIdentity(t: usec) -> usec
+  fn msecIdentity(t: msec) -> msec
+  fn secIdentity(t: sec) -> sec
+  fn minIdentity(t: min) -> min
+  fn hourIdentity(t: hour) -> hour
+end

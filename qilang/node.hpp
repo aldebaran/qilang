@@ -546,6 +546,8 @@ public:
 // keep in sync with makeType in grammar.y
 enum BuiltinType {
   BuiltinType_Nothing = 0,  //this is void. (useless in qilang itself, but helps with bindings)
+
+  // Basic types
   BuiltinType_Bool,
   BuiltinType_Char,
   BuiltinType_Int,
@@ -561,9 +563,17 @@ enum BuiltinType {
   BuiltinType_Float,
   BuiltinType_Float32,
   BuiltinType_Float64,
+
+  BuiltinType_NanoSeconds,
+  BuiltinType_MicroSeconds,
+  BuiltinType_MilliSeconds,
+  BuiltinType_Seconds,
+  BuiltinType_Minutes,
+  BuiltinType_Hours,
   BuiltinType_QiTimePoint,
   BuiltinType_SteadyTimePoint,
   BuiltinType_SystemTimePoint,
+
   BuiltinType_String,
   BuiltinType_Value,
   BuiltinType_Object,
