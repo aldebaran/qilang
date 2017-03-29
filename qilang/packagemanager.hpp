@@ -105,7 +105,7 @@ namespace qilang {
     }
 
     bool hasError() const;
-    void printMessage(std::ostream& os) const;
+    void printMessage(std::ostream& out, std::ostream& err) const;
 
     std::string    _name;      // package name
     ParseResultMap _contents;  // map<filename, ParseResult>  file of the package
@@ -175,7 +175,7 @@ namespace qilang {
     std::unordered_set<std::string> locatePackage(const std::string& pkgName);
 
     bool hasError() const;
-    void printMessage(std::ostream& os) const;
+    void printMessage(std::ostream& out, std::ostream& err) const;
 
     void parseDir(const std::string &dirname);
 

@@ -67,30 +67,31 @@ namespace qilang {
     }
   }
 
-  void Diagnostic::print(std::ostream &out) const {
-    out << loc() << ":";
+  void Diagnostic::print(std::ostream& out, std::ostream& err) const {
+    auto& os = (DiagnosticType_Error == type()) ? err : out;
+    os << loc() << ": ";
 
     switch (type()) {
       case DiagnosticType_Error:
-        out << "error: ";
+        os << "error: ";
         break;
       case DiagnosticType_Warning:
-        out << "warning: ";
+        os << "warning: ";
         break;
       case DiagnosticType_Info:
-        out << "info: ";
+        os << "info: ";
         break;
       default:
         break;
     }
 
-    out << what() << std::endl;
-    out << qilang::getErrorLine(filename(), loc());
+    os << what() << std::endl;
+    os << qilang::getErrorLine(filename(), loc());
   }
 
-  void ParseResult::printMessage(std::ostream &out) const {
+  void ParseResult::printMessage(std::ostream& out, std::ostream& err) const {
     for (unsigned i = 0; i < _messages.size(); ++i)
-      _messages.at(i).print(out);
+      _messages.at(i).print(out, err);
   }
 
   ParseResultPtr Parser::result() {
@@ -149,7 +150,7 @@ namespace qilang {
     ParseResultPtr ret = newParseResult();
     ret->filename = file->filename();
     if (!file->isOpen()) {
-      ret->addDiag(Diagnostic(DiagnosticType_Error, "Can't open file '" + file->filename() + "'"));
+      ret->addDiag(Diagnostic(DiagnosticType_Error, "cannot open file '" + file->filename() + "'"));
       return ret;
     }
     Parser p(file);
