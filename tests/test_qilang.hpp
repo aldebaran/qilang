@@ -3,11 +3,12 @@
 
 #include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <qi/anymodule.hpp>
 
 static const std::chrono::milliseconds usualTimeout{100};
 
-class QiLangModule: public testing::Test
+class QiLangModule: public ::testing::Test
 {
 protected:
   static void SetUpTestCase()

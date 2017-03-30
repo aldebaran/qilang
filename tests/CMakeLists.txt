@@ -140,7 +140,7 @@ if(QI_WITH_TESTS)
   add_dependencies(qi_gen_idl_testimportpackage qicc)
 
   # The actual entry point of the test
-  qi_create_gtest(
+  qi_create_gmock(
     test_qilang
 
     SRC
@@ -148,6 +148,7 @@ if(QI_WITH_TESTS)
     "test_qilang.cpp"
     "test_qilang_enum_include.cpp"
     "test_qilang_function.cpp"
+    "test_qilang_gmock.cpp"
     "test_qilang_package.cpp"
     "test_qilang_property.cpp"
     "test_qilang_qisubpackage.cpp"

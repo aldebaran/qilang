@@ -35,6 +35,7 @@ public:
   }
 
   qi::Signal<float> test;
+  qi::Signal<void> nothing;
   qi::Property<std::vector<float>> current;
 };
 } // testqilang

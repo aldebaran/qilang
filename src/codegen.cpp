@@ -22,6 +22,7 @@ namespace qilang {
     static const char* vals[] = { "cpp_interface", "cppi",
                                   "cpp_local", "cppl",
                                   "cpp_remote", "cppr",
+                                  "cpp_gmock",
                                   "sexpr", "qilang", "doc", 0 };
     int index = 0;
     const char* v = vals[index];
@@ -59,6 +60,8 @@ namespace qilang {
       out->out() << qilang::genCppObjectLocal(pm, pr);
     else if (generator == "cpp_remote"    || generator == "cppr")
       out->out() << qilang::genCppObjectRemote(pm, pr);
+    else if (generator == "cpp_gmock")
+      out->out() << qilang::genCppGMock(pm, pr);
     return true;
   }
 

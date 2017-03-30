@@ -28,6 +28,7 @@ set(C src/codegen.cpp
       src/format_cpp_interface.cpp
       src/format_cpp_local.cpp
       src/format_cpp_remote.cpp
+      src/format_cpp_gmock.cpp
       src/format_anyvalue.cpp
       src/cpptype.hpp
       src/cpptype.cpp
