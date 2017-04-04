@@ -1,0 +1,10 @@
+// This IDL is dedicated to test a package with enum declarations only.
+// It happened in the past that the necessary includes were not added,
+// which prevented the compilation on enum registration.
+package testqilang
+
+//! A dummy policy to choose the level of rudeness of the robot.
+enum BlablaPolicy
+  const LetOtherTalk = 0
+  const InterruptOthers = 1
+end
