@@ -12,6 +12,7 @@ if(QI_WITH_TESTS)
     "testqilang/somemix.idl.qi"
     "testqilang/someinterfaces.idl.qi"
     "testqilang/time.idl.qi"
+    "testqilang/someenums.idl.qi"
   )
 
   qi_gen_idl(
@@ -109,7 +110,8 @@ if(QI_WITH_TESTS)
     "test_qilang_time.cpp"
     "test_qilang_type_registration.cpp"
     "test_qilang_package.cpp"
-    "test_qilang_struct_include.cpp"
+    "test_qilang_struct.cpp"
+    "test_qilang_enum_include.cpp"
 
     DEPENDS
     qi
