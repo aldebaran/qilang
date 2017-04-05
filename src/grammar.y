@@ -372,6 +372,7 @@ struct_field_defs.1:
 %type<qilang::DeclNodePtrVector> struct_field_def;
 struct_field_def:
   ID ":" type              { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $3)); }
+| ID ":" type "=" const_exp { $$.push_back(NODE3(StructFieldDeclNode, @$, $1, $3, $5)); }
 | ID "," id_list ":" type  { $$.push_back(NODE2(StructFieldDeclNode, @$, $1, $5));
                          for (unsigned i = 0; i < $3.size(); ++i) {
                             $$.push_back(NODE2(StructFieldDeclNode, @$, $3.at(i), $5));

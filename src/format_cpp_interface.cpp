@@ -404,9 +404,14 @@ public:
       indent();
       accept(node->effectiveType());
       out() << " " << node->names.at(i);
+      if (node->data) {
+        out() << " = ";
+        accept(node->data);
+      }
       out() << ";" << std::endl;
     }
   }
+
   void visitDecl(EnumDeclNode* node) override {
     indent() << "enum class " << node->name << " {" << std::endl;
     scoped(node->fields);

@@ -862,15 +862,22 @@ public:
 class QILANG_API StructFieldDeclNode : public DeclNode {
 public:
   StructFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const Location& loc)
-    : DeclNode(NodeType_StructFieldDecl, loc)
-    , type(type)
-  {
-    names.push_back(name);
-  }
+    : StructFieldDeclNode(std::vector<std::string>{name}, type, loc)
+  {}
+
+  StructFieldDeclNode(const std::string &name, const TypeExprNodePtr& type, const LiteralNodePtr& data, const Location& loc)
+    : StructFieldDeclNode(std::vector<std::string>{name}, type, data, loc)
+  {}
+
   StructFieldDeclNode(const StringVector &names, const TypeExprNodePtr& type, const Location& loc)
+    : StructFieldDeclNode(names, type, LiteralNodePtr{}, loc)
+  {}
+
+  StructFieldDeclNode(const StringVector &names, const TypeExprNodePtr& type, const LiteralNodePtr& data, const Location& loc)
     : DeclNode(NodeType_StructFieldDecl, loc)
     , names(names)
     , type(type)
+    , data(data)
   {}
 
   TypeExprNodePtr effectiveType() {
@@ -883,6 +890,7 @@ public:
 
   StringVector    names;  //at least one
   TypeExprNodePtr type;
+  LiteralNodePtr data;
 };
 typedef boost::shared_ptr<StructFieldDeclNode> StructFieldDeclNodePtr;
 typedef std::vector<StructFieldDeclNodePtr>    StructFieldDeclNodePtrVector;
