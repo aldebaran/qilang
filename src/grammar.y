@@ -105,35 +105,13 @@
 %token
   //better error reporting
   END_OF_FILE          0 "end of file"
-  // Operators
-  BANG                "!"
-  PERCENT             "%"
-  STAR                "*"
-  STARSTAR            "**"
-  PLUS                "+"
-  MINUS               "-"
-  SLASH               "/"
-  EQ_EQ               "=="
+
   EQ                  "="
   GT                  ">"
-  GT_EQ               ">="
   LT                  "<"
-  LT_EQ               "<="
-  NOT_EQ              "!="
-  AMPERSAND_AMPERSAND "&&"
-  PIPE_PIPE           "||"
-  LBRACE              "{"
-  RBRACE              "}"
   LPAREN              "("
   RPAREN              ")"
-  TILDA               "~"
-  LBRACKET            "["
-  RBRACKET            "]"
   COMMA               ","
-  AND                 "&"
-  OR                  "|"
-  XOR                 "^"
-  ARO                 "@"
   COLON               ":"
   ARROW               "->"
 
@@ -146,7 +124,6 @@
   FROM                "from"
 
   // Blocks Types
-  OBJECT              "object"
   STRUCT              "struct"
   END                 "end"
 
@@ -156,14 +133,9 @@
   // IFace Keywords
   SIG                 "sig"
   PROP                "prop"
-
   CONST               "const"
 
-  // Core Keywords
-  AT                  "at"
-  FOR                 "for"
-  IF                  "if"
-
+  // Basic Types Keywords
   VEC                 "Vec"
   MAP                 "Map"
   TUPLE               "Tuple"
@@ -174,18 +146,6 @@
 
 %token <qilang::LiteralNodePtr>   STRING CONSTANT
 %token <std::string>              ID
-
-// the first item here is the last to evaluate, the last item is the first
-%left  "||"
-%left  "&&"
-%left  "==" "!="
-%left  "<" "<=" ">" ">="
-%left  "|" "&" "^"
-%left  "+" "-"
-%left  "*" "/" "%"
-%precedence "!"
-%precedence "["
-
 
 %%
 // #######################################################################################
@@ -206,8 +166,7 @@ toplevel.1:
 
 %type<qilang::NodePtr> toplevel_def;
 toplevel_def:
-  object        { $$ = $1; }
-| iface         { $$ = $1; }
+  iface         { $$ = $1; }
 | function_decl { $$ = $1; }
 | package       { $$ = $1; }
 | import        { $$ = $1; }
@@ -240,44 +199,7 @@ import:
 import_defs:
   ID                               { $$.push_back($1); }
 | import_defs "," ID               { std::swap($$, $1);
-                                     $$.push_back($3);
-                                   }
-
-// #######################################################################################
-// # OBJECT GRAPH
-// #######################################################################################
-
-%type<qilang::StmtNodePtr> object;
-object:
-  OBJECT type STRING object_defs END { qilang::StringLiteralNode* tnode = static_cast<qilang::StringLiteralNode*>($3.get());
-                                       $$ = NODE3(ObjectDefNode, @$, $2, tnode->value, $4); }
-
-%type<qilang::StmtNodePtrVector> object_defs;
-object_defs:
-  %empty                       {}
-| object_defs.1                { std::swap($$, $1); }
-
-%type<qilang::StmtNodePtrVector> object_defs.1;
-object_defs.1:
-  object_def                   { $$.push_back($1); }
-| object_defs.1 object_def     { std::swap($$, $1); $$.push_back($2); }
-
-
-%type<qilang::StmtNodePtr> object_def;
-object_def:
-  object                       { $$ = $1; }
-| object_property              { $$ = $1; }
-| at_expr                      { $$ = $1; }
-
-%type<qilang::StmtNodePtr> object_property;
-object_property:
-  ID ":" const_exp             { $$ = NODE2(PropertyDefNode, @$, $1, $3); }
-
-%type<qilang::StmtNodePtr> at_expr;
-at_expr:
-  AT exp ":" ID               { $$ = NODE2(AtNode, @$, $2, $4); }
-| AT exp ID END               { $$ = NODE2(AtNode, @$, $2, $3); }
-
+                                     $$.push_back($3); }
 
 // #######################################################################################
 // # TYPE
@@ -456,64 +378,6 @@ struct_field_def:
                          }
                        }
 | interface_def        { $$.push_back($1); }
-
-
-// #######################################################################################
-// # EXPR
-// #######################################################################################
-
-//%type<qilang::ExprNodePtr> expr;
-//expr:
-// exp { std::swap($$, $1); }
-
-%type<qilang::ExprNodePtr> exp;
-exp:
-  exp "+" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Plus);}
-| exp "-" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Minus);}
-| exp "/" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Divide);}
-| exp "*" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Multiply);}
-| exp "%" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Modulus);}
-| exp "^" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Xor);}
-| exp "|" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Or);}
-| exp "&" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_And);}
-
-exp:
-  "!" exp { $$ = NODE2(UnaryOpExprNode, @$, $2, qilang::UnaryOpCode_Negate);}
-| "-" exp { $$ = NODE2(UnaryOpExprNode, @$, $2, qilang::UnaryOpCode_Minus);}
-
-exp:
-  exp "||" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_BoolOr);}
-| exp "&&" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_BoolAnd);}
-
-exp:
-  const_exp { $$ = NODE1(LiteralExprNode, @$, $1); }
-
-exp:
-  ID       { $$ = NODE1(VarExprNode, @$, $1); }
-
-exp:
-   exp "==" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_EqEq);}
-|  exp "<"  exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Lt);}
-|  exp "<=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Le);}
-|  exp ">"  exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Gt);}
-|  exp ">=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Ge);}
-|  exp "!=" exp { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_Ne);}
-
-exp:
-  "(" exp ")" { $$ = $2; }
-
-exp:
-  exp "[" exp "]" { $$ = NODE3(BinaryOpExprNode, @$, $1, $3, qilang::BinaryOpCode_FetchArray);}
-
-exp:
-  ID "(" ")"          { $$ = NODE1(CallExprNode, @$, $1); }
-| ID "(" exp_list ")" { $$ = NODE2(CallExprNode, @$, $1, $3); }
-
-%type<qilang::ExprNodePtrVector> exp_list;
-exp_list:
-  exp               { $$.push_back($1); }
-| exp_list "," exp  { std::swap($$, $1); $$.push_back($3); }
-
 
 // #######################################################################################
 // # CONST DATA

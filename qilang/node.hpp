@@ -64,9 +64,7 @@ class Node;
 class StmtNode;
 class PackageNode;
 class ImportNode;
-class ObjectDefNode;
 class PropertyDefNode;
-class AtNode;
 class VarDefNode;
 
 // EXPR: Const Data
@@ -181,9 +179,7 @@ public:
   virtual void visitStmt(ImportNode* node) = 0;
 
   // Object Definitions
-  virtual void visitStmt(ObjectDefNode* node) = 0;
   virtual void visitStmt(PropertyDefNode* node) = 0;
-  virtual void visitStmt(AtNode* node) = 0;
 
   // Definitions
   virtual void visitStmt(VarDefNode* node) = 0;
@@ -254,10 +250,8 @@ enum NodeType {
   NodeType_ListData,
   NodeType_TupleData,
 
-  NodeType_ObjectDef,
   NodeType_PropDef,
   NodeType_VarDef,
-  NodeType_At,
 
   NodeType_InterfaceDecl,
   NodeType_FnDecl,
@@ -782,22 +776,6 @@ public:
   LiteralNodePtr data;
 };
 
-class QILANG_API ObjectDefNode : public StmtNode {
-public:
-  ObjectDefNode(const TypeExprNodePtr& type, const std::string& name, const StmtNodePtrVector& defs, const Location& loc)
-    : StmtNode(NodeType_ObjectDef, loc)
-    , type(type)
-    , name(name)
-    , values(defs)
-  {}
-
-  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
-
-  TypeExprNodePtr   type;
-  std::string       name;
-  StmtNodePtrVector values;
-};
-
 class QILANG_API PropertyDefNode : public StmtNode {
 public:
   PropertyDefNode(const std::string& name, LiteralNodePtr data, const Location& loc)
@@ -810,24 +788,6 @@ public:
 
   std::string      name;
   LiteralNodePtr data;
-};
-
-class QILANG_API AtNode : public StmtNode {
-public:
-  AtNode(const ExprNodePtr& sender, const std::string& receiver, const Location& loc)
-    : StmtNode(NodeType_At, loc)
-    , _sender(sender)
-    , receiver(receiver)
-  {}
-
-  void accept(NodeVisitor* visitor) { visitor->visitStmt(this); }
-
-  //TODO: remove me. (this is only for compat reason atm)
-  std::string sender();
-
-public:
-  ExprNodePtr _sender;
-  std::string receiver;
 };
 
 // ####################

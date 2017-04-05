@@ -469,15 +469,11 @@ protected:
 
   void visitStmt(ImportNode*) override {
   }
-  void visitStmt(ObjectDefNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(PropertyDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(VarDefNode* node) override {
     indent();
     accept(node->effectiveType());

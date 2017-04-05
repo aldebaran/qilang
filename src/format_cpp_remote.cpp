@@ -368,15 +368,10 @@ namespace qilang {
   void visitStmt(ImportNode* node) override {
   }
 
-  void visitStmt(ObjectDefNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
   void visitStmt(PropertyDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(VarDefNode*) override {
     throw std::runtime_error("unimplemented");
   }

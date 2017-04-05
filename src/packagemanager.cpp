@@ -54,10 +54,6 @@ namespace qilang {
         ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
-      } case NodeType_ObjectDef: {
-        ObjectDefNode* tnode = static_cast<ObjectDefNode*>(node.get());
-        pkg->addMember(tnode->name, node);
-        return;
       } case NodeType_TypeDefDecl: {
         TypeDefDeclNode* tnode = static_cast<TypeDefDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);

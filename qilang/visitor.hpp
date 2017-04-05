@@ -160,14 +160,11 @@ namespace qilang {
     }
     void visitStmt(ImportNode* node) {
     }
-    void visitStmt(ObjectDefNode *node) {
-      each(node->values);
-    }
+
     void visitStmt(PropertyDefNode *node) {
       acceptWithCb(node->data);
     }
-    void visitStmt(AtNode* node) {
-    }
+
     void visitStmt(VarDefNode* node) {
       acceptWithCb(node->data);
     }
