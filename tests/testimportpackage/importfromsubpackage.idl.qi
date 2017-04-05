@@ -1,0 +1,7 @@
+package testimportpackage
+
+from testsubpackage.othersubpackage import LetMeSee
+
+struct LookingAtIt
+  toLook: LetMeSee
+end

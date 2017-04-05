@@ -16,6 +16,7 @@ if(QI_WITH_TESTS)
     "testqilang/somestructs.idl.qi"
     "testqilang/time.idl.qi"
   )
+  )
 
   qi_gen_idl(
     testqilang_generated
@@ -84,7 +85,12 @@ if(QI_WITH_TESTS)
   qi_stage_lib(testsubpackage)
 
   # Test qilang package import feature
-  set(testimportpackage_idl "testimportpackage/testimportpackage.idl.qi")
+  set(
+    testimportpackage_idl
+
+    "testimportpackage/testimportpackage.idl.qi"
+    "testimportpackage/importfromsubpackage.idl.qi"
+  )
 
   qi_gen_lib(
     testimportpackage
@@ -149,6 +155,7 @@ if(QI_WITH_TESTS)
     "test_qilang_enum_include.cpp"
     "test_qilang_function.cpp"
     "test_qilang_gmock.cpp"
+    "test_qilang_import.cpp"
     "test_qilang_package.cpp"
     "test_qilang_property.cpp"
     "test_qilang_qisubpackage.cpp"
