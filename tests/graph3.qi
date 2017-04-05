@@ -1,8 +1,0 @@
-package plouf
-package tests
-
-object Graph "g3"
-  direction: "forward"
-  directions: "forwardd"
-  toto: "titi"
-end
