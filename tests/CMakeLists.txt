@@ -16,7 +16,6 @@ if(QI_WITH_TESTS)
     "testqilang/somestructs.idl.qi"
     "testqilang/time.idl.qi"
   )
-  )
 
   qi_gen_idl(
     testqilang_generated
@@ -63,7 +62,12 @@ if(QI_WITH_TESTS)
   )
 
   # Test qilang subpackages management
-  set(testsubpackage_idl "testsubpackage/othersubpackage/othersubpackage.idl.qi")
+  set(
+    testsubpackage_idl
+
+    "testsubpackage/othersubpackage/othersubpackage.idl.qi"
+    "testsubpackage/othersubpackage/localimport.idl.qi"
+  )
 
   qi_gen_lib(
     testsubpackage
