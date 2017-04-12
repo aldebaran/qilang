@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include "test_qilang.hpp"
 #include <qi/application.hpp>
 #include <qi/log.hpp>
 #include "test_qilang.hpp"

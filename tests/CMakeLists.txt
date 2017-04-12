@@ -8,11 +8,13 @@ if(QI_WITH_TESTS)
   set(
     testqilang_idl
 
-    "testqilang/somestructs.idl.qi"
-    "testqilang/somemix.idl.qi"
-    "testqilang/someinterfaces.idl.qi"
-    "testqilang/time.idl.qi"
     "testqilang/someenums.idl.qi"
+    "testqilang/someinterfaces.idl.qi"
+    "testqilang/somemix.idl.qi"
+    "testqilang/someproperties.idl.qi"
+    "testqilang/somesignals.idl.qi"
+    "testqilang/somestructs.idl.qi"
+    "testqilang/time.idl.qi"
   )
 
   qi_gen_idl(
@@ -43,12 +45,14 @@ if(QI_WITH_TESTS)
     testqilang_module
 
     SRC
-    "src/kindamanagerimpl.hpp"
     "src/anotherinterfaceimpl.hpp"
     "src/bradpitt.hpp"
+    "src/kindamanagerimpl.hpp"
     "src/ouroboros.hpp"
     "src/pingpong.hpp"
+    "src/propertymaster.hpp"
     "src/registration.cpp"
+    "src/signalmaster.hpp"
     "src/time.hpp"
     "src/truthseeker.hpp"
 
@@ -105,13 +109,15 @@ if(QI_WITH_TESTS)
     SRC
     "test_qilang.hpp"
     "test_qilang.cpp"
+    "test_qilang_enum_include.cpp"
     "test_qilang_function.cpp"
+    "test_qilang_package.cpp"
+    "test_qilang_property.cpp"
+    "test_qilang_signal.cpp"
     "test_qilang_signature.cpp"
+    "test_qilang_struct.cpp"
     "test_qilang_time.cpp"
     "test_qilang_type_registration.cpp"
-    "test_qilang_package.cpp"
-    "test_qilang_struct.cpp"
-    "test_qilang_enum_include.cpp"
 
     DEPENDS
     qi

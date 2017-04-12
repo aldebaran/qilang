@@ -1,0 +1,6 @@
+// This IDL is dedicated to test a package with interfaces with properties only.
+package testqilang
+
+interface PropertyMaster
+  prop intProperty(value: int)
+end

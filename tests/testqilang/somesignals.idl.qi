@@ -1,0 +1,7 @@
+// This IDL is dedicated to test a package with interfaces with signals only.
+package testqilang
+
+interface SignalMaster
+  sig voidSignal()
+  sig intSignal(value: int)
+end
