@@ -7,3 +7,8 @@ struct Score
   score: int
   name: str
 end
+
+struct Point
+  x: float = 3.14159
+  y: float = 1.618
+end

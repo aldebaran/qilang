@@ -63,7 +63,7 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      indent() << "qi::Future<";
+      indent() << "::qi::Future<";
       accept(node->effectiveRet());
       out() << "> " << node->name << "(";
       cppParamsFormat(this, node->args);
@@ -264,7 +264,7 @@ namespace qilang {
 
     void visitDecl(FnDeclNode* node) {
       if (_methodBounceAttr.isActive()) {
-        indent() << "static qi::Future< ";
+        indent() << "static ::qi::Future< ";
         accept(node->effectiveRet());
         out() << " > " << _curName << node->name << "(" << _fullName << "* obj";
         if (!node->args.empty()) {
@@ -297,7 +297,7 @@ namespace qilang {
             indent() << "mmb.setDescription(\"" << *doc.description << "\"); \\" << std::endl;
           indent() << "const auto callType = std::is_base_of<qi::Actor, " << ImplTypeName << " >::value ?"
             " qi::MetaCallType_Direct : qi::MetaCallType_Auto; \\" << std::endl;
-          indent() << "builder.advertiseMethod(mmb, static_cast<qi::Future< ";
+          indent() << "builder.advertiseMethod(mmb, static_cast<::qi::Future< ";
           accept(node->effectiveRet());
           out() << " > (*)(" << _fullName << "*";
           if (!node->args.empty())

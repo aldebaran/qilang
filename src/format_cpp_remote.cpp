@@ -69,7 +69,7 @@ namespace qilang {
     }
 
     void visitDecl(FnDeclNode* node) {
-      indent() << "qi::Future< ";
+      indent() << "::qi::Future< ";
       accept(node->effectiveRet());
       out() << " > " << node->name << "(";
       cppParamsFormat(this, node->args);
@@ -118,13 +118,13 @@ namespace qilang {
 
     void visitDecl(FnDeclNode* node) {}
     void visitDecl(SigDeclNode* node) {
-      indent() << "qi::Signal< ";
+      indent() << "::qi::Signal< ";
       ScopedFormatAttrBlock _(constattr);
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << " > _" << node->name << ";" << std::endl;
     }
     void visitDecl(PropDeclNode* node) {
-      indent() << "qi::Property< ";
+      indent() << "::qi::Property< ";
       ScopedFormatAttrBlock _(constattr);
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << " > _" << node->name << ";" << std::endl;
@@ -251,7 +251,7 @@ namespace qilang {
     }
 
     void visitDecl(SigDeclNode* node) {
-      indent() << "qi::Signal< ";
+      indent() << "::qi::Signal< ";
       ScopedFormatAttrBlock _(constattr);
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << " >& " << node->name << "() {" << std::endl;
@@ -262,7 +262,7 @@ namespace qilang {
       indent() << "}" << std::endl;
     }
     void visitDecl(PropDeclNode* node) {
-      indent() << "qi::Property< ";
+      indent() << "::qi::Property< ";
       ScopedFormatAttrBlock _(constattr);
       cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
       out() << " >& " << node->name << "() {" << std::endl;
@@ -368,15 +368,10 @@ namespace qilang {
   void visitStmt(ImportNode* node) override {
   }
 
-  void visitStmt(ObjectDefNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
   void visitStmt(PropertyDefNode*) override {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode*) override {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(VarDefNode*) override {
     throw std::runtime_error("unimplemented");
   }

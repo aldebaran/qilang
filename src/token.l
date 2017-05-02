@@ -132,34 +132,12 @@ FLOAT    {UFLOAT}
 
 %%
 
-"!"             RETURN_OP(BANG);
-"%"             RETURN_OP(PERCENT);
-"*"             RETURN_OP(STAR);
-"**"            RETURN_OP(STARSTAR);
-"+"             RETURN_OP(PLUS);
-"-"             RETURN_OP(MINUS);
-"/"             RETURN_OP(SLASH);
-"=="            RETURN_OP(EQ_EQ);
 "="             RETURN_OP(EQ);
 ">"             RETURN_OP(GT);
-">="            RETURN_OP(GT_EQ);
 "<"             RETURN_OP(LT);
-"<="            RETURN_OP(LT_EQ);
-"!="            RETURN_OP(NOT_EQ);
-"&&"|"and"      RETURN_OP(AMPERSAND_AMPERSAND);
-"||"|"or"       RETURN_OP(PIPE_PIPE);
-"{"             RETURN_OP(LBRACE);
-"}"             RETURN_OP(RBRACE);
 "("             RETURN_OP(LPAREN);
 ")"             RETURN_OP(RPAREN);
-"~"             RETURN_OP(TILDA);
-"["             RETURN_OP(LBRACKET);
-"]"             RETURN_OP(RBRACKET);
 ","             RETURN_OP(COMMA);
-"&"             RETURN_OP(AND);
-"|"             RETURN_OP(OR);
-"^"             RETURN_OP(XOR);
-"@"             RETURN_OP(ARO);
 ":"             RETURN_OP(COLON);
 "->"            RETURN_OP(ARROW);
 
@@ -169,7 +147,6 @@ FLOAT    {UFLOAT}
 "package"       RETURN_OP(PACKAGE);
 "from"          RETURN_OP(FROM);
 "import"        RETURN_OP(IMPORT);
-"object"        RETURN_OP(OBJECT);
 "struct"        RETURN_OP(STRUCT);
 "end"           RETURN_OP(END);
 "const"         RETURN_OP(CONST);
@@ -177,10 +154,6 @@ FLOAT    {UFLOAT}
 "fn"            RETURN_OP2(FN);
 "sig"           RETURN_OP(SIG);
 "prop"          RETURN_OP(PROP);
-
-"at"            RETURN_OP(AT);
-"for"           RETURN_OP(FOR);
-"if"            RETURN_OP(IF);
 
 "typedef"       RETURN_OP(TYPEDEF);
 "enum"          RETURN_OP(ENUM);

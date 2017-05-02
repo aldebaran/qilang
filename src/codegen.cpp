@@ -13,19 +13,21 @@ qiLogCategory("qilang.codegen");
 
 namespace qilang {
 
-  bool codegen(const FileWriterPtr&             out,
-               const std::string&               codegen,
-               const qilang::PackageManagerPtr& pm,
-               const qilang::ParseResultPtr&    pr)
+  bool codegen(
+      const FileWriterPtr&             out,
+      const std::string&               generator,
+      const qilang::PackageManagerPtr& pm,
+      const qilang::ParseResultPtr&    pr)
   {
     static const char* vals[] = { "cpp_interface", "cppi",
                                   "cpp_local", "cppl",
                                   "cpp_remote", "cppr",
+                                  "cpp_gmock",
                                   "sexpr", "qilang", "doc", 0 };
     int index = 0;
     const char* v = vals[index];
     while (v) {
-      if (codegen == v)
+      if (generator == v)
         break;
       index++;
       v = vals[index];
@@ -36,15 +38,15 @@ namespace qilang {
     if (pr->hasError()) {
       return false;
     }
-    if (codegen == "qilang") {
+    if (generator == "qilang") {
       out->out() << qilang::format(pr->ast);
       return true;
     }
-    else if (codegen == "sexpr") {
+    else if (generator == "sexpr") {
       out->out() << qilang::formatAST(pr->ast);
       return true;
     }
-    else if (codegen == "doc") {
+    else if (generator == "doc") {
       out->out() << qilang::genDoc(pr->ast);
       return true;
     }
@@ -52,12 +54,14 @@ namespace qilang {
     if (pm->hasError()) {
       return false;
     }
-    if      (codegen == "cpp_interface" || codegen == "cppi")
+    if      (generator == "cpp_interface" || generator == "cppi")
       out->out() << qilang::genCppObjectInterface(pm, pr);
-    else if (codegen == "cpp_local"     || codegen == "cppl")
+    else if (generator == "cpp_local"     || generator == "cppl")
       out->out() << qilang::genCppObjectLocal(pm, pr);
-    else if (codegen == "cpp_remote"    || codegen == "cppr")
+    else if (generator == "cpp_remote"    || generator == "cppr")
       out->out() << qilang::genCppObjectRemote(pm, pr);
+    else if (generator == "cpp_gmock")
+      out->out() << qilang::genCppGMock(pm, pr);
     return true;
   }
 

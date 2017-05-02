@@ -54,10 +54,6 @@ namespace qilang {
         ConstDeclNode* tnode = static_cast<ConstDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
         return;
-      } case NodeType_ObjectDef: {
-        ObjectDefNode* tnode = static_cast<ObjectDefNode*>(node.get());
-        pkg->addMember(tnode->name, node);
-        return;
       } case NodeType_TypeDefDecl: {
         TypeDefDeclNode* tnode = static_cast<TypeDefDeclNode*>(node.get());
         pkg->addMember(tnode->name, node);
@@ -232,10 +228,10 @@ namespace qilang {
     return false;
   }
 
-  void PackageManager::printMessage(std::ostream &os) const
+  void PackageManager::printMessage(std::ostream& out, std::ostream& err) const
   {
     for (PackagePtrMap::const_iterator it = _packages.begin(); it != _packages.end(); ++it)
-      it->second->printMessage(os);
+      it->second->printMessage(out, err);
   }
 
 
@@ -304,13 +300,13 @@ namespace qilang {
         break;
       default:
         pr->addDiag(Diagnostic(DiagnosticType_Error, "'" + type + "' in package '" + pkgName + "' is not a type", tnode->loc()));
-        throw std::runtime_error("Not a type");
+        throw std::runtime_error("not a type");
         break;
       }
       return ResolutionResult(pkgName, type, kind);
     }
-    pr->addDiag(Diagnostic(DiagnosticType_Error, "Can't find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
-    throw std::runtime_error("Can't find import");
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "cannot find '" + type + "' in package '" + pkgName + "'", tnode->loc()));
+    throw std::runtime_error("cannot find import");
   }
 
   //throw on error
@@ -354,8 +350,8 @@ namespace qilang {
         }
       }
     }
-    pr->addDiag(Diagnostic(DiagnosticType_Error, "cant resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
-    throw std::runtime_error("cant resolve id");
+    pr->addDiag(Diagnostic(DiagnosticType_Error, "cannot resolve id '" + type + "' from package '" + pkg->_name + "'", tnode->loc()));
+    throw std::runtime_error("cannot resolve id");
   }
 
   /** parse all dependents packages
@@ -371,7 +367,7 @@ namespace qilang {
         //throw on error? should..
         parsePackage(it->first);
       } catch (const std::exception& e) {
-        mv.push_back(Diagnostic(DiagnosticType_Error, "Can't find package '" + it->first + "'"));//, it->second->loc()));
+        mv.push_back(Diagnostic(DiagnosticType_Error, "cannot find package '" + it->first + "'"));//, it->second->loc()));
       }
     }
 
@@ -390,9 +386,8 @@ namespace qilang {
         ResolutionResult sp;
         try {
           sp = resolveImport(it2->second, pkg, tnode);
-        } catch(const std::exception& e) {
-          it2->second->addDiag(Diagnostic(DiagnosticType_Error, "Can't find id '" + tnode->value + "'", tnode->loc()));
-          continue;
+        } catch(const std::exception&) {
+          continue; // error reporting in diagnostic already done by resolveImport
         }
         qiLogVerbose() << "resolved value '" << tnode->value << " to '" << sp.pkg << "." << sp.type << "'";
         tnode->resolved_package = sp.pkg;
@@ -410,10 +405,7 @@ namespace qilang {
   }
 
   /**
-   * @brief PackageManager::anal
-   * @param packageName
-   *
-   * let's annalyse what we have..
+   * let's analyse what we have..
    * precond: we have a list of files already parsed in the asked package.
    *
    * first pass: we find all exported symbols of a package
@@ -443,11 +435,11 @@ namespace qilang {
     return false;
   }
 
-  void Package::printMessage(std::ostream &os) const
+  void Package::printMessage(std::ostream& out, std::ostream& err) const
   {
     ParseResultMap::const_iterator it;
     for (it = _contents.begin(); it != _contents.end(); ++it) {
-      it->second->printMessage(os);
+      it->second->printMessage(out, err);
     }
   }
 

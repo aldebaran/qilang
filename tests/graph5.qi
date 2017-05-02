@@ -1,9 +1,0 @@
-package tests
-
-
-object Graph "g5"
-  object Motion.MoveTo "moveto"
-    direction: "forward"
-    length: 1
-  end
-end

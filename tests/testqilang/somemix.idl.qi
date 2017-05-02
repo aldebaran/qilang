@@ -22,6 +22,7 @@ interface KindaManager
   fn overlord(arg: int)
 
   sig test(s: float)
+  sig nothing()
   prop current(s: Vec<float>)
 end
 

@@ -139,7 +139,7 @@ std::string pkgNameToAPI(const std::string& name) {
   return ret;
 }
 
-static std::string filenameToHeaderGuardBase(
+std::string filenameToHeaderGuardBase(
     const std::string& pkgName,
     const std::string& filename)
 {

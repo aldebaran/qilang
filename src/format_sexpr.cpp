@@ -231,23 +231,13 @@ namespace qilang {
         out() << "))" << std::endl;
       }
     }
-    void visitStmt(ObjectDefNode *node) {
-      indent() << "(object ";
-      accept(node->type);
-      out() << " " << node->name << std::endl;
-      scoped(node->values);
-      indent() << ")" << std::endl;
-    }
+
     void visitStmt(PropertyDefNode *node) {
       indent() << "(prop " << node->name << " ";
       accept(node->data);
       out() << ")" << std::endl;
     }
-    void visitStmt(AtNode* node) {
-      indent() << "(at ";
-      accept(node->_sender);
-      out() << " " << node->receiver << ")" << std::endl;
-    }
+
     void visitStmt(VarDefNode* node) {
       indent() << "(defvar " << node->name;
       if (node->type) {

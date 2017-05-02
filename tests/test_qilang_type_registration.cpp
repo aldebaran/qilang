@@ -90,3 +90,11 @@ TEST_F(QiLangTypeRegistration, sumScores)
   };
   EXPECT_EQ(sum, _testqilang.call<int>("sumScores", scores));
 }
+
+TEST_F(QiLangTypeRegistration, StructDefaultValue)
+{
+  const double epsilon = 0.0001;
+  testqilang::Point point;
+  ASSERT_NEAR(3.14159, point.x, epsilon);
+  ASSERT_NEAR(1.618, point.y, epsilon);
+}

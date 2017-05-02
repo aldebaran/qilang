@@ -23,6 +23,7 @@ message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 # \flag:NOINTERFACE do not generate interface file
 # \flag:NOLOCAL     do not generate local file
 # \flag:NOREMOTE    do not generate remote file
+# \flag:NOGMOCK     do not generate GMockups
 # \group:FLAGS      flags to pass to qicc
 #
 # This function will set three variables:
@@ -31,9 +32,10 @@ message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
 #   wrappers over your classes
 # - ${OUT}_REMOTE which is the implementation of the interfaces as remote
 #   proxies
+# - ${OUT}_GMOCK which is mockups of the interfaces using GMock
 function(qi_gen_idl OUT lang pkg dir)
   cmake_parse_arguments(ARG
-    "NOINTERFACE;NOLOCAL;NOREMOTE"
+    "NOINTERFACE;NOLOCAL;NOREMOTE;NOGMOCK"
     ""
     "FLAGS"
     ${ARGN})
@@ -58,13 +60,20 @@ function(qi_gen_idl OUT lang pkg dir)
     get_filename_component(name "${rel_idl_path}" NAME)
     set(staged_idl_dir "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
     make_directory("${staged_idl_dir}")
-    message(STATUS "Will copy IDL file: ${abs_idl_path} to ${staged_idl_dir}")
-    set(copy_idl_file_target copy-idl-file-${dest_filename})
+    message(STATUS "Will mirror IDL file: ${abs_idl_path} to ${staged_idl_dir}")
+    set(mirror_idl_file_target mirror-idl-file-${dest_filename})
     set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
-    add_custom_target(
-      ${copy_idl_file_target} ALL
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${abs_idl_path}" "${staged_idl_path}"
-    )
+    if(UNIX)
+      add_custom_target(
+          ${mirror_idl_file_target} ALL
+          COMMAND ${CMAKE_COMMAND} -E create_symlink "${abs_idl_path}" "${staged_idl_path}"
+       )
+    else(UNIX)
+      add_custom_target(
+        ${mirror_idl_file_target} ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${abs_idl_path}" "${staged_idl_path}"
+      )
+    endif(UNIX)
 
     # each idl file shall be installed in the sdk
     qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
@@ -74,35 +83,47 @@ function(qi_gen_idl OUT lang pkg dir)
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
         COMMENT "Generating interface ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
         COMMAND "${QICC_EXECUTABLE}" -c cpp_interface "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_INTERFACE "${generated_path}")
-      message(STATUS "Will generate C++ interface header: ${generated_path}")
+      message(STATUS "Will generate C++ interface: ${generated_path}")
     endif()
 
     if(NOT ARG_NOLOCAL)
       set(generated_path "${abs_gen_dest_dir}/src/${maybe_subpackage}${dest_basename}_p.hpp")
       qi_generate_src(${generated_path}
         SRC "${abs_idl_path}"
-        COMMENT "Generating local ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        COMMENT "Generating local proxy wrapper ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
         COMMAND "${QICC_EXECUTABLE}" -c cpp_local "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_LOCAL "${generated_path}")
-      message(STATUS "Will generate C++ private header: ${generated_path}")
+      message(STATUS "Will generate C++ local proxy wrapper: ${generated_path}")
     endif()
 
     if(NOT ARG_NOREMOTE)
       set(generated_path "${abs_gen_dest_dir}/src/${subpackage}/${dest_basename}remote.cpp")
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
-        COMMENT "Generating remote ${generated_path}"
-        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${copy_idl_file_target}
+        COMMENT "Generating remote proxy implementation ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
         COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_REMOTE "${generated_path}")
-      message(STATUS "Will generate C++ proxy implementation: ${generated_path}")
+      message(STATUS "Will generate C++ remote proxy implementation: ${generated_path}")
+    endif()
+
+    if(NOT ARG_NOGMOCK)
+        set(generated_path "${abs_gen_dest_dir}/${package_and_subpackage}/gmock/${dest_basename}.hpp")
+        qi_generate_src("${generated_path}"
+          SRC "${abs_idl_path}"
+          COMMENT "Generating C++ GMock ${generated_path}"
+          DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
+          COMMAND "${QICC_EXECUTABLE}" -c cpp_gmock "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+        list(APPEND _out "${generated_path}")
+        list(APPEND _${OUT}_GMOCK "${generated_path}")
+        message(STATUS "Will generate C++ GMock: ${generated_path}")
     endif()
   endforeach()
 
@@ -116,6 +137,9 @@ function(qi_gen_idl OUT lang pkg dir)
   endif()
   if(NOT ARG_NOREMOTE)
     set(${OUT}_REMOTE ${_${OUT}_REMOTE} PARENT_SCOPE)
+  endif()
+  if(NOT ARG_NOGMOCK)
+    set(${OUT}_GMOCK ${_${OUT}_GMOCK} PARENT_SCOPE)
   endif()
 
   # This target is only useful for qilang unit tests.

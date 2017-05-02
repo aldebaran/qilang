@@ -1,0 +1,7 @@
+package testsubpackage.othersubpackage
+
+from testsubpackage.othersubpackage import CustomStruct
+
+struct JustAStruct
+  data: CustomStruct
+end

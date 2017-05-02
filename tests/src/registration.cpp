@@ -7,6 +7,8 @@
 #include "bradpitt.hpp"
 #include "ouroboros.hpp"
 #include "pingpong.hpp"
+#include "propertymaster.hpp"
+#include "signalmaster.hpp"
 #include "time.hpp"
 #include "truthseeker.hpp"
 
@@ -17,6 +19,8 @@ REGISTER_TIMELORD(testqilang::TimeLordImpl)
 REGISTER_OUROBOROS(testqilang::OuroborosImpl)
 REGISTER_PING(testqilang::PingImpl)
 REGISTER_PONG(testqilang::PongImpl)
+REGISTER_PROPERTYMASTER(testqilang::PropertyMasterImpl)
+REGISTER_SIGNALMASTER(testqilang::SignalMasterImpl)
 REGISTER_TRUTHSEEKER(testqilang::TruthSeekerImpl)
 
 testqilang::Error makeError(int code, std::string message)
@@ -48,6 +52,8 @@ void registerTestQiLang(qi::ModuleBuilder* mb)
   mb->advertiseFactory<testqilang::KindaManager>("KindaManager");
   mb->advertiseFactory<testqilang::AnotherInterface>("AnotherInterface");
   mb->advertiseFactory<testqilang::BradPitt>("BradPitt");
+  mb->advertiseFactory<testqilang::SignalMaster>("SignalMaster");
+  mb->advertiseFactory<testqilang::PropertyMaster>("PropertyMaster");
   mb->advertiseFactory<testqilang::TimeLord>("TimeLord");
   mb->advertiseMethod("Error", makeError);
   mb->advertiseMethod("Score", makeScore);

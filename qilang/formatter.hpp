@@ -55,6 +55,7 @@ namespace qilang {
   QILANG_API std::string genCppObjectRemote(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
   QILANG_API std::string genCppObjectLocal(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
+  QILANG_API std::string genCppGMock(const PackageManagerPtr& pm, const ParseResultPtr& nodes);
 
   QILANG_API std::string formatAST(const NodePtrVector& node);
   QILANG_API std::string format(const NodePtrVector& node);
@@ -68,10 +69,12 @@ namespace qilang {
   QILANG_API qi::AnyValue toAnyValue(const NodePtr& node);
 
 
-  QILANG_API bool codegen(const FileWriterPtr& out,
-                          const std::string& codegen,
-                          const PackageManagerPtr& pm,
-                          const ParseResultPtr& pr);
+  QILANG_API bool codegen(
+      const FileWriterPtr& out,
+      const std::string& generator,
+      const PackageManagerPtr& pm,
+      const ParseResultPtr& pr);
+
   enum FormatterCodeGen {
     QiLang,
     Cpp_Header,

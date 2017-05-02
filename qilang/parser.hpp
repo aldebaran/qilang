@@ -47,7 +47,7 @@ namespace qilang {
     const std::string& filename() const { return _loc.filename; }
     const Location&    loc() const      { return _loc; }
 
-    void print(std::ostream &out) const;
+    void print(std::ostream& out, std::ostream& err) const;
   protected:
     DiagnosticType _type;
     std::string _what;
@@ -96,14 +96,14 @@ namespace qilang {
 
     void addDiag(const Diagnostic& diag) {
       _messages.push_back(diag);
-      diag.print(std::cout);
+      diag.print(std::cout, std::cerr);
     }
 
     bool hasError() const {
       return _messages.size() > 0;
     }
 
-    void printMessage(std::ostream& out) const;
+    void printMessage(std::ostream& out, std::ostream& err) const;
   };
 
   typedef boost::shared_ptr<ParseResult> ParseResultPtr;

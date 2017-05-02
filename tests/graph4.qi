@@ -1,6 +1,0 @@
-package tests
-
-
-object Graph "g4"
-  text: "mange ton slip mec"
-end

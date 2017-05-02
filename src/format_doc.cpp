@@ -265,15 +265,11 @@ protected:
 
   void visitStmt(ImportNode* node) {
   }
-  void visitStmt(ObjectDefNode *node) {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(PropertyDefNode *node) {
     throw std::runtime_error("unimplemented");
   }
-  void visitStmt(AtNode* node) {
-    throw std::runtime_error("unimplemented");
-  }
+
   void visitStmt(VarDefNode* node) {
   }
 
