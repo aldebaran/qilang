@@ -75,8 +75,8 @@ function(qi_gen_idl OUT lang pkg dir)
       )
     endif(UNIX)
 
-    # each idl file shall be installed in the sdk
-    qi_install_data("${rel_idl_path}" SUBFOLDER "qi/idl")
+    # each idl file shall be installed in the sdk only
+    qi_install("${rel_idl_path}" COMPONENT devel DESTINATION "${QI_SDK_SHARE}/qi/idl")
 
     if(NOT ARG_NOINTERFACE)
       set(generated_path "${abs_gen_dest_dir}/${package_and_subpackage}/${dest_basename}.hpp")
