@@ -1,4 +1,8 @@
 <project version="3" >
+  <maintainer email="jlamotte@aldebaran.com">Joël Lamotte</maintainer>
+  <maintainer email="jmonnon@aldebaran.com">Jérémy Monnon</maintainer>
+  <maintainer email="matthieu.paindavoine@softbankrobotics.com">Matthieu Paindavoine</maintainer>
+  <maintainer email="vincent.palancher@external.softbankrobotics.com">Vincent Palancher</maintainer>
   <qibuild name="libqilang" >
     <depends buildtime="true" runtime="true" names="boost libqi"/>
     <depends buildtime="true" names="gmock pthread"/>
