@@ -101,6 +101,7 @@ public:
     indent() << "#define " << _headerGuard << "\n";
     indent() << "\n";
     indent() << "#include <gmock/gmock.h>\n";
+    indent() << "#include <boost/core/ignore_unused.hpp>\n";
     indent() << "#include " << qiLangToCppInclude(_pm->package(_pr->package), _pr->filename) << "\n";
     indent() << "\n";
 
@@ -182,7 +183,7 @@ public:
           indent() << "return true;\n";
         } // registration
         indent() << "}();\n";
-        indent() << "QI_UNUSED(_typeRegistered_);\n";
+        indent() << "boost::ignore_unused(_typeRegistered_);\n";
       } // construction
       indent() << "}\n" << "\n";
 
