@@ -80,4 +80,6 @@ qi_stage_cmake(qilang-tools-config.cmake)
 
 # include it go for testing!
 include(${CMAKE_CURRENT_SOURCE_DIR}/qilang-tools-config.cmake)
-add_subdirectory("tests")
+if (QI_WITH_TESTS)
+  add_subdirectory("tests")
+endif()
