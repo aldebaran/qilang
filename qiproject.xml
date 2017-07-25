@@ -2,6 +2,6 @@
   <qibuild name="libqilang" >
     <depends buildtime="true" runtime="true" names="boost libqi"/>
     <depends buildtime="true" names="gmock pthread"/>
-    <depends host="true" names="bison flex"/>
+    <depends buildtime="true" names="bison flex"/>
   </qibuild>
 </project>
