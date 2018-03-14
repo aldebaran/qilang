@@ -91,10 +91,25 @@
     return false;
   }
 #endif
-#ifdef _WIN32
-  static void qilang_readsome(qilang::Parser* p, char* buf, int *result, size_t max_size)
-#else
+
+// yy_n_chars has changed in 2.5.36 from int to yy_size_t to fix issue 1961902
+// https://github.com/westes/flex/commit/9ba3187a537d6a58d345f2874d06087fd4050399
+// Then it changed back to int in 2.6.1 to fix https://github.com/westes/flex/issues/53
+// https://github.com/westes/flex/commit/4a8eccf830e36f6611dc9cc6debd815ff32dcaf5
+//
+// Apple ships its own build of flex with Mac OS.
+// It is based on upstream flex 2.5.35 but it does include
+// the 1961902 change, and thus behaves like the upstream 2.5.36 version
+// (see https://opensource.apple.com/source/flex/flex-26/patches/W64-32.diff.auto.html).
+//
+// Hence, whenever flex has version 2.5.35 and we are on Mac OS, we assume this is the
+// apple-provided flex build, and we do as if it was the upstream flex 2.5.36.
+#if ((defined(__APPLE__) && YY_FLEX_MAJOR_VERSION == 2 && YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION == 35) \
+    || (YY_FLEX_MAJOR_VERSION == 2 && YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION >= 36) \
+    || (YY_FLEX_MAJOR_VERSION == 2 && YY_FLEX_MINOR_VERSION == 6 && YY_FLEX_SUBMINOR_VERSION < 1))
   static void qilang_readsome(qilang::Parser* p, char* buf, yy_size_t *result, size_t max_size)
+#else
+  static void qilang_readsome(qilang::Parser* p, char* buf, int *result, size_t max_size)
 #endif
   {
     if (p->file->in().eof() || p->file->in().fail()) {
