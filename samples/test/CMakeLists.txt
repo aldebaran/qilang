@@ -5,9 +5,10 @@ find_package(qibuild)
 find_package(qimodule)
 find_package(qilang-tools)
 
-qi_gen_idl(test_idl CPP "test" "${CMAKE_CURRENT_BINARY_DIR}" test/test.idl.qi)
+qi_gen_idl(test_idl CPP "test" "${CMAKE_CURRENT_BINARY_DIR}" share/qi/idl/test/test.idl.qi)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(".")
+qi_stage_dir(".")
 
 set(PUBLIC_HEADERS
   ${test_idl_INTERFACE}

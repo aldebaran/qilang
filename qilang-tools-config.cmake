@@ -12,6 +12,9 @@ else()
 endif()
 
 message(STATUS "Using qicc: ${QICC_EXECUTABLE}")
+option(QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT
+    "If ON, qi_gen_idl will copy/symlink IDL files whose path does not start with \"share/qi/idl/\" to QI_SDK_DIR"
+  ON)
 
 #! Generate qicc cpp files.
 #
@@ -42,44 +45,75 @@ function(qi_gen_idl OUT lang pkg dir)
 
   foreach(rel_idl_path ${ARG_UNPARSED_ARGUMENTS})
     message(STATUS "Processing IDL file: ${rel_idl_path}")
-    get_filename_component(package_and_subpackage "${rel_idl_path}" DIRECTORY)
-    get_filename_component(subpackage "${package_and_subpackage}" NAME)
+    if (IS_ABSOLUTE "${rel_idl_path}")
+        message(FATAL_ERROR "IDL path shall be relative, but was '${rel_idl_path}'")
+    endif()
+    # check the prefix is share/qi/idl/
+    set(_expected_prefix "share/qi/idl/")
+    string(LENGTH "${_expected_prefix}" _prefix_length)
+    string(SUBSTRING "${rel_idl_path}" 0 "${_prefix_length}" _prefix)
+    set (_use_legacy_layout OFF)
+    if (NOT _prefix STREQUAL _expected_prefix)
+      if(NOT QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT)
+        message(FATAL_ERROR
+                "IDL path '${rel_idl_path}' does not begin with '${_expected_prefix}'"
+                " and QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT"
+                " is ${QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT}.")
+      endif()
+      message(AUTHOR_WARNING "IDL path '${rel_idl_path}' does not begin with '${_expected_prefix}'."
+              " This layout is deprecated.")
+      set (_use_legacy_layout ON)
+      set (_prefix "")
+      set (_prefix_length 0)
+      # strip the filename
+      get_filename_component(package_subpackage "${rel_idl_path}" DIRECTORY)
+    else()
+      # strip the filename
+      get_filename_component(prefix_package_subpackage "${rel_idl_path}" DIRECTORY)
+      # strip the prefix
+      string(SUBSTRING "${prefix_package_subpackage}" "${_prefix_length}" -1 package_subpackage)
+    endif()
+    get_filename_component(subpackage "${package_subpackage}" NAME)
     set(maybe_subpackage "${subpackage}/")
-    if("${subpackage}" STREQUAL "${package_and_subpackage}")
+    if(subpackage STREQUAL package_subpackage)
       set(subpackage "")
       set(maybe_subpackage "")
     endif()
 
-    get_filename_component(abs_idl_path "${rel_idl_path}" ABSOLUTE)
     get_filename_component(abs_gen_dest_dir "${dir}" ABSOLUTE)
+    get_filename_component(abs_idl_path "${rel_idl_path}" ABSOLUTE)
     get_filename_component(dest_basename "${rel_idl_path}" NAME_WE)
     get_filename_component(dest_filename "${rel_idl_path}" NAME)
-    file(MAKE_DIRECTORY ${abs_gen_dest_dir}/${package_and_subpackage})
+    file(MAKE_DIRECTORY ${abs_gen_dest_dir}/${package_subpackage})
 
-    # each idl file shall be copied in the sdk folder
-    get_filename_component(name "${rel_idl_path}" NAME)
-    set(staged_idl_dir "${QI_SDK_DIR}/${QI_SDK_SHARE}/qi/idl/${package_and_subpackage}")
-    make_directory("${staged_idl_dir}")
-    message(STATUS "Will mirror IDL file: ${abs_idl_path} to ${staged_idl_dir}")
-    set(mirror_idl_file_target mirror-idl-file-${dest_filename})
-    set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
-    if(UNIX)
-      add_custom_target(
+    if (_use_legacy_layout)
+      # each idl file shall be copied in the sdk folder
+      set(staged_idl_dir "${QI_SDK_DIR}/${_expected_prefix}${package_subpackage}")
+      make_directory("${staged_idl_dir}")
+      message(STATUS "Will mirror IDL file: ${abs_idl_path} to ${staged_idl_dir}")
+      set(mirror_idl_file_target mirror-idl-file-${dest_filename})
+      set(staged_idl_path "${staged_idl_dir}/${dest_filename}")
+      if(UNIX)
+        add_custom_target(
           ${mirror_idl_file_target} ALL
           COMMAND ${CMAKE_COMMAND} -E create_symlink "${abs_idl_path}" "${staged_idl_path}"
-       )
-    else(UNIX)
-      add_custom_target(
-        ${mirror_idl_file_target} ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${abs_idl_path}" "${staged_idl_path}"
-      )
-    endif(UNIX)
+         )
+      else(UNIX)
+        add_custom_target(
+          ${mirror_idl_file_target} ALL
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different "${abs_idl_path}" "${staged_idl_path}"
+        )
+      endif(UNIX)
+    else()
+      set(staged_idl_path "${abs_idl_path}")
+      set(mirror_idl_file_target "")
+    endif()
 
     # each idl file shall be installed in the sdk only
-    qi_install("${rel_idl_path}" COMPONENT devel DESTINATION "${QI_SDK_SHARE}/qi/idl")
+    qi_install("${rel_idl_path}" COMPONENT devel DESTINATION "${_expected_prefix}${package_subpackage}")
 
     if(NOT ARG_NOINTERFACE)
-      set(generated_path "${abs_gen_dest_dir}/${package_and_subpackage}/${dest_basename}.hpp")
+      set(generated_path "${abs_gen_dest_dir}/${package_subpackage}/${dest_basename}.hpp")
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
         COMMENT "Generating interface ${generated_path}"
@@ -103,7 +137,7 @@ function(qi_gen_idl OUT lang pkg dir)
     endif()
 
     if(NOT ARG_NOREMOTE)
-      set(generated_path "${abs_gen_dest_dir}/src/${subpackage}/${dest_basename}remote.cpp")
+      set(generated_path "${abs_gen_dest_dir}/src/${maybe_subpackage}${dest_basename}remote.cpp")
       qi_generate_src("${generated_path}"
         SRC "${abs_idl_path}"
         COMMENT "Generating remote proxy implementation ${generated_path}"
@@ -115,15 +149,15 @@ function(qi_gen_idl OUT lang pkg dir)
     endif()
 
     if(NOT ARG_NOGMOCK)
-        set(generated_path "${abs_gen_dest_dir}/${package_and_subpackage}/gmock/${dest_basename}.hpp")
-        qi_generate_src("${generated_path}"
-          SRC "${abs_idl_path}"
-          COMMENT "Generating C++ GMock ${generated_path}"
-          DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
-          COMMAND "${QICC_EXECUTABLE}" -c cpp_gmock "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
-        list(APPEND _out "${generated_path}")
-        list(APPEND _${OUT}_GMOCK "${generated_path}")
-        message(STATUS "Will generate C++ GMock: ${generated_path}")
+      set(generated_path "${abs_gen_dest_dir}/${package_subpackage}/gmock/${dest_basename}.hpp")
+      qi_generate_src("${generated_path}"
+        SRC "${abs_idl_path}"
+        COMMENT "Generating C++ GMock ${generated_path}"
+        DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
+        COMMAND "${QICC_EXECUTABLE}" -c cpp_gmock "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+      list(APPEND _out "${generated_path}")
+      list(APPEND _${OUT}_GMOCK "${generated_path}")
+      message(STATUS "Will generate C++ GMock: ${generated_path}")
     endif()
   endforeach()
 
