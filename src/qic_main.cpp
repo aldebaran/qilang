@@ -95,6 +95,9 @@ int main(int argc, char *argv[])
     auto targetSdkDir =
         qi::Path::fromNative(qilang::formatPath(vm["target-sdk-dir"].as<std::string>()));
     if (!targetSdkDir.isEmpty()) {
+      // first add the "${target-sdk-dir}"
+      pm->addLookupPaths({targetSdkDir.str()});
+      // then add paths which are listed in "${target-sdk-dir}/share/qi/path.conf"
       pm->addLookupPaths(qi::path::parseQiPathConf(targetSdkDir.str()));
     }
   }
@@ -119,7 +122,7 @@ int main(int argc, char *argv[])
     includes = vm["include"].as< std::vector<std::string> >();
 
   pm->setIncludes(includes);
-  std::string idlFile = qilang::formatPath(inputs[0]);
+  std::string idlFile = qilang::formatPath(inputs.at(0));
 
   if (mode == "service") {
     app.startSession();

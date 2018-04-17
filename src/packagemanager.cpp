@@ -13,6 +13,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <algorithm>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
 #include <qilang/pathformatter.hpp>
@@ -400,7 +401,10 @@ namespace qilang {
   void PackageManager::addLookupPaths(const StringVector& lookupPaths) {
     _lookupPaths.reserve(_lookupPaths.size() + lookupPaths.size());
     for (const auto& path : lookupPaths) {
-      _lookupPaths.push_back(path);
+      const auto it = std::find(_lookupPaths.begin(), _lookupPaths.end(), path);
+      if (it == _lookupPaths.end()) {
+        _lookupPaths.push_back(path);
+      }
     }
   }
 
