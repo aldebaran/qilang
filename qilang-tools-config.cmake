@@ -197,10 +197,10 @@ function(qi_gen_lib package destination)
     "DEPENDS;API_HEADER;IDL"
     ${ARGN})
 
-  set(generated_file_list ${package}_generated)
+  set(generated_files_var ${package}_generated)
 
   qi_gen_idl(
-    ${generated_file_list}
+    ${generated_files_var}
     CPP
     ${package}
     ${destination}
@@ -218,7 +218,7 @@ function(qi_gen_lib package destination)
     ${package} SHARED
 
     ${ARG_API_HEADER}
-    ${${generated_file_list}}
+    ${${generated_files_var}}
     ${ARG_IDL}
 
     DEPENDS
@@ -229,8 +229,8 @@ function(qi_gen_lib package destination)
   get_filename_component(header_dir "${ARG_API_HEADER}" DIRECTORY)
 
   qi_install_header(
-    ${${package}_INTERFACE}
-    ${${package}_REMOTE}
+    ${${generated_files_var}_INTERFACE}
+    ${${generated_files_var}_REMOTE}
     SUBFOLDER
     "${header_dir}"
   )
