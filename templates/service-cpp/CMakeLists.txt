@@ -4,10 +4,11 @@ project(@ProjectName@)
 find_package(qibuild) # Always required
 qi_sanitize_compile_flags(HIDDEN_SYMBOLS) # To behave the same way on every platform
 include_directories(".") # Exposes the headers locally
+qi_stage_dir(".") # Exposes the IDLs locally
 
 # Generate the specialized proxies. You can put several IDL files if you want.
 find_package(qilang-tools) # Required for qi_gen_idl
-set(@projectname@_idl "@projectname@/@projectname@.idl.qi")
+set(@projectname@_idl "share/qi/idl/@projectname@/@projectname@.idl.qi")
 qi_gen_idl(@projectname@_generated CPP "@projectname@" "${CMAKE_CURRENT_BINARY_DIR}" ${@projectname@_idl})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Exposes the generated headers locally
 

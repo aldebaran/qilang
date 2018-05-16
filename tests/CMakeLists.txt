@@ -1,20 +1,21 @@
 if(QI_WITH_TESTS)
   find_package(qimodule)
   qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR})
   include_directories(".")
+  qi_stage_dir(".")
+
 
   # TestQiLang, a messy set of IDLs to check many cases
   set(
     testqilang_idl
 
-    "testqilang/someenums.idl.qi"
-    "testqilang/someinterfaces.idl.qi"
-    "testqilang/somemix.idl.qi"
-    "testqilang/someproperties.idl.qi"
-    "testqilang/somesignals.idl.qi"
-    "testqilang/somestructs.idl.qi"
-    "testqilang/time.idl.qi"
+    "share/qi/idl/testqilang/someenums.idl.qi"
+    "share/qi/idl/testqilang/someinterfaces.idl.qi"
+    "share/qi/idl/testqilang/somemix.idl.qi"
+    "share/qi/idl/testqilang/someproperties.idl.qi"
+    "share/qi/idl/testqilang/somesignals.idl.qi"
+    "share/qi/idl/testqilang/somestructs.idl.qi"
+    "share/qi/idl/testqilang/time.idl.qi"
   )
 
   qi_gen_idl(
@@ -65,8 +66,8 @@ if(QI_WITH_TESTS)
   set(
     testsubpackage_idl
 
-    "testsubpackage/othersubpackage/othersubpackage.idl.qi"
-    "testsubpackage/othersubpackage/localimport.idl.qi"
+    "share/qi/idl/testsubpackage/othersubpackage/othersubpackage.idl.qi"
+    "share/qi/idl/testsubpackage/othersubpackage/localimport.idl.qi"
   )
 
   qi_gen_lib(
@@ -92,8 +93,8 @@ if(QI_WITH_TESTS)
   set(
     testimportpackage_idl
 
-    "testimportpackage/testimportpackage.idl.qi"
-    "testimportpackage/importfromsubpackage.idl.qi"
+    "share/qi/idl/testimportpackage/testimportpackage.idl.qi"
+    "share/qi/idl/testimportpackage/importfromsubpackage.idl.qi"
   )
 
   qi_gen_lib(
@@ -113,7 +114,7 @@ if(QI_WITH_TESTS)
   add_dependencies(qi_gen_idl_testimportpackage qicc)
 
   # Test packages under "qi"
-  set(qisubpackage_idl "qi/subpackage/mix.idl.qi")
+  set(qisubpackage_idl "share/qi/idl/qi/subpackage/mix.idl.qi")
 
   qi_gen_idl(
     qisubpackage_generated
