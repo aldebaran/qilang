@@ -4,6 +4,11 @@ if(QI_WITH_TESTS)
   include_directories(".")
   qi_stage_dir(".")
 
+  # Below, we were lazy to make the distribution of these tests correctly in deploys.
+  # It was preferred to simply prevent those files from being installed, and instead only
+  # use them locally to the build.
+  # TODO: allow modules for test only, and improve qi_gen_lib to allow to run these tests from
+  # a deploy.
 
   # TestQiLang, a messy set of IDLs to check many cases
   set(
@@ -24,6 +29,7 @@ if(QI_WITH_TESTS)
     "testqilang" # Package name
     "${CMAKE_CURRENT_BINARY_DIR}" # Destination
     ${testqilang_idl} # IDL files
+    NO_INSTALL
   )
 
   qi_create_lib(
@@ -35,6 +41,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     qi
+    NO_INSTALL
   )
 
   # Needed to ensure the build order
@@ -60,6 +67,7 @@ if(QI_WITH_TESTS)
     DEPENDS
     qi
     testqilang
+    NO_INSTALL
   )
 
   # Test qilang subpackages management
@@ -82,6 +90,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     testqilang
+    NO_INSTALL
   )
 
   # Needed to ensure the build order
@@ -106,6 +115,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     testsubpackage
+    NO_INSTALL
   )
 
   qi_stage_lib(testimportpackage)
@@ -122,6 +132,7 @@ if(QI_WITH_TESTS)
     qi.subpackage # Package name
     "${CMAKE_CURRENT_BINARY_DIR}" # Destination
     ${qisubpackage_idl} # IDL files
+    NO_INSTALL
   )
 
   qi_create_lib(
@@ -131,6 +142,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     qi
+    NO_INSTALL
   )
 
   qi_stage_lib(qisubpackage)
@@ -143,6 +155,7 @@ if(QI_WITH_TESTS)
 
     DEPENDS
     qisubpackage
+    NO_INSTALL
   )
 
   qi_stage_lib(qisubpackageimpl)
@@ -180,5 +193,6 @@ if(QI_WITH_TESTS)
     testsubpackage
 
     TIMEOUT 10
+    NO_INSTALL
   )
 endif(QI_WITH_TESTS)
