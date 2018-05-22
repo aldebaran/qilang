@@ -10,10 +10,13 @@
 #include <qilang/parser.hpp>
 #include <qilang/visitor.hpp>
 #include "cpptype.hpp"
+#include <boost/version.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp> // needed because of https://svn.boost.org/trac10/ticket/8634
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
+#include <boost/algorithm/cxx14/mismatch.hpp>
 #include <qi/qi.hpp>
 #include <qi/path.hpp>
 #include <qilang/pathformatter.hpp>
@@ -77,7 +80,7 @@ namespace qilang {
     }
   }
 
-  PackagePtr    PackageManager::package(const std::string& packagename) const {
+  PackagePtr PackageManager::package(const std::string& packagename) const {
     PackagePtrMap::const_iterator it;
     it = _packages.find(packagename);
     if (it == _packages.end())
@@ -183,18 +186,52 @@ namespace qilang {
     return ret;
   }
 
-  void         PackageManager::addInclude(const std::string& include) {
+  boost::filesystem::path pm_relative(const boost::filesystem::path &path,
+                                      const boost::filesystem::path &base) {
+#if BOOST_VERSION < 106000
+    // This is a  poor man implementation of relative(),
+    // limited to the case where path is a child of base.
+    const auto apath = boost::filesystem::absolute(path);
+    const auto abase = boost::filesystem::absolute(base);
+    auto mm = boost::algorithm::mismatch(abase.begin(), abase.end(),
+                                         apath.begin(), apath.end());
+    if(mm.first != abase.end()) {
+      std::ostringstream ss;
+      ss << "the lookup path seems malformed: " << apath
+         << " is not a child of " << abase;
+      throw std::invalid_argument(ss.str());
+    }
+    boost::filesystem::path res;
+    while (mm.second != apath.end()) {
+      res /= *(mm.second);
+      ++mm.second;
+    }
+    return res;
+#else
+    return boost::filesystem::relative(path, base);
+#endif
+  }
+
+  void PackageManager::addInclude(const std::string& include) {
     if (std::find(_includes.begin(), _includes.end(), include) == _includes.end()) {
       qiLogVerbose() << "adding include: " << include;
       _includes.insert(_includes.begin(), include);
     }
   }
 
+  struct HashBfsPath {
+    size_t operator()(const boost::filesystem::path& p) const
+    {
+      return boost::filesystem::hash_value(p);
+    }
+  };
+
   std::unordered_set<std::string> PackageManager::locatePackage(const std::string& pkgName) {
 
     if (pkgName.empty())
       throw std::runtime_error("empty package name");
 
+    std::unordered_set<boost::filesystem::path, HashBfsPath> pkgFilesRelPaths;
     qi::Path pkgPath(pkgNameToDir(pkgName));
 
     std::unordered_set<std::string> packageFiles;
@@ -211,6 +248,13 @@ namespace qilang {
         auto path = itPath->path();
         std::string pathStr = formatPath(path.string());
         if (boost::algorithm::ends_with(pathStr, ".idl.qi")) {
+          auto relPath = pm_relative(path, lookupPath.bfsPath());
+          if (!(pkgFilesRelPaths.insert(relPath).second)) {
+            // ignore this file: we already found an IDL file named like
+            // this in the _lookupPath
+            qiLogVerbose() << "ignored colliding file: '" << pathStr << "'";
+            continue;
+          }
           packageFiles.insert(pathStr);
           qiLogVerbose() << "Found package '" << pkgName << "' in " << pathStr;
         }
@@ -358,6 +402,7 @@ namespace qilang {
   /** parse all dependents packages
    */
   void PackageManager::resolvePackage(const std::string& packageName) {
+    qiLogVerbose() << "resolvePackage pkg '" << packageName;
     PackagePtr pkg = package(packageName);
 
     DiagnosticVector mv;

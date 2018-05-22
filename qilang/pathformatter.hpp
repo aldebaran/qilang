@@ -6,6 +6,9 @@
 
 namespace qilang {
 
+// TODO: document the purpose of this function, and the
+// encoding used for input and output.
+// (hint: current usage seems inconsistent).
 QILANG_API std::string formatPath(const std::string& path);
 
 }
