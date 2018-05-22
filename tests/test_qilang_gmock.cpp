@@ -9,7 +9,7 @@ TEST(QiLangGMock, mockExistsAndWorks)
   int truth = 1337;
   testqilang::gmock::KindaManagerGMock kindaManagerMock{};
   EXPECT_CALL(kindaManagerMock, findTruth()).WillOnce(testing::Return(qi::Future<int>{truth}));
-  ASSERT_EQ(truth, kindaManagerMock.findTruth());
+  ASSERT_EQ(truth, kindaManagerMock.findTruth().value());
 }
 
 TEST(QiLangGMock, typeErasedCallToMockedFunction)
