@@ -74,7 +74,6 @@ int main(int argc, char *argv[])
       ("codegen,c", po::value<std::string>(), "Set the codegenerator to use")
       ("input-mode,i", po::value<std::string>()->default_value("file"), "Set the input type (file or service)")
       ("inputs", po::value< std::vector< std::string> >(), "input files")
-      ("include,I", po::value< std::vector< std::string> >(), "include directories for packages")
       ("output-file,o", po::value<std::string>(), "output file")
       ("target-sdk-dir,t", po::value<std::string>(), "the SDK directory of the target platform")
       ;
@@ -118,10 +117,6 @@ int main(int argc, char *argv[])
     out = qilang::newFileWriter(&std::cout, "cout");
   }
 
-  if (vm.count("include"))
-    includes = vm["include"].as< std::vector<std::string> >();
-
-  pm->setIncludes(includes);
   std::string idlFile = qilang::formatPath(inputs.at(0));
 
   if (mode == "service") {
