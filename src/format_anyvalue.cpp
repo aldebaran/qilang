@@ -5,6 +5,8 @@
 ** Copyright (C) 2014 Aldebaran Robotics
 */
 
+#include <iostream>
+
 #include <qilang/formatter.hpp>
 #include <qilang/node.hpp>
 #include <qilang/visitor.hpp>
