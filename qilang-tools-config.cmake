@@ -27,6 +27,7 @@ option(QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT
 # \flag:NOLOCAL     do not generate local file
 # \flag:NOREMOTE    do not generate remote file
 # \flag:NOGMOCK     do not generate GMockups
+# \flag:NO_INSTALL  do not generate install rule
 # \group:FLAGS      flags to pass to qicc
 #
 # This function will set three variables:
@@ -38,7 +39,7 @@ option(QI_GEN_IDL_SUPPORT_LEGACY_LAYOUT
 # - ${OUT}_GMOCK which is mockups of the interfaces using GMock
 function(qi_gen_idl OUT lang pkg dir)
   cmake_parse_arguments(ARG
-    "NOINTERFACE;NOLOCAL;NOREMOTE;NOGMOCK"
+    "NOINTERFACE;NOLOCAL;NOREMOTE;NOGMOCK;NO_INSTALL"
     ""
     "FLAGS"
     ${ARGN})
@@ -109,8 +110,10 @@ function(qi_gen_idl OUT lang pkg dir)
       set(mirror_idl_file_target "")
     endif()
 
-    # each idl file shall be installed in the sdk only
-    qi_install("${rel_idl_path}" COMPONENT devel DESTINATION "${_expected_prefix}${package_subpackage}")
+    if(NOT ARG_NO_INSTALL)
+      # each idl file shall be installed in the sdk only
+      qi_install("${rel_idl_path}" COMPONENT devel DESTINATION "${_expected_prefix}${package_subpackage}")
+    endif()
 
     if(NOT ARG_NOINTERFACE)
       set(generated_path "${abs_gen_dest_dir}/${package_subpackage}/${dest_basename}.hpp")
@@ -186,25 +189,32 @@ endfunction()
 # \arg:package The package name, also the name of the resulting target
 # \arg:dir The directory where the files will be generated
 # \arg:depends The list of dependencies required by the generated library
+# \flag:NO_INSTALL  do not generate install rule
 #
 # This function forwards the extra arguments to qi_gen_idl.
 # \ref:qi_gen_idl
 #
 function(qi_gen_lib package destination)
   cmake_parse_arguments(ARG
-    ""
+    "NO_INSTALL"
     ""
     "DEPENDS;API_HEADER;IDL"
     ${ARGN})
 
-  set(generated_file_list ${package}_generated)
+  set(generated_files_var ${package}_generated)
+
+  set(maybe_no_install "")
+  if (ARG_NO_INSTALL)
+      set(maybe_no_install "NO_INSTALL")
+  endif()
 
   qi_gen_idl(
-    ${generated_file_list}
+    ${generated_files_var}
     CPP
     ${package}
     ${destination}
     ${ARG_IDL}
+    ${maybe_no_install}
     ${ARG_UNPARSED_ARGUMENTS}
   )
 
@@ -216,9 +226,9 @@ function(qi_gen_lib package destination)
 
   qi_create_lib(
     ${package} SHARED
-
+    ${maybe_no_install}
     ${ARG_API_HEADER}
-    ${${generated_file_list}}
+    ${${generated_files_var}}
     ${ARG_IDL}
 
     DEPENDS
@@ -228,11 +238,12 @@ function(qi_gen_lib package destination)
 
   get_filename_component(header_dir "${ARG_API_HEADER}" DIRECTORY)
 
-  qi_install_header(
-    ${${package}_INTERFACE}
-    ${${package}_REMOTE}
-    SUBFOLDER
-    "${header_dir}"
-  )
-
+  if (NOT ARG_NO_INSTALL)
+    qi_install_header(
+      ${${generated_files_var}_INTERFACE}
+      ${${generated_files_var}_REMOTE}
+      SUBFOLDER
+      "${header_dir}"
+    )
+  endif()
 endfunction()

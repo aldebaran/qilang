@@ -6,6 +6,7 @@
 */
 
 #include <iostream>
+#include <memory>
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
@@ -94,7 +95,7 @@ public:
   }
 
   std::stack<bool> first;
-  boost::scoped_ptr<Doc> curDoc;
+  std::unique_ptr<Doc> curDoc;
 
   void putComma() {
     if (first.top())
