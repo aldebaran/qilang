@@ -167,10 +167,6 @@ namespace qilang {
     NodePtrVector ast(const std::string& filename);
     PackagePtr    package(const std::string& packagename) const;
 
-    void         addInclude(const std::string& include);
-    void         setIncludes(const StringVector& includes) { _includes = includes; }
-    StringVector includes() const                          { return _includes; }
-
     //return all the files composing a package  (their may be false)
     std::unordered_set<std::string> locatePackage(const std::string& pkgName);
 
@@ -194,7 +190,6 @@ namespace qilang {
   protected:
     PackagePtrMap        _packages; // packagename , packageptr
     FilenameToPackageMap _sources;  // abs filename , packagename
-    StringVector         _includes;
     StringVector _lookupPaths;
   };
   typedef boost::shared_ptr<PackageManager> PackageManagerPtr;

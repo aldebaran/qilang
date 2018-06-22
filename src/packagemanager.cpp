@@ -139,7 +139,6 @@ namespace qilang {
 
     std::string pkgpath = p.absolute().str();
 
-    addInclude(pkgpath);
     addPackage(pkgname);
     pr->package = pkgname;
     package(pkgname)->setContent(absfile, pr);
@@ -212,13 +211,6 @@ namespace qilang {
 #endif
   }
 
-  void PackageManager::addInclude(const std::string& include) {
-    if (std::find(_includes.begin(), _includes.end(), include) == _includes.end()) {
-      qiLogVerbose() << "adding include: " << include;
-      _includes.insert(_includes.begin(), include);
-    }
-  }
-
   struct HashBfsPath {
     size_t operator()(const boost::filesystem::path& p) const
     {
@@ -284,8 +276,7 @@ namespace qilang {
    * @brief PackageManager::parsePackage
    * @param package
    *
-   * locate the package... use QIPATH and -I to look for the package.
-   * a folder with a "pkgname".pkg.qi file
+   * locate the package...
    */
   void PackageManager::parsePackage(const std::string& packageName) {
     addPackage(packageName);
