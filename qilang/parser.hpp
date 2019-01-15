@@ -10,6 +10,7 @@
 
 #include <qilang/api.hpp>
 #include <fstream>
+#include <iostream>
 #include <qilang/node.hpp>
 #include <boost/make_shared.hpp>
 
