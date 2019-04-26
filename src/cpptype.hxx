@@ -79,6 +79,13 @@ void CppTypeFormatter<T>::visitTypeExpr(TupleTypeExprNode* node) {
 }
 
 template <typename T>
+void CppTypeFormatter<T>::visitTypeExpr(OptionalTypeExprNode* node) {
+  this->out() << constattr("const ") << "boost::optional< ";
+  unconstify(node->element);
+  this->out() << " >" << constattr("&");
+}
+
+template <typename T>
 void CppTypeFormatter<T>::visitTypeExpr(VarArgTypeExprNode* node) {
   this->out() << constattr("const ") << "qi::VarArguments< ";
   unconstify(node->element);

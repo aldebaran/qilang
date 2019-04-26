@@ -178,6 +178,7 @@ FLOAT    {UFLOAT}
 "Vec"           RETURN_OP(VEC);
 "Map"           RETURN_OP(MAP);
 "Tuple"         RETURN_OP(TUPLE);
+"Opt"           RETURN_OP(OPT);
 
 {FLOAT}           {
   qilang::LiteralNodePtr node = boost::make_shared<qilang::FloatLiteralNode>(boost::lexical_cast<float>(yytext), qilang::makeLocation(LOC));

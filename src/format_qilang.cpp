@@ -83,6 +83,10 @@ namespace qilang {
       join(node->elements, ", ");
       out() << ")";
     }
+    void visitTypeExpr(OptionalTypeExprNode *node) {
+      out() << "+"; // like in libqi
+      accept(node->element);
+    }
     void visitTypeExpr(VarArgTypeExprNode* node) {
       accept(node->effectiveElement());
     }

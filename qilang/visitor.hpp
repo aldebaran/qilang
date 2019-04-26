@@ -97,6 +97,9 @@ namespace qilang {
     void visitTypeExpr(TupleTypeExprNode *node) {
       each(node->elements);
     }
+    void visitTypeExpr(OptionalTypeExprNode *node) {
+      acceptWithCb(node->element);
+    }
     void visitTypeExpr(VarArgTypeExprNode *node) {
       acceptWithCb(node->element);
     }

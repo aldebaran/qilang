@@ -86,6 +86,7 @@ class KeywordArgTypeExprNode;
 class ListTypeExprNode;
 class MapTypeExprNode;
 class TupleTypeExprNode;
+class OptionalTypeExprNode;
 
 // EXPR
 class ExprNode;        //VIRTUAL: dep on TypeExpr, Literal
@@ -212,6 +213,7 @@ public:
   virtual void visitTypeExpr(ListTypeExprNode* node) = 0;
   virtual void visitTypeExpr(MapTypeExprNode* node) = 0;
   virtual void visitTypeExpr(TupleTypeExprNode* node) = 0;
+  virtual void visitTypeExpr(OptionalTypeExprNode* node) = 0;
   virtual void visitTypeExpr(VarArgTypeExprNode *node) = 0;
   virtual void visitTypeExpr(KeywordArgTypeExprNode *node) = 0;
 };
@@ -241,6 +243,7 @@ enum NodeType {
   NodeType_MapTypeExpr,
   NodeType_ListTypeExpr,
   NodeType_TupleTypeExpr,
+  NodeType_OptionalTypeExpr,
 
   NodeType_BoolData,
   NodeType_IntData,
@@ -685,6 +688,17 @@ public:
   TypeExprNodePtrVector elements;
 };
 
+class QILANG_API OptionalTypeExprNode : public TypeExprNode {
+public:
+  explicit OptionalTypeExprNode(const TypeExprNodePtr& element, const Location& loc)
+    : TypeExprNode(NodeType_OptionalTypeExpr, loc)
+    , element(element)
+  {}
+
+  void accept(NodeVisitor* visitor) { visitor->visitTypeExpr(this); }
+
+  TypeExprNodePtr element;
+};
 
 // ####################
 // # STMT Node

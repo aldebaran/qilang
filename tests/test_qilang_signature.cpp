@@ -32,6 +32,13 @@ TEST(TestSignature, signatureToQiLangMap) {
   EXPECT_STREQ("([int8]uint8, [int16]uint16, [int32]uint32, [int64]uint64, [float32]float64, [bool]str, [int8]any)", qilang::format(node).c_str());
 }
 
+TEST(TestSignature, signatureToQiLangOpt) {
+  const qi::Signature signature("(+b+c+C+w+W+i+I+l+L+f+d+s+m)"); //miss v
+  qilang::TypeExprNodePtr node = qilang::signatureToQiLang(signature);
+
+  EXPECT_STREQ("(+bool, +int8, +uint8, +int16, +uint16, +int32, +uint32, +int64, +uint64, +float32, +float64, +str, +any)", qilang::format(node).c_str());
+}
+
 qi::MetaMethod metaMethodeTest(){
   const qi::Signature returnSignature("i");
   const qi::Signature parametersSignature("(bcCiIlLfdsm)");

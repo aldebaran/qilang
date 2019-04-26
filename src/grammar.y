@@ -139,6 +139,7 @@
   VEC                 "Vec"
   MAP                 "Map"
   TUPLE               "Tuple"
+  OPT                 "Opt"
 
 %token <qilang::KeywordNodePtr>
   INTERFACE           "interface"
@@ -210,6 +211,8 @@ type:
 | "Vec" "<" type ">"                { $$ = NODE1(ListTypeExprNode, @$, $3); }
 | "Map" "<" type "," type ">"       { $$ = NODE2(MapTypeExprNode, @$, $3, $5); }
 | "Tuple" "<" tuple_type_defs ">"   { $$ = NODE1(TupleTypeExprNode, @$, $3); }
+| "Opt" "<" type ">"                { $$ = NODE1(OptionalTypeExprNode, @$, $3); }
+
 
 %type<qilang::TypeExprNodePtrVector> tuple_type_defs;
 tuple_type_defs:
