@@ -8,6 +8,7 @@ namespace testqilang
 struct PropertyMasterImpl
 {
   qi::Property<int> intProperty;
+  qi::Property<boost::optional<float>> optionalProperty;
 };
 } // testqilang
 

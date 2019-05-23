@@ -257,6 +257,7 @@ public:
   virtual void visitTypeExpr(ListTypeExprNode* node) {}
   virtual void visitTypeExpr(MapTypeExprNode* node) {}
   virtual void visitTypeExpr(TupleTypeExprNode* node) {}
+  virtual void visitTypeExpr(OptionalTypeExprNode* node) {}
   virtual void visitTypeExpr(VarArgTypeExprNode *node) {}
   virtual void visitTypeExpr(KeywordArgTypeExprNode *node) {}
 

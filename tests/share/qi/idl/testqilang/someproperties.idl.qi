@@ -3,4 +3,5 @@ package testqilang
 
 interface PropertyMaster
   prop intProperty(value: int)
+  prop optionalProperty(value: Opt<float>)
 end

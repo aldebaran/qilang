@@ -191,6 +191,7 @@ if(QI_WITH_TESTS)
     testimportpackage
     testqilang
     testsubpackage
+    testsession
 
     TIMEOUT 10
     NO_INSTALL

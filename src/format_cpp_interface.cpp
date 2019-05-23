@@ -362,28 +362,39 @@ public:
     ScopedFormatAttrBlock _(constattr);
     scoped(node->decls);
 
-    StringVector fields;
+    StringVector fields, optionalFields;
     for (unsigned int i = 0; i < node->decls.size(); ++i) {
       if (StructFieldDeclNodePtr field =
           boost::dynamic_pointer_cast<StructFieldDeclNode>(node->decls[i])) {
-        for (unsigned int j = 0; j < field->names.size(); ++j)
+        for (unsigned int j = 0; j < field->names.size(); ++j) {
           fields.push_back(field->names[j]);
+        }
+        if (field->effectiveType()->type() == NodeType_OptionalTypeExpr) {
+          optionalFields.insert(end(optionalFields), begin(field->names), end(field->names));
+        }
       }
     }
     indent() << "};" << std::endl << std::endl;
 
     {
       ScopedNamespaceEscaper _e(out(), currentNs);
-      out() << "QI_TYPE_STRUCT(";
-      for (unsigned int i = 0; i < currentNs.size(); ++i) {
-        out() << "::" << currentNs.at(i);
+      auto printStructMacro = [&](const char* const macroName, const StringVector& fieldNames, bool namesAsStrings) {
+        out() << macroName << "(";
+        for (auto&& value : currentNs) {
+          out() << "::" << value;
+        }
+        out() << "::" << node->name;
+        StringVector fieldRegs;
+        const std::string quote = (namesAsStrings ? "\"" : "");
+        std::transform(fieldNames.begin(), fieldNames.end(),
+            std::back_inserter(fieldRegs), ", " + quote + boost::lambda::_1 + quote);
+        join(fieldRegs, "");
+        out() << ")" << std::endl;
+      };
+      if (!optionalFields.empty()) {
+        printStructMacro("QI_TYPE_STRUCT_EXTENSION_ADDED_FIELDS", optionalFields, true);
       }
-      out() << "::" << node->name;
-      StringVector fieldRegs;
-      std::transform(fields.begin(), fields.end(),
-          std::back_inserter(fieldRegs), ", " + boost::lambda::_1);
-      join(fieldRegs, "");
-      out() << ")" << std::endl;
+      printStructMacro("QI_TYPE_STRUCT", fields, false);
       out() << std::endl;
     }
   }

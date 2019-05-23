@@ -12,3 +12,24 @@ struct Point
   x: float = 3.14159
   y: float = 1.618
 end
+
+struct Config1
+  maxSpeed: Opt<float>
+end
+
+struct Config2
+  maxSpeed: Opt<float>
+  n: Opt<int>
+end
+
+struct Config3
+  maxSpeed: Opt<float>
+  n: Opt<int>
+  name: Opt<str>
+end
+
+struct Config3APIBreak
+  maxSpeed: Opt<float>
+  n: Opt<int>
+  name: str
+end

@@ -31,6 +31,9 @@ public:
       case '(':
         return visitTuple(sig);
         break;
+      case '+':
+        return visitOptional(sig);
+        break;
       default:
         return visitSimple(sig);
         break;
@@ -134,6 +137,10 @@ protected:
 
     //this is a tuple
     return visit(sig.children());
+  }
+
+  TypeExprNodePtr visitOptional(const qi::Signature& sig) {
+    return boost::make_shared<qilang::OptionalTypeExprNode>(visit(sig.children().at(0)), Location());
   }
 
   bool                 _done;

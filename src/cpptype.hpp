@@ -45,6 +45,7 @@ namespace qilang {
     void visitTypeExpr(ListTypeExprNode* node);
     void visitTypeExpr(MapTypeExprNode* node);
     void visitTypeExpr(TupleTypeExprNode* node);
+    void visitTypeExpr(OptionalTypeExprNode* node);
     void visitTypeExpr(VarArgTypeExprNode* node);
     void visitTypeExpr(KeywordArgTypeExprNode* node);
 
