@@ -20,7 +20,7 @@
 
 %locations
 %defines
-%error-verbose
+%define parse.error verbose
 
 //use C++ type, instead of old union C type
 %define api.value.type variant
