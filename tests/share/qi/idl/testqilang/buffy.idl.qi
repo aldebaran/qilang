@@ -1,0 +1,12 @@
+// This IDL is dedicated to test buffer-related types.
+package testqilang
+
+struct Vampire
+  data: raw
+  annotation: str
+end
+
+interface Buffy
+  fn fightAgainst(vampire: Vampire) -> Vampire
+  fn bufferIdentity(buffer: raw) -> raw
+end

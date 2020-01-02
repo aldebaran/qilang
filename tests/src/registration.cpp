@@ -5,6 +5,7 @@
 #include "kindamanagerimpl.hpp"
 #include "anotherinterfaceimpl.hpp"
 #include "bradpitt.hpp"
+#include "buffy.hpp"
 #include "ouroboros.hpp"
 #include "pingpong.hpp"
 #include "propertymaster.hpp"
@@ -15,6 +16,7 @@
 REGISTER_KINDAMANAGER(testqilang::KindaManagerImpl)
 REGISTER_ANOTHERINTERFACE(testqilang::AnotherInterfaceImpl)
 REGISTER_BRADPITT(testqilang::BradPittImpl)
+REGISTER_BUFFY(testqilang::BuffyImpl)
 REGISTER_TIMELORD(testqilang::TimeLordImpl)
 REGISTER_OUROBOROS(testqilang::OuroborosImpl)
 REGISTER_PING(testqilang::PingImpl)
@@ -53,6 +55,7 @@ void registerTestQiLang(qi::ModuleBuilder* mb)
   mb->advertiseFactory<testqilang::KindaManager>("KindaManager");
   mb->advertiseFactory<testqilang::AnotherInterface>("AnotherInterface");
   mb->advertiseFactory<testqilang::BradPitt>("BradPitt");
+  mb->advertiseFactory<testqilang::Buffy>("Buffy");
   mb->advertiseFactory<testqilang::SignalMaster>("SignalMaster");
   mb->advertiseFactory<testqilang::PropertyMaster>("PropertyMaster");
   mb->advertiseFactory<testqilang::TimeLord>("TimeLord");

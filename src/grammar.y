@@ -87,7 +87,7 @@
       "float32", "float64",
       "nsec", "usec", "msec", "sec", "min", "hour",
       "qitimepoint", "steadytimepoint", "systemtimepoint",
-      "str", "any", "obj", 0 };
+      "str", "raw", "any", "obj", 0 };
     int index = 0;
     const char *t = builtin[index];
     while (t != 0) {
