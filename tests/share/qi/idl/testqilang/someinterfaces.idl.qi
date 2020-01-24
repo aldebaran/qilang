@@ -7,3 +7,9 @@ interface TruthSeeker
   fn answer() -> int
   fn bradPittAnswer(bradPitt: testqilang.BradPitt) -> int
 end
+
+interface Foo
+  fn accessMember(future: obj) -> int
+  fn onDestroyed() -> nothing
+end
+

@@ -22,6 +22,7 @@ REGISTER_PONG(testqilang::PongImpl)
 REGISTER_PROPERTYMASTER(testqilang::PropertyMasterImpl)
 REGISTER_SIGNALMASTER(testqilang::SignalMasterImpl)
 REGISTER_TRUTHSEEKER(testqilang::TruthSeekerImpl)
+REGISTER_FOO(testqilang::FooImpl)
 
 testqilang::Error makeError(int code, std::string message)
 {
@@ -55,6 +56,7 @@ void registerTestQiLang(qi::ModuleBuilder* mb)
   mb->advertiseFactory<testqilang::SignalMaster>("SignalMaster");
   mb->advertiseFactory<testqilang::PropertyMaster>("PropertyMaster");
   mb->advertiseFactory<testqilang::TimeLord>("TimeLord");
+  mb->advertiseFactory<testqilang::Foo>("Foo");
   mb->advertiseMethod("Error", makeError);
   mb->advertiseMethod("Score", makeScore);
   mb->advertiseMethod("sumScores", sumScores);
