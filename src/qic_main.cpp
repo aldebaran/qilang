@@ -28,7 +28,7 @@ int codegen_service(const std::string& codegen,
                     const std::string& service) {
   qiLogVerbose() << "Generation " << codegen << " for service " << service;
 
-  qi::AnyObject obj = session->service(service);
+  qi::AnyObject obj = session->service(service).value();
 
   const qi::MetaObject& mo = obj.metaObject();
   qilang::NodePtrVector objs;
