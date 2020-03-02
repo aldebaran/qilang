@@ -95,6 +95,9 @@ protected:
       case 's':
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_String, "str", Location());
         break;
+      case 'r':
+        ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Raw, "raw", Location());
+        break;
       case 'm':
         ret = boost::make_shared<qilang::BuiltinTypeExprNode>(BuiltinType_Value, "any", Location());
         break;

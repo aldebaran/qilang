@@ -79,6 +79,8 @@ static std::string builtinTypeToString(BuiltinType type) {
     return "systemtimepoint";
   case BuiltinType_String:
     return "str";
+  case BuiltinType_Raw:
+    return "raw";
   case BuiltinType_Value:
     return "any";
   case BuiltinType_Object:

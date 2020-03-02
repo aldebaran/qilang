@@ -572,6 +572,7 @@ enum BuiltinType {
   BuiltinType_SystemTimePoint,
 
   BuiltinType_String,
+  BuiltinType_Raw,
   BuiltinType_Value,
   BuiltinType_Object,
 };

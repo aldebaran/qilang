@@ -78,6 +78,8 @@ std::string builtinTypeToCpp(BuiltinType type, bool constref) {
       return "qi::SystemClockTimePoint";
     case BuiltinType_String:
       return constRefYourSelf("std::string", constref);
+    case BuiltinType_Raw:
+      return constRefYourSelf("qi::Buffer", constref);
     case BuiltinType_Value:
       return constRefYourSelf("qi::AnyValue", constref);
     case BuiltinType_Object:
@@ -261,6 +263,8 @@ StringVector extractCppIncludeDir(const PackageManagerPtr& pm, const ParseResult
         BuiltinTypeExprNode* tnode = static_cast<BuiltinTypeExprNode*>(node.get());
         if (tnode->value == "str") {
           pushIfNot(includes, "<string>");
+        } else if (tnode->value == "raw") {
+          pushIfNot(includes, "<qi/buffer.hpp>");
         } else if (tnode->value == "any") {
           pushIfNot(includes, "<qi/anyvalue.hpp>");
         } else if (tnode->value == "obj") {

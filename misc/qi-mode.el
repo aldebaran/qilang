@@ -22,7 +22,7 @@
     "char" "int" "uint"
     "int8" "uint8" "int16" "uint16" "int32" "uint32" "int64" "uint64"
     "float" "float32" "float64"
-    "str" "list" "map" "any" "obj" "object"
+    "str" "raw" "list" "map" "any" "obj" "object"
     )
   '(;; int constant
     ("\\b[0-9]+\\b" . font-lock-constant-face)

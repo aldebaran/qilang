@@ -24,9 +24,8 @@ public:
     return opt;
   }
 
-  void overlord(const std::string& whatever = std::string{})
+  void overlord(const std::string& = std::string{})
   {
-    QI_UNUSED(whatever);
   }
 
   void overlord(int)

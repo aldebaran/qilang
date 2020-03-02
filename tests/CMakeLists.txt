@@ -14,6 +14,7 @@ if(QI_WITH_TESTS)
   set(
     testqilang_idl
 
+    "share/qi/idl/testqilang/buffy.idl.qi"
     "share/qi/idl/testqilang/someenums.idl.qi"
     "share/qi/idl/testqilang/someinterfaces.idl.qi"
     "share/qi/idl/testqilang/somemix.idl.qi"
@@ -55,6 +56,7 @@ if(QI_WITH_TESTS)
     SRC
     "src/anotherinterfaceimpl.hpp"
     "src/bradpitt.hpp"
+    "src/buffy.hpp"
     "src/kindamanagerimpl.hpp"
     "src/ouroboros.hpp"
     "src/pingpong.hpp"
@@ -170,6 +172,7 @@ if(QI_WITH_TESTS)
     SRC
     "test_qilang.hpp"
     "test_qilang.cpp"
+    "test_qilang_raw.cpp"
     "test_qilang_enum_include.cpp"
     "test_qilang_function.cpp"
     "test_qilang_gmock.cpp"
@@ -192,6 +195,7 @@ if(QI_WITH_TESTS)
     testqilang
     testsubpackage
     testsession
+    qitestutils
 
     TIMEOUT 10
     NO_INSTALL

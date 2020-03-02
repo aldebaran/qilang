@@ -40,7 +40,7 @@ namespace qilang {
       indent() << "public:" << std::endl;
       {
         ScopedIndent _(_indent);
-        indent() << node->name << "LocalAsync(ImplPtr impl)" << std::endl;
+        indent() << "explicit " << node->name << "LocalAsync(ImplPtr impl)" << std::endl;
         indent() << "  : _p(std::move(impl))" << std::endl;
         indent() << "{}" << std::endl;
 
@@ -72,44 +72,35 @@ namespace qilang {
       {
         ScopedIndent _(_indent);
 
-        // Use a lambda for easier type deduction.
-        // Note the need of repeating "this" for qi::bind.
-        // Consequently nothing needs to be captured, so the lambda can be static.
-        indent() << "static auto f = [](ImplType* self";
-        if (!node->args.empty()) {
-          out() << ", ";
-          cppParamsFormat(this, node->args, CppParamsFormat_Normal);
+        // Use a lambda capturing all arguments for easier type deduction.
+        // There is always a possibility that a task pushed through qi::async()
+        // is called after `this` object is destroyed, leading to undefined behavior.
+        // To prevent this we will use a weak pointer to check if
+        // the implementation is still alive and throw an error otherwise.
+        indent() << "auto maybeThis = boost::weak_ptr<ImplType>(_p);" << std::endl;
+        indent() << "auto f = [=]() mutable {" << std::endl;
+        {
+          ScopedIndent _( _indent );
+          indent() << "if (auto self = maybeThis.lock())" << std::endl;
+          indent() << "{" << std::endl;
+          {
+            ScopedIndent _( _indent );
+            indent() << "return self->" << node->name << "(";
+            if (!node->args.empty()) {
+              cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
+            }
+            out() << ");" << std::endl;
+          }
+          indent() << "}" << std::endl;
+          indent() << "throw std::runtime_error(\""
+                   << selfName <<" instance destroyed before call to "
+                   << node->name << " was executed."
+                   << " \");" << std::endl;
         }
-        out() << "){ return self->" << node->name << "(";
-        if (!node->args.empty()) {
-          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
-        }
-        out() << "); };" << std::endl;
+        indent() << "};" << std::endl;
 
-        // Deduce the return type of the implementation
-        indent() << "using ReturnType = decltype(f(_p.get()";
-        if (!node->args.empty()) {
-          out() << ", ";
-          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
-        }
-        out() << "));" << std::endl;
-
-        // Use an std::function to explicit types (qi::bind does not always support it).
-        // As long as the lambda is static, this function can be static too.
-        indent() << "static std::function<ReturnType(ImplType*";
-        if (!node->args.empty()) {
-          out() << ", ";
-          cppParamsFormat(this, node->args, CppParamsFormat_TypeOnly);
-        }
-        out() << ")> sf{f};" << std::endl;
-
-        // Use qi::bind for proper scheduling, async for asynchronicity, tryUnwrap to fallback on a simple future
-        indent() << "return qi::detail::tryUnwrap(qi::async(qi::bind(sf, _p.get()";
-        if (!node->args.empty()) {
-          out() << ", ";
-          cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
-        }
-        out() << ")));" << std::endl;
+        // Use async for asynchronicity, tryUnwrap to fallback on a simple future
+        indent() << "return qi::detail::tryUnwrap(qi::async(std::move(f)));" << std::endl;
       }
       indent() << "}" << std::endl << std::endl; // let an empty line after function definition
     }
