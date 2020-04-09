@@ -4,6 +4,13 @@ if(QI_WITH_TESTS)
   include_directories(".")
   qi_stage_dir(".")
 
+  # Generates this header to be able to test it
+  # (otherwise its content is injected in generated code).
+  unset(QILANG_COMMON_GEN_BEGIN)
+  unset(QILANG_COMMON_GEN_END)
+  configure_file(../qilang/gencodeutility.hpp.in ./qilang/gencodeutility.hpp)
+
+
   # Below, we were lazy to make the distribution of these tests correctly in deploys.
   # It was preferred to simply prevent those files from being installed, and instead only
   # use them locally to the build.
@@ -185,6 +192,8 @@ if(QI_WITH_TESTS)
     "test_qilang_struct.cpp"
     "test_qilang_time.cpp"
     "test_qilang_type_registration.cpp"
+    "test_qilang_gencodeutility.cpp"
+    "test_qilang_test_utils.hpp"
 
     DEPENDS
     qi
@@ -197,7 +206,7 @@ if(QI_WITH_TESTS)
     testsession
     qitestutils
 
-    TIMEOUT 10
+    TIMEOUT 90
     NO_INSTALL
   )
 endif(QI_WITH_TESTS)

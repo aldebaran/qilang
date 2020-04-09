@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
+
 #include <qi/anymodule.hpp>
 #include <testsession/testsession.hpp>
 #include <testqilang/somemix.hpp>
 #include <testqilang/somestructs.hpp>
 #include <testqilang/someinterfaces.hpp>
 #include <qi/testutils/testutils.hpp>
+#include <tests/test_qilang_test_utils.hpp>
 
 class QiLangFunction: public ::testing::Test
 {
@@ -43,6 +45,27 @@ TEST_F(QiLangFunction, OverloadedMethodsWithDifferentDeclarations)
 TEST_F(QiLangFunction, MethodOfAnActor)
 {
   _testqilang.call<BradPittPtr>("BradPitt")->act();
+}
+
+TEST_F(QiLangFunction, MethodOfAnActorIsThreadSafe)
+{
+  // We check that an implementation inheriting qi::Actor
+  // will have its members called sequentially if called through
+  // qi::Object.
+  // Therefore below we assume that the implementation for BradPitt
+  // is inheriting qi::Actor.
+
+  const int countCallsPerCaller = 5;
+  auto actor = _testqilang.call<BradPittPtr>("BradPitt");
+
+  auto results = test::qilang::runTaskConcurrently([=]() mutable {
+    return actor->act(); // @see testqilang::BradPittImpl
+  }, countCallsPerCaller);
+
+  for (auto&& result : results)
+  {
+    ASSERT_TRUE(test::finishesWithValue(result)) << result.error();
+  }
 }
 
 TEST_F(QiLangFunction, callsAreSafeWhenDestroyed)
