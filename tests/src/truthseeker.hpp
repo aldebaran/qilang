@@ -24,15 +24,21 @@ class FooImpl
 {
 public:
   // For context, see test "QiLangFunction.callsAreSafeWhenDestroyed".
-  int accessMember(qi::AnyObject fut)
+  int accessMember(qi::AnyObject futCanResumeExecution)
   {
     auto futDestroyed = _promiseDestroyed.future();
     qiLogInfo("FooImpl") << "Entered call, waiting ...";
-    fut.call<void>("value", 0); // Only continue once the test has lost its reference to this object.
+    _promiseStartAccessMember.setValue(nullptr); // Notify that we reached the beginning of this function.
+    futCanResumeExecution.call<void>("value", std::int32_t{10000}); // Only continue once the test has lost its reference to this object.
     qiLogInfo("FooImpl") << "Finishing call.";
     if (futDestroyed.isFinished())
       throw std::runtime_error("Member function called while `this` is destroyed.");
     return 42;
+  }
+
+  qi::Future<void> onStartAccessMember() const
+  {
+    return _promiseStartAccessMember.future();
   }
 
   qi::Future<void> onDestroyed() const
@@ -46,6 +52,7 @@ public:
   }
 
 private:
+  qi::Promise<void> _promiseStartAccessMember;
   qi::Promise<void> _promiseDestroyed;
 };
 }

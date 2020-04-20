@@ -11,5 +11,6 @@ end
 interface Foo
   fn accessMember(future: obj) -> int
   fn onDestroyed() -> nothing
+  fn onStartAccessMember() -> nothing
 end
 

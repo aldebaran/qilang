@@ -58,9 +58,14 @@ TEST_F(QiLangFunction, callsAreSafeWhenDestroyed)
     auto obj = _testqilang.call<qi::AnyObject>("Foo");
     futObjectIsDestroyed = obj.async<void>("onDestroyed");
     qi::AnyObject futFinishCall(boost::make_shared<qi::Future<void>>(promiseFinishCall.future()));
+    auto ftOnStarted = obj.async<void>("onStartAccessMember");
     ASSERT_NO_THROW(futCall = obj.async<int>("accessMember", std::move(futFinishCall)));
+    // Make sure the object has not been destroyed before entering the function.
+    ASSERT_TRUE(test::finishesWithValue(ftOnStarted));
   }
-  promiseFinishCall.setValue(nullptr); // Execution of the call will wait for this promise to be set.
-  ASSERT_TRUE(test::finishesWithValue(futObjectIsDestroyed)); // Wait until the object is really destroyed.
+  promiseFinishCall.setValue(nullptr); // Resume execution of the function.
+  // Wait until the object is really destroyed.
+  ASSERT_TRUE(test::finishesWithValue(futObjectIsDestroyed));
+  // The object has now been destroyed.
   ASSERT_TRUE(test::finishesWithValue(futCall));
 }
