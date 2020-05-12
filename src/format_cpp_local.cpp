@@ -72,35 +72,35 @@ namespace qilang {
       {
         ScopedIndent _(_indent);
 
-        // Use a lambda capturing all arguments for easier type deduction.
-        // There is always a possibility that a task pushed through qi::async()
-        // is called after `this` object is destroyed, leading to undefined behavior.
-        // To prevent this we will use a weak pointer to check if
-        // the implementation is still alive and throw an error otherwise.
-        indent() << "auto maybeThis = boost::weak_ptr<ImplType>(_p);" << std::endl;
-        indent() << "auto f = [=]() mutable {" << std::endl;
-        {
-          ScopedIndent _( _indent );
-          indent() << "if (auto self = maybeThis.lock())" << std::endl;
-          indent() << "{" << std::endl;
-          {
-            ScopedIndent _( _indent );
-            indent() << "return self->" << node->name << "(";
-            if (!node->args.empty()) {
-              cppParamsFormat(this, node->args, CppParamsFormat_NameOnly);
-            }
-            out() << ");" << std::endl;
+        const auto outputArgs = [&](CppParamsFormat format, bool withComma = true) {
+          if (!node->args.empty()) {
+            if (withComma)
+              out() << ", ";
+            cppParamsFormat(this, node->args, format);
           }
-          indent() << "}" << std::endl;
-          indent() << "throw std::runtime_error(\""
-                   << selfName <<" instance destroyed before call to "
-                   << node->name << " was executed."
-                   << " \");" << std::endl;
-        }
-        indent() << "};" << std::endl;
+        };
 
-        // Use async for asynchronicity, tryUnwrap to fallback on a simple future
-        indent() << "return qi::detail::tryUnwrap(qi::async(std::move(f)));" << std::endl;
+        // Use a lambda for easier type deduction.
+        // We want to access `this` only once access is checked as safe (see below)
+        // so we take it as parameter passed by the code doing the check.
+        // Consequently nothing needs to be captured, so the lambda can be static.
+        indent() << "static auto f = [](const ImplPtr& self";
+        outputArgs(CppParamsFormat_Normal);
+        out() << "){ QI_ASSERT_NOT_NULL(self); return self->" << node->name << "(";
+        outputArgs(CppParamsFormat_NameOnly, false);
+        out() << "); };" << std::endl;
+
+        // Deduce the return type of the implementation
+        indent() << "using ReturnType = decltype(f(_p";
+        outputArgs(CppParamsFormat_NameOnly);
+        out() << "));" << std::endl;
+
+        // Use `qilang::detail::safeMemberAsync()` for asynchronicity, tryUnwrap to fallback on a simple future,
+        // whatever the return type of the member function of the implementation.
+        // @see `qilang::detail::safeMemberAsync()` for details.
+        indent() << "return qi::detail::tryUnwrap(qilang::detail::safeMemberAsync<ReturnType, ImplType>(f, _p";
+        outputArgs(CppParamsFormat_NameOnly);
+        out() << "));" << std::endl;
       }
       indent() << "}" << std::endl << std::endl; // let an empty line after function definition
     }
@@ -333,6 +333,7 @@ namespace qilang {
       , _fileName(fileName)
     {
       _includes.push_back("<boost/smart_ptr/enable_shared_from_raw.hpp>");
+      _includes.push_back("<qi/assert.hpp>");
     }
 
     void visitDecl(InterfaceDeclNode* node) {
@@ -380,6 +381,18 @@ namespace qilang {
       for (unsigned i = 0; i < _includes.size(); ++i) {
         indent() << "#include " << _includes.at(i) << std::endl;
       }
+      indent() << std::endl;
+
+      // We need to inject manually the content of common-gen.hpp because
+      // targets using qicc do not necessarily depend on libqilang.
+      // Instead of copying the content of the common code in each fonction
+      // (making it untestable) we prefer to inject it at generation-time
+      // in each generated file.
+      // The code will be protected by header guards.
+      const char* commonCode =
+      #include <qilang/detail/gencodeutility.txt>
+      ;
+      out() << commonCode;
       indent() << std::endl;
     }
 
