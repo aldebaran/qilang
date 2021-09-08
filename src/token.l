@@ -84,36 +84,34 @@
 
 #define STEP() LOC.step()
 
-#define YY_INPUT(buf, result, max_size) qilang_readsome(yyextra, buf, &result, max_size)
+// See https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html#SEC10
+#define YY_INPUT(buf, result, max_size) \
+  { \
+    auto p = yyextra; \
+    if (p->file->in().eof() || p->file->in().fail()) { \
+      result = 0; \
+    } else { \
+      p->file->in().readsome(buf, max_size); \
+      if (!p->file->in().gcount() && !p->file->in().eof()) \
+      { \
+        p->file->in().peek(); \
+        p->file->in().readsome(buf, max_size); \
+      } \
+      if (p->file->in().bad()) \
+      { \
+        result = -1; \
+      } else { \
+        result = p->file->in().gcount(); \
+      } \
+    } \
+  }
 
 #ifdef _WIN32
   static bool isatty(int fp) {
     return false;
   }
 #endif
-#ifdef _WIN32
-  static void qilang_readsome(qilang::Parser* p, char* buf, int *result, size_t max_size)
-#else
-  static void qilang_readsome(qilang::Parser* p, char* buf, yy_size_t *result, size_t max_size)
-#endif
-  {
-    if (p->file->in().eof() || p->file->in().fail()) {
-      *result = 0;
-      return;
-    }
-    p->file->in().readsome(buf, max_size);
-    if (!p->file->in().gcount() && !p->file->in().eof())
-    {
-      p->file->in().peek();
-      p->file->in().readsome(buf, max_size);
-    }
-    if (p->file->in().bad())
-    {
-      *result = -1;
-      return;
-    }
-    *result = p->file->in().gcount();
-  }
+
 
 #define yyterminate()                                   \
   return yy::parser::make_END_OF_FILE(LOC)
