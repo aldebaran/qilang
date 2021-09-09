@@ -108,7 +108,7 @@ function(qi_gen_idl OUT lang pkg dir)
         SRC "${abs_idl_path}"
         COMMENT "Generating remote proxy implementation ${generated_path}"
         DEPENDS "${QICC_EXECUTABLE}" "${staged_idl_path}" ${mirror_idl_file_target}
-        COMMAND "${QICC_EXECUTABLE}" -c cpp_remote "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
+	COMMAND readelf -d "${CMAKE_CURRENT_SOURCE_DIR}/../build-qisdk/sdk/bin/qicc" | head -20 && readelf -d "/home/runner/.local/share/qi/toolchains/qisdk/libqi/lib/libqi.so" | head -20 && "${QICC_EXECUTABLE}" -c cpp_remote "${staged_idl_path}" -o "${generated_path}" -t ${QI_SDK_DIR})
       list(APPEND _out "${generated_path}")
       list(APPEND _${OUT}_REMOTE "${generated_path}")
       message(STATUS "Will generate C++ remote proxy implementation: ${generated_path}")
