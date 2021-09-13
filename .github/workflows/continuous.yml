@@ -1,0 +1,46 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ master, release-2.9, team/platform/dev ]
+  pull_request:
+    branches: [ master, release-2.9, team/platform/dev ]
+
+env:
+  FEED: https://github.com/victorpaleologue/libqi/releases/download/v1.8.8-actions/feed.xml
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - name: Install Build Tools
+      run: pip install qibuild
+
+    - name: Install Dependencies
+      # TODO move these dependencies in the toolchain
+      run: sudo apt install libgtest-dev libgmock-dev
+    
+    - uses: actions/checkout@v2
+
+    - name: Prepare QiBuild Toolchain
+      run: qitoolchain create qisdk $FEED
+
+    - name: Prepare QiBuild Config
+      run: |
+        qibuild init
+        qibuild add-config qisdk -t qisdk
+
+    - name: Configure
+      run: qibuild configure -c qisdk --debug -DQI_WITH_TESTS=ON -DCMAKE_CXX_FLAGS=-pthread
+
+    - name: Build
+      run: qibuild make -c qisdk
+
+    - name: Test
+      run: qitest run -c qisdk

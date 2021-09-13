@@ -6,6 +6,7 @@
 */
 
 #include <iostream>
+#include <ka/scoped.hpp>
 #include <qi/log.hpp>
 #include <qilang/node.hpp>
 #include <qilang/formatter.hpp>
@@ -14,8 +15,6 @@
 #include <qi/os.hpp>
 #include "formatter_p.hpp"
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/scope_exit.hpp>
 #include <stack>
 #include "cpptype.hpp"
 
@@ -94,7 +93,7 @@ public:
   }
 
   std::stack<bool> first;
-  boost::scoped_ptr<Doc> curDoc;
+  std::unique_ptr<Doc> curDoc;
 
   void putComma() {
     if (first.top())
@@ -169,9 +168,7 @@ public:
 
       curDoc.reset(new Doc(doc));
     }
-    BOOST_SCOPE_EXIT(&curDoc) {
-      curDoc.reset();
-    } BOOST_SCOPE_EXIT_END
+    ka::scoped([this] { curDoc.reset(); });
 
     out() << "\"" << node->name << "\" : {";
     out() << "\"type\" : \"method\", ";
