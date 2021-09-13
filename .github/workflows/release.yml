@@ -54,6 +54,8 @@ jobs:
 
     - name: Make Feed # Outputs feed.xml
       run: .github/workflows/make_feed.sh
+      env:
+        CURRENT_RELEASE_TAG: ${{ steps.release.outputs.automatic_releases_tag }}
 
     - name: Release Feed
       uses: actions/upload-release-asset@v1

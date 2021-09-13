@@ -1,10 +1,11 @@
 #!/bin/bash
 # Retrieves the latest release output to generate a QiToolchain XML feed.
 set -e
-echo "Getting packages from current release at ${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/latest"
-ASSETS_URL=$(curl --silent "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/latest" |
+RELEASE_URL="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/${CURRENT_RELEASE_TAG}"
+echo "Getting packages from current release at $RELEASE_URL"
+ASSETS_URL=$(curl --silent $RELEASE_URL |
     jq -r '.assets_url')
-PACKAGES_URLS=$(curl --silent ${ASSETS_URL} |
+PACKAGES_URLS=$(curl --silent $ASSETS_URL |
     jq '.[] | .browser_download_url' |
     grep .zip | xargs -L 1 echo) # echo removes the extra quotes
 
