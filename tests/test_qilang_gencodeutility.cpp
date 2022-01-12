@@ -139,7 +139,7 @@ TYPED_TEST(QiLangSafeMemberAsyncActor, safeMemberAsyncConcurrentCalls)
     ASSERT_TRUE(test::finishesWithValue(result));
   }
 
-  EXPECT_EQ(totalCallCount, ptr->log.size());
+  EXPECT_EQ(static_cast<std::size_t>(totalCallCount), ptr->log.size());
   for (auto&& value : ptr->log)
   {
     EXPECT_EQ("asyncFoo()", value);
