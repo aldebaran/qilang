@@ -74,14 +74,14 @@ namespace {
                                                       IAmActor,
                                                       IAmTrackable,
                                                       IAmTrackableActor>;
-  TYPED_TEST_CASE(QiLangSafeMemberAsync, SafeMemberAsync_AllowedTypes);
+  TYPED_TEST_SUITE(QiLangSafeMemberAsync, SafeMemberAsync_AllowedTypes);
 
 
   template <typename T>
   struct QiLangSafeMemberAsyncActor : ::testing::Test {};
   using SafeMemberAsync_ActorTypes = ::testing::Types<IAmActor,
                                                       IAmTrackableActor>;
-  TYPED_TEST_CASE(QiLangSafeMemberAsyncActor, SafeMemberAsync_ActorTypes);
+  TYPED_TEST_SUITE(QiLangSafeMemberAsyncActor, SafeMemberAsync_ActorTypes);
 }
 
 TYPED_TEST(QiLangSafeMemberAsync, safeMemberAsyncCompilesAndRun)
