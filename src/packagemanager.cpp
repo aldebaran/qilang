@@ -17,7 +17,6 @@
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <boost/algorithm/cxx14/mismatch.hpp>
-#include <qi/qi.hpp>
 #include <qi/path.hpp>
 #include <qilang/pathformatter.hpp>
 
