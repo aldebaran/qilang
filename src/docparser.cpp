@@ -159,7 +159,7 @@ Doc parseDoc(Iterator begin, Iterator end)
     out.description = boost::algorithm::join(outint.description, "\n\n");
   }
 
-  BOOST_FOREACH(const Decl& decl, outint.declarations) {
+  for (const Decl& decl : outint.declarations) {
     boost::apply_visitor(Filler(out), decl);
   }
 

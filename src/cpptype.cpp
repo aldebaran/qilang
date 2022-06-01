@@ -8,7 +8,6 @@
 #include "formatter_p.hpp"
 #include <boost/algorithm/string.hpp>
 #include <qilang/visitor.hpp>
-#include <qi/qi.hpp>
 #include <qi/path.hpp>
 #include <qilang/packagemanager.hpp>
 
