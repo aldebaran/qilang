@@ -32,8 +32,8 @@
 
 //We tell Bison that yyparse should take an extra parameter context
 //and that yylex (LanAB_lex) takes an additional argument scanner
-%parse-param { qilang::Parser* context }
-%lex-param   { qilang::Parser* context }
+%parse-param { qilang::Parser* qilangContext }
+%lex-param   { qilang::Parser* qilangContext }
 
 %code requires {
   namespace qilang {
@@ -68,9 +68,9 @@
   typedef void* yyscan_t;
   yy::parser::symbol_type qilang_lex(yyscan_t lex);
 
-  yy::parser::symbol_type yylex(qilang::Parser* context)
+  yy::parser::symbol_type yylex(qilang::Parser* qilangContext)
   {
-    return qilang_lex(context->scanner);
+    return qilang_lex(qilangContext->scanner);
   }
 
   qilang::TypeExprNodePtr makeType(const yy::location& loc, const std::string& id) {
@@ -158,7 +158,7 @@
 %type<qilang::NodePtrVector> toplevel;
 toplevel:
   %empty         {}
-| toplevel.1 { context->_result->ast.insert(context->_result->ast.end(), $1.begin(), $1.end()); }
+| toplevel.1 { qilangContext->_result->ast.insert(qilangContext->_result->ast.end(), $1.begin(), $1.end()); }
 
 %type<qilang::NodePtrVector> toplevel.1;
 toplevel.1:
