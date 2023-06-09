@@ -1,212 +1,272 @@
-if(QI_WITH_TESTS)
-  find_package(qimodule)
-  qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
-  include_directories(".")
-  qi_stage_dir(".")
+if(NOT BUILD_TESTING)
+  return()
+endif()
 
-  # Generates this header to be able to test it
-  # (otherwise its content is injected in generated code).
-  unset(QILANG_COMMON_GEN_BEGIN)
-  unset(QILANG_COMMON_GEN_END)
-  configure_file(../qilang/gencodeutility.hpp.in ./qilang/gencodeutility.hpp)
+find_package(GTest REQUIRED)
 
+find_package(qimodule REQUIRED)
+find_package(
+    qilang-tools REQUIRED
+    PATHS "${PROJECT_SOURCE_DIR}/cmake"
+    # Disable CMAKE_FIND_ROOT_PATH modes, when cross-compiling.
+    NO_CMAKE_FIND_ROOT_PATH
+)
 
-  # Below, we were lazy to make the distribution of these tests correctly in deploys.
-  # It was preferred to simply prevent those files from being installed, and instead only
-  # use them locally to the build.
-  # TODO: allow modules for test only, and improve qi_gen_lib to allow to run these tests from
-  # a deploy.
+# Required for qicc to find all IDL of a package.
+file(
+  WRITE
+    "${PROJECT_BINARY_DIR}/sdk/share/qi/path.conf"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+)
 
-  # TestQiLang, a messy set of IDLs to check many cases
-  set(
-    testqilang_idl
+# Generates this header to be able to test it
+# (otherwise its content is injected in generated code).
+unset(QILANG_COMMON_GEN_BEGIN)
+unset(QILANG_COMMON_GEN_END)
+configure_file(
+    "${PROJECT_SOURCE_DIR}/qilang/gencodeutility.hpp.in"
+    qilang/gencodeutility.hpp
+)
 
-    "share/qi/idl/testqilang/buffy.idl.qi"
-    "share/qi/idl/testqilang/someenums.idl.qi"
-    "share/qi/idl/testqilang/someinterfaces.idl.qi"
-    "share/qi/idl/testqilang/somemix.idl.qi"
-    "share/qi/idl/testqilang/someproperties.idl.qi"
-    "share/qi/idl/testqilang/somesignals.idl.qi"
-    "share/qi/idl/testqilang/somestructs.idl.qi"
-    "share/qi/idl/testqilang/time.idl.qi"
-  )
+##############################################################################
+# testqilang
+# TestQiLang, a messy set of IDLs to check many cases
+##############################################################################
+add_library(testqilang SHARED)
 
-  qi_gen_idl(
-    testqilang_generated
-    CPP # Output language
-    "testqilang" # Package name
-    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
-    ${testqilang_idl} # IDL files
-    NO_INSTALL
-  )
+set(
+  testqilang_idl
 
-  qi_create_lib(
-    testqilang SHARED
+  share/qi/idl/testqilang/buffy.idl.qi
+  share/qi/idl/testqilang/someenums.idl.qi
+  share/qi/idl/testqilang/someinterfaces.idl.qi
+  share/qi/idl/testqilang/somemix.idl.qi
+  share/qi/idl/testqilang/someproperties.idl.qi
+  share/qi/idl/testqilang/somesignals.idl.qi
+  share/qi/idl/testqilang/somestructs.idl.qi
+  share/qi/idl/testqilang/time.idl.qi
+)
 
-    "testqilang/api.hpp"
-    ${testqilang_generated}
+qi_gen_idl(
+  testqilang_generated
+  CPP # Output language
+  testqilang # Package name
+  "${CMAKE_CURRENT_BINARY_DIR}" # Destination
+  ${testqilang_idl} # IDL files
+  NO_INSTALL
+)
+
+target_sources(
+  testqilang
+  PUBLIC
+    testqilang/api.hpp
+    ${testqilang_generated_INTERFACE}
+    ${testqilang_generated_GMOCK}
+  PRIVATE
+    ${testqilang_generated_LOCAL}
+    ${testqilang_generated_REMOTE}
     ${testqilang_idl}
+)
 
-    DEPENDS
-    qi
-    NO_INSTALL
-  )
+target_include_directories(
+  testqilang
+  PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
-  # Needed to ensure the build order
-  add_dependencies(qi_gen_idl_testqilang qicc)
+target_link_libraries(
+  testqilang
+  PUBLIC
+    qi::qi
+)
 
-  qi_stage_lib(testqilang)
+##############################################################################
+# testqilang_module
+##############################################################################
+qi_create_module(
+  testqilang_module
 
-  qi_create_module(
-    testqilang_module
+  SRC
+  src/anotherinterfaceimpl.hpp
+  src/bradpitt.hpp
+  src/buffy.hpp
+  src/kindamanagerimpl.hpp
+  src/ouroboros.hpp
+  src/pingpong.hpp
+  src/propertymaster.hpp
+  src/registration.cpp
+  src/signalmaster.hpp
+  src/time.hpp
+  src/truthseeker.hpp
 
-    SRC
-    "src/anotherinterfaceimpl.hpp"
-    "src/bradpitt.hpp"
-    "src/buffy.hpp"
-    "src/kindamanagerimpl.hpp"
-    "src/ouroboros.hpp"
-    "src/pingpong.hpp"
-    "src/propertymaster.hpp"
-    "src/registration.cpp"
-    "src/signalmaster.hpp"
-    "src/time.hpp"
-    "src/truthseeker.hpp"
+  DEPENDS
+  testqilang
+  NO_INSTALL
+)
 
-    DEPENDS
-    qi
-    testqilang
-    NO_INSTALL
-  )
+target_include_directories(
+  testqilang_module
+  PRIVATE
+    "${PROJECT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+)
 
-  # Test qilang subpackages management
-  set(
-    testsubpackage_idl
+# Test qilang subpackages management
+set(
+  testsubpackage_idl
 
-    "share/qi/idl/testsubpackage/othersubpackage/othersubpackage.idl.qi"
-    "share/qi/idl/testsubpackage/othersubpackage/localimport.idl.qi"
-  )
+  share/qi/idl/testsubpackage/othersubpackage/othersubpackage.idl.qi
+  share/qi/idl/testsubpackage/othersubpackage/localimport.idl.qi
+)
 
-  qi_gen_lib(
-    testsubpackage
-    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
+##############################################################################
+# testsubpackage
+##############################################################################
+qi_gen_lib(
+  testsubpackage
+  "${CMAKE_CURRENT_BINARY_DIR}" # Destination
 
-    IDL
-    ${testsubpackage_idl}
+  IDL
+  ${testsubpackage_idl}
 
-    API_HEADER
-    "testsubpackage/othersubpackage/api.hpp"
+  API_HEADER
+  "testsubpackage/othersubpackage/api.hpp"
 
-    DEPENDS
-    testqilang
-    NO_INSTALL
-  )
+  DEPENDS
+  testqilang
+  NO_INSTALL
+)
 
-  # Needed to ensure the build order
-  add_dependencies(qi_gen_idl_testsubpackage qicc)
+##############################################################################
+# testimportpackage
+# Test qilang package import feature
+##############################################################################
+qi_gen_lib(
+  testimportpackage
+  "${CMAKE_CURRENT_BINARY_DIR}" # Destination
 
-  qi_stage_lib(testsubpackage)
+  IDL
+  share/qi/idl/testimportpackage/testimportpackage.idl.qi
+  share/qi/idl/testimportpackage/importfromsubpackage.idl.qi
 
-  # Test qilang package import feature
-  set(
-    testimportpackage_idl
+  DEPENDS
+  testsubpackage
+  NO_INSTALL
+)
 
-    "share/qi/idl/testimportpackage/testimportpackage.idl.qi"
-    "share/qi/idl/testimportpackage/importfromsubpackage.idl.qi"
-  )
+##############################################################################
+# qisubpackage
+# Test packages under "qi"
+##############################################################################
+add_library(qisubpackage SHARED)
 
-  qi_gen_lib(
-    testimportpackage
-    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
+qi_gen_idl(
+  qisubpackage_generated
+  CPP # Output language
+  qi.subpackage # Package name
+  "${CMAKE_CURRENT_BINARY_DIR}" # Destination
+  share/qi/idl/qi/subpackage/mix.idl.qi # IDL files
+  NO_INSTALL
+)
 
-    IDL
-    ${testimportpackage_idl}
+target_include_directories(
+  qisubpackage
+  PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
-    DEPENDS
-    testsubpackage
-    NO_INSTALL
-  )
+target_sources(
+  qisubpackage
+  PUBLIC
+    ${qisubpackage_generated_INTERFACE}
+    ${qisubpackage_generated_GMOCK}
+  PRIVATE
+    ${qisubpackage_generated_LOCAL}
+    ${qisubpackage_generated_REMOTE}
+)
+target_link_libraries(
+  qisubpackage
+  PUBLIC
+    qi::qi
+)
 
-  qi_stage_lib(testimportpackage)
+##############################################################################
+# qisubpackageimpl
+##############################################################################
+add_library(qisubpackageimpl SHARED)
 
-  # Needed to ensure the build order
-  add_dependencies(qi_gen_idl_testimportpackage qicc)
+target_sources(
+  qisubpackageimpl
+  PRIVATE
+    src/qi/subpackage/mix.hpp
+    src/qi/subpackage/mix.cpp
+)
 
-  # Test packages under "qi"
-  set(qisubpackage_idl "share/qi/idl/qi/subpackage/mix.idl.qi")
-
-  qi_gen_idl(
-    qisubpackage_generated
-    CPP # Output language
-    qi.subpackage # Package name
-    "${CMAKE_CURRENT_BINARY_DIR}" # Destination
-    ${qisubpackage_idl} # IDL files
-    NO_INSTALL
-  )
-
-  qi_create_lib(
-    qisubpackage SHARED
-
-    ${qisubpackage_generated}
-
-    DEPENDS
-    qi
-    NO_INSTALL
-  )
-
-  qi_stage_lib(qisubpackage)
-
-  qi_create_lib(
-    qisubpackageimpl SHARED
-
-    "src/qi/subpackage/mix.hpp"
-    "src/qi/subpackage/mix.cpp"
-
-    DEPENDS
+target_link_libraries(
+  qisubpackageimpl
+  PUBLIC
     qisubpackage
-    NO_INSTALL
-  )
+)
 
-  qi_stage_lib(qisubpackageimpl)
+##############################################################################
+# test_qilang
+# The actual entry point of the test
+##############################################################################
+add_executable(test_qilang)
 
-  # Needed to ensure the build order
-  add_dependencies(qi_gen_idl_testimportpackage qicc)
+target_sources(
+  test_qilang
+  PRIVATE
+    test_qilang.hpp
+    test_qilang.cpp
+    test_qilang_raw.cpp
+    test_qilang_enum_include.cpp
+    test_qilang_function.cpp
+    test_qilang_gmock.cpp
+    test_qilang_import.cpp
+    test_qilang_package.cpp
+    test_qilang_property.cpp
+    test_qilang_qisubpackage.cpp
+    test_qilang_signal.cpp
+    test_qilang_signature.cpp
+    test_qilang_struct.cpp
+    test_qilang_time.cpp
+    test_qilang_type_registration.cpp
+    test_qilang_gencodeutility.cpp
+    test_qilang_test_utils.hpp
+)
 
-  # The actual entry point of the test
-  qi_create_gmock(
-    test_qilang
+target_include_directories(
+  test_qilang
+  PRIVATE
+    "${PROJECT_BINARY_DIR}"
+)
 
-    SRC
-    "test_qilang.hpp"
-    "test_qilang.cpp"
-    "test_qilang_raw.cpp"
-    "test_qilang_enum_include.cpp"
-    "test_qilang_function.cpp"
-    "test_qilang_gmock.cpp"
-    "test_qilang_import.cpp"
-    "test_qilang_package.cpp"
-    "test_qilang_property.cpp"
-    "test_qilang_qisubpackage.cpp"
-    "test_qilang_signal.cpp"
-    "test_qilang_signature.cpp"
-    "test_qilang_struct.cpp"
-    "test_qilang_time.cpp"
-    "test_qilang_type_registration.cpp"
-    "test_qilang_gencodeutility.cpp"
-    "test_qilang_test_utils.hpp"
-
-    DEPENDS
-    qi
+target_link_libraries(
+  test_qilang
+  PRIVATE
     qilang
     qisubpackage
     qisubpackageimpl
     testimportpackage
     testqilang
     testsubpackage
-    testsession
-    qitestutils
+    qi::qi
+    qi::testsession
+    GTest::gmock
+)
 
+add_test(
+  NAME test_qilang
+  COMMAND
+    test_qilang
+      --qi-sdk-prefix "${CMAKE_BINARY_DIR}/sdk"
+)
+
+set_tests_properties(
+  test_qilang
+  PROPERTIES
     TIMEOUT 90
-    NO_INSTALL
-  )
-endif(QI_WITH_TESTS)
+)

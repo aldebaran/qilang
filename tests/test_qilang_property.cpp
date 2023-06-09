@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <future>
 #include <testqilang/someproperties.hpp>
+#include <boost/optional/optional_io.hpp>
 #include "test_qilang.hpp"
 
 using QiLangProperty = QiLangModule;

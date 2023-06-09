@@ -5,8 +5,9 @@
 #include <testqilang/somemix.hpp>
 #include <testqilang/somestructs.hpp>
 #include <testqilang/someinterfaces.hpp>
-#include <qi/testutils/testutils.hpp>
 #include <tests/test_qilang_test_utils.hpp>
+
+const auto waitTimeout = qi::Seconds{ 5 };
 
 class QiLangFunction: public ::testing::Test
 {
@@ -64,7 +65,7 @@ TEST_F(QiLangFunction, MethodOfAnActorIsThreadSafe)
 
   for (auto&& result : results)
   {
-    ASSERT_TRUE(test::finishesWithValue(result)) << result.error();
+    ASSERT_EQ(qi::FutureState_FinishedWithValue, result.wait(waitTimeout)) << result.error();
   }
 }
 
@@ -84,11 +85,11 @@ TEST_F(QiLangFunction, callsAreSafeWhenDestroyed)
     auto ftOnStarted = obj.async<void>("onStartAccessMember");
     ASSERT_NO_THROW(futCall = obj.async<int>("accessMember", std::move(futFinishCall)));
     // Make sure the object has not been destroyed before entering the function.
-    ASSERT_TRUE(test::finishesWithValue(ftOnStarted));
+    ASSERT_EQ(qi::FutureState_FinishedWithValue, ftOnStarted.wait(waitTimeout));
   }
   promiseFinishCall.setValue(nullptr); // Resume execution of the function.
   // Wait until the object is really destroyed.
-  ASSERT_TRUE(test::finishesWithValue(futObjectIsDestroyed));
+  ASSERT_EQ(qi::FutureState_FinishedWithValue, futObjectIsDestroyed.wait(waitTimeout));
   // The object has now been destroyed.
-  ASSERT_TRUE(test::finishesWithValue(futCall));
+  ASSERT_EQ(qi::FutureState_FinishedWithValue, futCall.wait(waitTimeout));
 }

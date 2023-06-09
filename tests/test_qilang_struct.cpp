@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <testsession/testsessionpair.hpp>
 #include <testqilang/somestructs.hpp>
+#include <boost/optional/optional_io.hpp>
 
 TEST(Struct, defaultConstruction)
 {
