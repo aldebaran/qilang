@@ -1,89 +1,245 @@
-cmake_minimum_required(VERSION 2.8)
-project(QiLang)
-find_package(qibuild)
-qi_sanitize_compile_flags(HIDDEN_SYMBOLS)
+## qilang CMake project
+## ====================
+##
+## Parameters
+## ----------
+## QILANG_VERSION
+## ~~~~~~~~~~~~~~
+## A version number that will be used for this project. If this variable is
+## undefined, CMake will read the project version number from the
+## `project.json` file in the source directory.
+##
+## Targets
+## -------
+## The targets defined by the project are:
+## - `qilang::qicc`: executable.
+##
+## All targets are defined for:
+## - qilang as a CMake subproject (through `add_subdirectory`).
+## - a build directory of the project.
+## - an installation of the project.
+##
+## The last two cases are implemented by generating package configuration
+## files (`X-config.cmake`) in the build directory and in the installation
+## directory.
 
-enable_testing()
+cmake_minimum_required(VERSION 3.23)
 
-include_directories(".")
+# - Parse project description file
+file(READ "${CMAKE_CURRENT_LIST_DIR}/project.json" project_json)
+
+# - Define the project version number.
+if(NOT QILANG_VERSION)
+  string(JSON QILANG_VERSION GET "${project_json}" version)
+endif()
+
+include(cmake/ParseVersion.cmake)
+parse_version(QILANG "${QILANG_VERSION}")
+message(STATUS "Project version is ${QILANG_VERSION_FULL} (interpreted as ${QILANG_VERSION} for CMake)")
+
+project(qilang VERSION "${QILANG_VERSION}")
+
+include(CTest)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(cmake/BuildType.cmake)
+include(cmake/MakePackageConfigFile.cmake)
+
+# Enable more warnings. This is set globally for every targets of this project,
+# but is not reflected on the interface of this project libraries. Consumers
+# of these libraries are free to add (or not) these flags themselves.
+if(MSVC)
+  add_compile_options(/W3)
+else()
+  add_compile_options(-Wall -Wextra)
+endif()
+
+set(QI_WITH_TESTS "${BUILD_TESTING}")
+
+##############################################################################
+# External Packages
+##############################################################################
+find_package(BISON MODULE REQUIRED)
+find_package(FLEX MODULE REQUIRED)
+
+find_package(
+  Boost REQUIRED
+  COMPONENTS
+    filesystem
+    program_options
+)
+
+find_package(qi REQUIRED)
+
+##############################################################################
+# Convenience library: cxx_standard
+##############################################################################
+add_library(cxx_standard INTERFACE)
+
+# The project requires at least C++17.
+target_compile_features(
+  cxx_standard
+  INTERFACE
+    cxx_std_17
+)
+
+##############################################################################
+# Flex & Bison targets
+##############################################################################
+bison_target(
+  parse
+  src/grammar.y
+  "${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp"
+  COMPILE_FLAGS "-Wall -t -g=graph.txt -v -d"
+)
+
+flex_target(
+  lex
+  src/token.l
+  "${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp"
+  COMPILE_FLAGS "--batch"
+)
+
+add_flex_bison_dependency(lex parse)
+
+##############################################################################
+# Library: qilang
+##############################################################################
+add_library(qilang STATIC)
+
+target_sources(
+  qilang
+  PUBLIC
+    FILE_SET source_headers
+      TYPE HEADERS
+      FILES
+        qilang/api.hpp
+        qilang/node.hpp
+        qilang/visitor.hpp
+        qilang/parser.hpp
+        qilang/formatter.hpp
+        qilang/packagemanager.hpp
+        qilang/docparser.hpp
+        qilang/pathformatter.hpp
+  PRIVATE
+    src/codegen.cpp
+    src/node.cpp
+    src/parser.cpp
+    src/parser_p.hpp
+    src/formatter_p.hpp
+    src/format_doc.cpp
+    src/format_qilang.cpp
+    src/format_sexpr.cpp
+    src/format_cpp_interface.cpp
+    src/format_cpp_local.cpp
+    src/format_cpp_remote.cpp
+    src/format_cpp_gmock.cpp
+    src/format_anyvalue.cpp
+    src/cpptype.hpp
+    src/cpptype.cpp
+    src/packagemanager.cpp
+    src/qilang_signature.cpp
+    src/qilang_metaobject.cpp
+    src/docparser.cpp
+    src/pathformatter.cpp
+    ${BISON_parse_OUTPUTS}
+    ${FLEX_lex_OUTPUTS}
+)
+
+target_include_directories(
+  qilang
+  PRIVATE
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+  qilang
+  PRIVATE
+    cxx_standard
+    qi::qi
+    Boost::headers
+    Boost::filesystem
+    Boost::program_options
+)
+
+target_compile_definitions(
+  qilang
+  PRIVATE
+    YYDEBUG=1
+)
+
+##############################################################################
+# Executable: qilang
+##############################################################################
+add_executable(qicc)
+add_executable(qilang::qicc ALIAS qicc)
+
+target_sources(
+  qicc
+  PRIVATE
+    src/qic_main.cpp
+)
+
+target_link_libraries(
+  qicc
+  PRIVATE
+    qilang
+    qi::qi
+    Boost::filesystem
+    Boost::program_options
+)
 
 # Common code used by code generated by qicc.
 set(QILANG_COMMON_GEN_BEGIN "R\"gencodeutility(\n")
 set(QILANG_COMMON_GEN_END "\n)gencodeutility\"")
-configure_file(qilang/gencodeutility.hpp.in qilang/detail/gencodeutility.txt)
-
-set(H qilang/api.hpp
-      qilang/node.hpp
-      qilang/visitor.hpp
-      qilang/parser.hpp
-      qilang/formatter.hpp
-      qilang/packagemanager.hpp
-      qilang/docparser.hpp
-      qilang/pathformatter.hpp
-   )
-
-set(C src/codegen.cpp
-      src/node.cpp
-      src/parser.cpp
-      src/parser_p.hpp
-      src/formatter_p.hpp
-      src/format_doc.cpp
-      src/format_qilang.cpp
-      src/format_sexpr.cpp
-      src/format_cpp_interface.cpp
-      src/format_cpp_local.cpp
-      src/format_cpp_remote.cpp
-      src/format_cpp_gmock.cpp
-      src/format_anyvalue.cpp
-      src/cpptype.hpp
-      src/cpptype.cpp
-      src/packagemanager.cpp
-      src/qilang_signature.cpp
-      src/qilang_metaobject.cpp
-      src/docparser.cpp
-      src/pathformatter.cpp)
-
-find_package(FLEX NO_MODULE REQUIRED)
-find_package(BISON NO_MODULE REQUIRED)
-
-add_definitions("-DYYDEBUG")
-
-qi_generate_src(
-  ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
-   SRC src/token.l src/grammar.y
-   COMMENT "flexing ..."
-   COMMAND ${FLEX_EXECUTABLE} --batch -o lex.y.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/token.l
+configure_file(
+  qilang/gencodeutility.hpp.in
+  qilang/detail/gencodeutility.txt
 )
 
-qi_generate_src(
-  ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp
-   SRC src/grammar.y
-   COMMENT "bisoning ..."
-   COMMAND ${BISON_EXECUTABLE} -Wall -t -g=graph.txt -v -d -o grammar.tab.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.y
+
+##############################################################################
+# Installation
+##############################################################################
+install(
+  TARGETS qicc
+  EXPORT qilang-targets
+  COMPONENT runtime
 )
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("src")
+make_package_config_file(qilang-targets qilang COMPONENT devel)
 
-qi_create_lib(qilang
-  SHARED
-  ${H}
-  ${C}
-  src/grammar.y
-  src/token.l
-  ${CMAKE_CURRENT_BINARY_DIR}/lex.y.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/grammar.tab.cpp)
+##############################################################################
+# qilang-tools
+##############################################################################
+set(
+  qilang-tools_install_cmakedir
+  "${CMAKE_INSTALL_LIBDIR}/cmake/qilang-tools"
+  CACHE STRING
+  "Path where qilang-tools CMake files are to be installed."
+)
 
-qi_use_lib(qilang qi)
-qi_stage_lib(qilang)
+set(
+  qilang-tools_config_file_path
+  "${CMAKE_CURRENT_BINARY_DIR}/qilang-tools-config.cmake"
+)
 
-qi_create_bin(qicc src/qic_main.cpp DEPENDS qi qilang)
-qi_stage_bin(qicc)
+configure_file(
+  cmake/qilang-tools-config.cmake
+  "${qilang-tools_config_file_path}"
+)
 
-qi_stage_cmake(qilang-tools-config.cmake)
+install(
+  FILES
+    "${qilang-tools_config_file_path}"
+  DESTINATION "${qilang-tools_install_cmakedir}"
+  COMPONENT devel
+)
 
-# include it go for testing!
-include(${CMAKE_CURRENT_SOURCE_DIR}/qilang-tools-config.cmake)
-if (QI_WITH_TESTS)
-  add_subdirectory("tests")
+##############################################################################
+# Tests
+##############################################################################
+if(BUILD_TESTING)
+  add_subdirectory(tests)
 endif()

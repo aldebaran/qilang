@@ -1,3 +1,4 @@
-build-*/
+build*/
 doc/build*
 CMakeLists.txt.user
+CMakeUserPresets.json

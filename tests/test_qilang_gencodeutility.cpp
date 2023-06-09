@@ -4,7 +4,6 @@
 
 #include <qi/clock.hpp>
 
-#include <qi/testutils/testutils.hpp>
 #include <tests/test_qilang_test_utils.hpp>
 
 #include <tests/qilang/gencodeutility.hpp>
@@ -12,6 +11,7 @@
 
 namespace {
 
+  const auto waitTimeout = qi::Seconds{ 5 };
   const auto checkDurationPerCall = std::chrono::milliseconds{ 500 };
 
   template<typename T>
@@ -94,17 +94,17 @@ TYPED_TEST(QiLangSafeMemberAsync, safeMemberAsyncCompilesAndRun)
   auto ft = safeMemberAsync<void, TypeParam>([](Ptr& ptr) mutable {
       return ptr->foo();
     }, ptr);
-  EXPECT_TRUE(test::finishesWithValue(ft));
+  EXPECT_EQ(qi::FutureState_FinishedWithValue, ft.wait(waitTimeout));
 
   auto ftArgs = safeMemberAsync<void, TypeParam>([](Ptr& ptr, int a, int b, int c) mutable {
       return ptr->foo(a, b, c);
     }, ptr, 1, 2, 3);
-  EXPECT_TRUE(test::finishesWithValue(ftArgs));
+  EXPECT_EQ(qi::FutureState_FinishedWithValue, ftArgs.wait(waitTimeout));
 
   auto ftFt = safeMemberAsync<qi::Future<void>, TypeParam>([](Ptr& ptr) mutable {
       return ptr->asyncFoo();
     }, ptr);
-  EXPECT_TRUE(test::finishesWithValue(ftFt.unwrap()));
+  EXPECT_EQ(qi::FutureState_FinishedWithValue, ftFt.unwrap().wait(waitTimeout));
 
   static const std::vector<std::string> expectedLog{
     "foo()", "foo(int, int, int)", "asyncFoo()",
@@ -131,12 +131,12 @@ TYPED_TEST(QiLangSafeMemberAsyncActor, safeMemberAsyncConcurrentCalls)
     auto ft = qi::detail::tryUnwrap(safeMemberAsync<qi::Future<void>, TypeParam>([](Ptr& ptr) mutable {
         return ptr->asyncFoo();
       }, ptr));
-    EXPECT_TRUE(test::finishesWithValue(ft, test::willDoNothing(), timeout));
+    EXPECT_EQ(qi::FutureState_FinishedWithValue, ft.wait(timeout));
     }, countCallsPerCaller, countConcurrentCallers);
 
   for (auto&& result : results)
   {
-    ASSERT_TRUE(test::finishesWithValue(result));
+    ASSERT_EQ(qi::FutureState_FinishedWithValue, result.wait(waitTimeout));
   }
 
   EXPECT_EQ(static_cast<std::size_t>(totalCallCount), ptr->log.size());
