@@ -26,6 +26,7 @@ unset(QILANG_COMMON_GEN_END)
 configure_file(
     "${PROJECT_SOURCE_DIR}/qilang/gencodeutility.hpp.in"
     qilang/gencodeutility.hpp
+    @ONLY
 )
 
 ##############################################################################
