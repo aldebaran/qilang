@@ -66,56 +66,61 @@ int main(int argc, char *argv[])
   qi::ApplicationSession app(argc, argv);
   qilang::PackageManagerPtr pm = qilang::newPackageManager();
 
+  bool help = false;
+  std::string codegen;
+  std::string mode;
+  std::string idlFile = "";
+  boost::optional<std::string> outputFile;
+  boost::optional<std::string> targetSdkDir;
+  std::vector<std::string> importDirs;
   po::options_description desc("qilang options");
   desc.add_options()
-      ("help,h", "produce help message")
-      ("codegen,c", po::value<std::string>(), "Set the codegenerator to use")
-      ("input-mode,i", po::value<std::string>()->default_value("file"), "Set the input type (file or service)")
-      ("inputs", po::value< std::vector< std::string> >(), "input files")
-      ("output-file,o", po::value<std::string>(), "output file")
-      ("target-sdk-dir,t", po::value<std::string>(), "the SDK directory of the target platform")
+      ("help,h", po::bool_switch(&help), "produce help message")
+      ("codegen,c", po::value(&codegen)->required(), "Set the codegenerator to use")
+      ("input-mode,i", po::value(&mode)->default_value("file"), "Set the input type (file or service)")
+      ("input", po::value(&idlFile)->required(), "input file")
+      ("output-file,o", po::value(&outputFile), "output file")
+      ("target-sdk-dir,t", po::value(&targetSdkDir), "the SDK directory of the target platform")
+      (",I", po::value(&importDirs)->composing(), "add a directory to be searched for imported packages")
       ;
 
   po::positional_options_description p;
-  p.add("inputs", -1);
+  p.add("input", 1);
 
   try {
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
     po::notify(vm);
 
-    if (vm.count("help")) {
+    if (help) {
         std::cout << desc << std::endl;
         return 1;
     }
-    if (vm.count("target-sdk-dir")) {
-      auto targetSdkDir =
-          qi::Path::fromNative(qilang::formatPath(vm["target-sdk-dir"].as<std::string>()));
-      if (!targetSdkDir.isEmpty()) {
+    if (targetSdkDir) {
+      auto path = qi::Path::fromNative(qilang::formatPath(*targetSdkDir));
+      if (!path.isEmpty()) {
         // first add the "${target-sdk-dir}"
-        pm->addLookupPaths({targetSdkDir.str()});
+        pm->addLookupPaths({path.str()});
         // then add paths which are listed in "${target-sdk-dir}/share/qi/path.conf"
-        pm->addLookupPaths(qi::path::parseQiPathConf(targetSdkDir.str()));
+        pm->addLookupPaths(qi::path::parseQiPathConf(path.str()));
       }
     }
 
-    qilang::FileWriterPtr    out;
-    std::string              codegen = vm["codegen"].as<std::string>();
-    std::string              mode = vm["input-mode"].as<std::string>();
-    std::vector<std::string> inputs;
-    std::vector<std::string> includes;
+    for (auto& importDir : importDirs) {
+      importDir = qilang::formatPath(importDir);
+    }
+    pm->addLookupPaths(importDirs);
 
-    if (vm.count("inputs"))
-      inputs = vm["inputs"].as<std::vector<std::string> >();
+    qilang::FileWriterPtr out;
 
-    if (vm.count("output-file")) {
-      std::string outf = qilang::formatPath(vm["output-file"].as<std::string>());
+    if (outputFile) {
+      std::string outf = qilang::formatPath(*outputFile);
       out = qilang::newFileWriter(outf);
     } else {
       out = qilang::newFileWriter(&std::cout, "cout");
     }
 
-    std::string idlFile = qilang::formatPath(inputs.at(0));
+    idlFile = qilang::formatPath(idlFile);
 
     if (mode == "service") {
       app.startSession();

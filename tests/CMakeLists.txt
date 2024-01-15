@@ -12,13 +12,6 @@ find_package(
     NO_CMAKE_FIND_ROOT_PATH
 )
 
-# Required for qicc to find all IDL of a package.
-file(
-  WRITE
-    "${PROJECT_BINARY_DIR}/sdk/share/qi/path.conf"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
 # Generates this header to be able to test it
 # (otherwise its content is injected in generated code).
 unset(QILANG_COMMON_GEN_BEGIN)
@@ -54,6 +47,8 @@ qi_gen_idl(
   testqilang # Package name
   "${CMAKE_CURRENT_BINARY_DIR}" # Destination
   ${testqilang_idl} # IDL files
+  IMPORT_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}"
   NO_INSTALL
 )
 
@@ -113,29 +108,25 @@ target_include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-# Test qilang subpackages management
-set(
-  testsubpackage_idl
-
-  share/qi/idl/testsubpackage/othersubpackage/othersubpackage.idl.qi
-  share/qi/idl/testsubpackage/othersubpackage/localimport.idl.qi
-)
-
 ##############################################################################
 # testsubpackage
+# Test qilang subpackages management
 ##############################################################################
 qi_gen_lib(
   testsubpackage
   "${CMAKE_CURRENT_BINARY_DIR}" # Destination
 
   IDL
-  ${testsubpackage_idl}
+  share/qi/idl/testsubpackage/othersubpackage/othersubpackage.idl.qi
+  share/qi/idl/testsubpackage/othersubpackage/localimport.idl.qi
 
   API_HEADER
   "testsubpackage/othersubpackage/api.hpp"
 
   DEPENDS
-  testqilang
+    testqilang
+  IMPORT_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}"
   NO_INSTALL
 )
 
@@ -152,7 +143,9 @@ qi_gen_lib(
   share/qi/idl/testimportpackage/importfromsubpackage.idl.qi
 
   DEPENDS
-  testsubpackage
+    testsubpackage
+  IMPORT_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}"
   NO_INSTALL
 )
 
