@@ -80,10 +80,9 @@ target_link_libraries(
 ##############################################################################
 # testqilang_module
 ##############################################################################
-qi_create_module(
+qi_add_module(
   testqilang_module
 
-  SRC
   src/anotherinterfaceimpl.hpp
   src/bradpitt.hpp
   src/buffy.hpp
@@ -95,10 +94,6 @@ qi_create_module(
   src/signalmaster.hpp
   src/time.hpp
   src/truthseeker.hpp
-
-  DEPENDS
-  testqilang
-  NO_INSTALL
 )
 
 target_include_directories(
@@ -106,6 +101,12 @@ target_include_directories(
   PRIVATE
     "${PROJECT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(
+  testqilang_module
+  PRIVATE
+    testqilang
 )
 
 ##############################################################################
