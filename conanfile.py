@@ -61,8 +61,8 @@ class QiLangConan(ConanFile):
     description = "Code generator for strongly-typed client code for the LibQi library"
 
     requires = [
-        "boost/[~1.78]",
-        "qi/4.0.1",
+        "boost/[~1.83]",
+        "qi/[~4]",
     ]
 
     tool_requires = [
