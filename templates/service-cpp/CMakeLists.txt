@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.23)
 project(@ProjectName@)
 
 find_package(qibuild) # Always required
@@ -25,15 +25,21 @@ qi_create_lib(@projectname@
   DEPENDS
   qi)
 
-qi_stage_lib(@projectname@)
-
 # Create a module with your implementation of the MyService interface
 # It is the easiest way to expose your service in NAOqi
 find_package(qimodule) # Required only if you create a module
-qi_create_module(
+
+qi_add_module(@projectname@_module INSTALL)
+
+target_sources(
   @projectname@_module
-  SRC
-  "src/@projectname@impl.hpp"
-  "src/@projectname@_module.cpp"
-  DEPENDS qi @projectname@
+  PRIVATE
+    src/@projectname@impl.hpp
+    src/@projectname@_module.cpp
+)
+
+target_link_libraries(
+  @projectname@_module
+  PUBLIC
+    @projectname@
 )

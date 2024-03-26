@@ -196,6 +196,7 @@ set(QILANG_COMMON_GEN_END "\n)gencodeutility\"")
 configure_file(
   qilang/gencodeutility.hpp.in
   qilang/detail/gencodeutility.txt
+  @ONLY
 )
 
 
@@ -228,6 +229,7 @@ set(
 configure_file(
   cmake/qilang-tools-config.cmake
   "${qilang-tools_config_file_path}"
+  COPYONLY
 )
 
 install(

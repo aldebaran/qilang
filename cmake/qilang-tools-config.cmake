@@ -12,6 +12,7 @@ Generate source files from an IDL interface file.
     <output> <lang> <pkg> <dir> <idl_files>...
     [NOINTERFACE] [NOLOCAL] [NOREMOTE] [NOGMOCK]
     [NO_INSTALL]
+    [IMPORT_DIRS <import_dirs>...]
     [FLAGS <flags>...]
   )
 
@@ -22,6 +23,7 @@ The function takes the following arguments:
 - ``<dir>``: the directory where the files will be generated.
 - ``<idl_files>``: the list of IDL file paths. Each path must be relative and
   start with "share/qi/idl/".
+- ``IMPORT_DIRS``: list of directories to be searched for imported packages.
 - ``FLAGS``: list of flags to pass to ``qicc``.
 - ``NOINTERFACE``: do not generate interface file.
 - ``NOLOCAL``: do not generate local file.
@@ -44,7 +46,7 @@ function(qi_gen_idl output lang pkg dir)
     ARG
     "NOINTERFACE;NOLOCAL;NOREMOTE;NOGMOCK;NO_INSTALL"
     ""
-    "FLAGS"
+    "FLAGS;IMPORT_DIRS"
     ${ARGN}
   )
 
@@ -83,13 +85,19 @@ function(qi_gen_idl output lang pkg dir)
     if(NOT ARG_NO_INSTALL)
       # Each idl file shall be installed in the sdk only.
       install(
-        FILES "${rel_idl_path}" 
+        FILES "${rel_idl_path}"
         DESTINATION "${_expected_prefix}${package_subpackage}"
         COMPONENT devel
       )
     endif()
 
     set(sdk_dir "${CMAKE_BINARY_DIR}/sdk")
+
+    set(import_dirs)
+    foreach(import_dir IN LISTS ARG_IMPORT_DIRS)
+      get_filename_component(abs_import_dir "${import_dir}" ABSOLUTE)
+      list(APPEND import_dirs -I "${import_dir}")
+    endforeach()
 
     if(NOT ARG_NOINTERFACE)
       set(generated_dir "${abs_gen_dest_dir}/${package_subpackage}")
@@ -103,6 +111,7 @@ function(qi_gen_idl output lang pkg dir)
             "${abs_idl_path}"
             -o "${generated_path}"
             -t "${sdk_dir}"
+            ${import_dirs}
         DEPENDS
           qilang::qicc
           "${abs_idl_path}"
@@ -124,7 +133,8 @@ function(qi_gen_idl output lang pkg dir)
             -c cpp_local
             "${abs_idl_path}"
             -o "${generated_path}"
-            -t ${sdk_dir}
+            -t "${sdk_dir}"
+            ${import_dirs}
         DEPENDS
           qilang::qicc
           "${abs_idl_path}"
@@ -146,7 +156,8 @@ function(qi_gen_idl output lang pkg dir)
             -c cpp_remote
             "${abs_idl_path}"
             -o "${generated_path}"
-            -t ${sdk_dir}
+            -t "${sdk_dir}"
+            ${import_dirs}
         DEPENDS
           qilang::qicc
           "${abs_idl_path}"
@@ -168,7 +179,8 @@ function(qi_gen_idl output lang pkg dir)
             -c cpp_gmock
             "${abs_idl_path}"
             -o "${generated_path}"
-            -t ${sdk_dir}
+            -t "${sdk_dir}"
+            ${import_dirs}
         DEPENDS
           qilang::qicc
           "${abs_idl_path}"
@@ -206,6 +218,7 @@ Generate source files and create a shared library out of them.
     [NO_INSTALL]
     [API_HEADER <api_header>]
     [DEPENDS <deps>...]
+    [IMPORT_DIRS <import_dirs>...]
   )
 
 - ``<pkg>``: The package name, also the name of the resulting target.
@@ -213,6 +226,7 @@ Generate source files and create a shared library out of them.
 - ``<idl_files>``: the list of IDL file paths. Each path must be relative and
   start with "share/qi/idl/".
 - ``DEPENDS``: the list of dependencies required by the generated library.
+- ``IMPORT_DIRS``: list of directories to be searched for imported packages.
 - ``API_HEADER``: the path to a "api" header, if any. If none is given, it
   will default to ``<pkg>/api.hpp``.
 - ``NO_INSTALL``: do not generate install rule.
@@ -227,7 +241,7 @@ function(qi_gen_lib pkg dir)
     ARG
     "NO_INSTALL"
     "API_HEADER"
-    "DEPENDS;IDL"
+    "DEPENDS;IDL;IMPORT_DIRS"
     ${ARGN}
   )
 
@@ -235,7 +249,12 @@ function(qi_gen_lib pkg dir)
 
   set(maybe_no_install "")
   if (ARG_NO_INSTALL)
-      set(maybe_no_install "NO_INSTALL")
+    set(maybe_no_install "NO_INSTALL")
+  endif()
+
+  set(maybe_import_dirs)
+  if(DEFINED ARG_IMPORT_DIRS)
+    set(maybe_import_dirs IMPORT_DIRS ${ARG_IMPORT_DIRS})
   endif()
 
   qi_gen_idl(
@@ -245,6 +264,7 @@ function(qi_gen_lib pkg dir)
     ${dir}
     ${idl_files}
     ${maybe_no_install}
+    ${maybe_import_dirs}
   )
 
   if(NOT ARG_API_HEADER)

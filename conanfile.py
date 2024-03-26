@@ -43,6 +43,7 @@ USED_BOOST_COMPONENTS = [
     "container", # required by libqi
     "date_time", # required by libqi
     "exception", # required by libqi
+    "locale", # required by libqi
     "filesystem",
     "program_options",
     "random", # required by libqi
@@ -60,8 +61,8 @@ class QiLangConan(ConanFile):
     description = "Code generator for strongly-typed client code for the LibQi library"
 
     requires = [
-        "boost/[~1.78]",
-        "qi/4.0.1",
+        "boost/[~1.83]",
+        "qi/[~4]",
     ]
 
     tool_requires = [
@@ -167,7 +168,7 @@ class QiLangConan(ConanFile):
         qicc = self.cpp_info.components["qicc"]
         qicc.libs = []
         qicc.requires = [
-            "qi",
+            "qi::qi",
             "boost::program_options",
             "boost::filesystem",
         ]
